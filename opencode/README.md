@@ -1,7 +1,7 @@
 # Headless OpenCode runner
 
-Runs one OpenCode prompt without its interactive terminal interface (TUI),
-streams progress, reports token usage, and exits.
+Runs one OpenCode prompt detached from the terminal. It keeps progress, supports
+timeouts, and reports final token usage.
 
 ## Run
 
@@ -11,6 +11,16 @@ chmod +x opencode-headless.sh
 ./opencode-headless.sh "Write simple CUDA Kernel."
 ```
 
+The command returns immediately and prints the run directory plus an exact
+command for following the run:
+
+```bash
+./opencode-headless.sh --attach /path/to/run-directory
+```
+
+Attaching is read-only: it shows the latest output and exits when the run
+finishes. Press `Ctrl+C` to stop watching; the detached task continues.
+
 With all options:
 
 ```bash
@@ -18,6 +28,7 @@ With all options:
   --dir /path/to/repository \
   --timeout 30m \
   --progress ./run.jsonl \
+  --run-dir ./run-state \
   --agents /path/to/AGENTS.md \
   -- "Run the tests, fix failures, and verify the result"
 ```
@@ -33,14 +44,24 @@ OpenCode must already be installed, configured, and connected to its model.
 | `-o, --progress PATH` | Save raw JSONL progress; replaces the file |
 | `-a, --agents PATH` | Add a specific Markdown instruction file |
 | `--kill-after TIME` | Grace period before force-killing; default `10s` |
+| `--run-dir PATH` | Store detached state in a new or empty directory |
+| `--foreground` | Run in the current terminal instead of detaching |
+| `--attach RUN_DIR` | Follow a detached run |
 | `-p, --prompt TEXT` | Provide the prompt as an option |
 | `-h, --help` | Show help |
 
 ## Notes
 
+- Runs detach with `nohup`, so closing the terminal does not stop them.
+- The run directory contains `output.log`, `pid`, `status`, `progress-path`,
+  and—unless overridden—`progress.jsonl`. Without `--run-dir`, a unique
+  temporary run directory is created and printed.
+- The launch command reports whether spawning succeeded. `--attach` returns the
+  finished task's exit status, including `124` for a timeout.
 - Without `--agents`, OpenCode discovers `AGENTS.md` normally. An explicit file
   is added to any discovered project instructions.
-- Without `--progress`, the temporary JSONL log is deleted after the run.
+- Without `--progress`, detached JSONL stays in the run directory. In
+  `--foreground` mode, it is temporary and deleted afterward.
 - `--timeout` covers model calls and tools. It sends `TERM`, then `KILL` after
   `--kill-after`. Exit status `124` means timed out.
 - Token usage includes the main session and any subagents:
@@ -56,7 +77,7 @@ Counts depend on usage metadata reported by the model server.
 
 ## Requirements
 
-- `opencode`, Bash, `jq`, and `tee`
+- `opencode`, Bash, `jq`, `tee`, `nohup`, and `tail`
 - GNU `timeout` only when using `--timeout`
 
 On macOS:
