@@ -6,6 +6,7 @@ streams progress, reports token usage, and exits.
 ## Run
 
 ```bash
+cd opencode
 chmod +x opencode-headless.sh
 ./opencode-headless.sh "Write simple CUDA Kernel."
 ```
