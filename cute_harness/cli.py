@@ -25,6 +25,19 @@ API_KEY_ENV = "CUTE_HARNESS_API_KEY"
 URL_ENV = "CUTE_HARNESS_URL"
 
 
+def _safe_print(text: str, *, stream: Any = sys.stdout) -> None:
+    """Print diagnostics even when the Windows console cannot encode them."""
+    try:
+        print(text, file=stream)
+    except UnicodeEncodeError:
+        encoding = getattr(stream, "encoding", None) or "utf-8"
+        safe_text = text.encode(
+            encoding,
+            errors="backslashreplace",
+        ).decode(encoding)
+        print(safe_text, file=stream)
+
+
 def _print_check(report: CheckReport) -> None:
     status = "PASS" if report.passed else "FAIL"
     print(
@@ -216,10 +229,10 @@ def _run_one(
     stderr = response.get("stderr")
     if isinstance(stdout, str) and stdout:
         print("--- remote stdout ---")
-        print(stdout.rstrip())
+        _safe_print(stdout.rstrip())
     if isinstance(stderr, str) and stderr:
         print("--- remote stderr ---")
-        print(stderr.rstrip())
+        _safe_print(stderr.rstrip(), stream=sys.stderr)
 
     status = "PASS" if acceptance["passed"] else "FAIL"
     print(
@@ -329,14 +342,16 @@ def command_run(args: argparse.Namespace) -> int:
         with tempfile.TemporaryDirectory(
             prefix="cute-harness-assembly-"
         ) as temp_dir:
+            candidate_snapshot = Path(temp_dir) / "candidate.py"
+            candidate_snapshot.write_bytes(submission.read_bytes())
             assembled = Path(temp_dir) / "submission.py"
             assembled.write_text(
-                assemble_submission(task, submission),
+                assemble_submission(task, candidate_snapshot),
                 encoding="utf-8",
             )
             passed, _ = _run_one(
                 task,
-                submission,
+                candidate_snapshot,
                 assembled,
                 True,
                 output_dir,
