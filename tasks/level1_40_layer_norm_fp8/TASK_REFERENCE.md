@@ -1,6 +1,6 @@
 # Task reference: FP8 LayerNorm
 
-Read `references/CUTE_DSL_REFERENCE.md` first.
+Load the `cute-fp8-kernels` skill listed in `task.json.agent_skills` first.
 
 Treat the input as 16 independent rows, each containing:
 

@@ -11,7 +11,11 @@ import shutil
 import subprocess
 from typing import Any, Callable
 
-from cute_harness.assembly import candidate_starter, install_task_references
+from cute_harness.assembly import (
+    candidate_starter,
+    install_task_agent_skills,
+    install_task_references,
+)
 from cute_harness.tasks import REPO_ROOT, TaskSpec, discover_tasks
 
 from . import __version__
@@ -24,8 +28,8 @@ WORKSPACE_INSTRUCTIONS = """# Experiment candidate workspace
 
 Solve the task described in TASK.md and task.json.
 
-- Read every file listed in `task.json.references` before planning or
-  delegating exploration.
+- Load every skill listed in `task.json.agent_skills`, then read every file
+  listed in `task.json.references` before planning or delegating exploration.
 - Edit only submission.py.
 - Do not define or call main(); the evaluator owns main and correctness checks.
 - Do not inspect repository baselines, task evaluator source, or previous runs.
@@ -109,6 +113,7 @@ def _prepare_workspace(
         problem["seed"] = seed
     public["starter"] = "submission.py"
     public["references"] = install_task_references(task, workspace)
+    public["agent_skills"] = install_task_agent_skills(task, workspace)
     (workspace / "task.json").write_text(
         json.dumps(public, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",

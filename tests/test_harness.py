@@ -45,14 +45,21 @@ class TaskManifestTests(unittest.TestCase):
                     report = check_submission(task, candidate)
                 self.assertTrue(report.passed, report.errors)
 
-    def test_all_tasks_declare_public_reference_files(self):
+    def test_all_tasks_declare_public_context(self):
         for task in discover_tasks().values():
             with self.subTest(task=task.id):
-                self.assertGreaterEqual(len(task.reference_paths), 2)
+                self.assertGreaterEqual(len(task.reference_paths), 1)
                 for path in task.reference_paths:
                     self.assertTrue(path.is_file())
                     self.assertNotIn("cute_kernels", path.parts)
                     self.assertNotIn("runs", path.parts)
+                self.assertEqual(
+                    [path.name for path in task.agent_skill_paths],
+                    ["cute-fp8-kernels"],
+                )
+                for path in task.agent_skill_paths:
+                    self.assertTrue((path / "SKILL.md").is_file())
+                    self.assertTrue((path / "references").is_dir())
 
     def test_evaluators_do_not_depend_on_candidate_problem_constants(self):
         public_constants = {
@@ -121,6 +128,7 @@ class TaskManifestTests(unittest.TestCase):
 class CliTests(unittest.TestCase):
     def test_prepare_excludes_baseline_path(self):
         task_id = "level1_01_square_matrix_multiplication_fp8"
+        task = discover_tasks()[task_id]
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "agent-work"
             code = main(["prepare", task_id, "--output", str(output)])
@@ -132,13 +140,29 @@ class CliTests(unittest.TestCase):
             self.assertEqual(public["starter"], "submission.py")
             self.assertEqual(
                 public["references"],
-                [
-                    "references/CUTE_DSL_REFERENCE.md",
-                    "references/TASK_REFERENCE.md",
-                ],
+                ["references/TASK_REFERENCE.md"],
             )
             for reference in public["references"]:
                 self.assertTrue((output / reference).is_file())
+            self.assertEqual(
+                public["agent_skills"],
+                [
+                    ".opencode/skills/cute-fp8-kernels/SKILL.md",
+                ],
+            )
+            skill = output / public["agent_skills"][0]
+            self.assertTrue(skill.is_file())
+            source_chapters = {
+                path.name
+                for path in (
+                    task.agent_skill_paths[0] / "references"
+                ).glob("*.md")
+            }
+            installed_chapters = {
+                path.name
+                for path in (skill.parent / "references").glob("*.md")
+            }
+            self.assertEqual(installed_chapters, source_chapters)
             candidate = (output / "submission.py").read_text("utf-8")
             self.assertNotIn(EVALUATOR_MARKER, candidate)
             self.assertNotIn("def main(", candidate)

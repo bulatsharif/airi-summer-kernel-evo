@@ -20,6 +20,7 @@ from .assembly import (
     baseline_candidate,
     candidate_starter,
     default_evaluation_config,
+    install_task_agent_skills,
     install_task_references,
 )
 from .client import HarnessClient, RemoteHarnessError
@@ -333,6 +334,10 @@ def command_prepare(args: argparse.Namespace) -> int:
     public_manifest = task.public_manifest()
     public_manifest["starter"] = "submission.py"
     public_manifest["references"] = install_task_references(
+        task,
+        output_dir,
+    )
+    public_manifest["agent_skills"] = install_task_agent_skills(
         task,
         output_dir,
     )

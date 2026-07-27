@@ -82,6 +82,27 @@ class TaskSpec:
             paths.append(path)
         return tuple(paths)
 
+    @property
+    def agent_skill_paths(self) -> tuple[Path, ...]:
+        values = self.data.get("agent_skills", [])
+        if not isinstance(values, list):
+            raise TaskError(f"{self.id}: 'agent_skills' must be a path list")
+        paths: list[Path] = []
+        for index, value in enumerate(values):
+            if not isinstance(value, str) or not value:
+                raise TaskError(
+                    f"{self.id}: agent_skills[{index}] must be a path string"
+                )
+            path = (self.directory / value).resolve()
+            try:
+                path.relative_to(REPO_ROOT)
+            except ValueError as error:
+                raise TaskError(
+                    f"{self.id}: agent skill escapes the repository: {value}"
+                ) from error
+            paths.append(path)
+        return tuple(paths)
+
     def public_manifest(self) -> dict[str, Any]:
         public = dict(self.data)
         public.pop("baseline", None)
@@ -170,6 +191,17 @@ def _validate_manifest(data: Any, manifest_path: Path) -> TaskSpec:
                 f"{manifest_path}: duplicate reference basename: {path.name}"
             )
         reference_names.add(path.name)
+    skill_names: set[str] = set()
+    for path in spec.agent_skill_paths:
+        if not path.is_dir() or not (path / "SKILL.md").is_file():
+            raise TaskError(
+                f"{manifest_path}: invalid agent skill directory: {path}"
+            )
+        if path.name in skill_names:
+            raise TaskError(
+                f"{manifest_path}: duplicate agent skill name: {path.name}"
+            )
+        skill_names.add(path.name)
     return spec
 
 

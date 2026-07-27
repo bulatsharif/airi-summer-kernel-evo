@@ -1,6 +1,6 @@
 # Task reference: FP8 square GEMM
 
-Read `references/CUTE_DSL_REFERENCE.md` first.
+Load the `cute-fp8-kernels` skill listed in `task.json.agent_skills` first.
 
 ## Data contract
 

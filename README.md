@@ -95,11 +95,12 @@ calls и ответы evaluator. Тот же вывод сохраняется �
 Если baseline не проходит, agent attempts не запускаются: без валидного
 baseline невозможно посчитать корректный speedup.
 
-Каждый workspace содержит объявленный task’ом локальный reference pack с
-поддерживаемыми CuTe API и design patterns. Subagents разрешены и наследуют тот
-же reference pack и файловую изоляцию; предыдущие `runs/**` и `work/**` им
-недоступны. Один model response ограничен 8192 токенами, а provider request —
-180 секундами.
+Каждый workspace получает существующий OpenCode skill `cute-fp8-kernels` с
+подробным CuTe handbook и короткие task-specific references. Skill загружается
+прогрессивно, поэтому простая задача не платит input tokens за все главы сразу.
+Subagents разрешены и наследуют тот же skill, references и файловую изоляцию;
+предыдущие `runs/**` и `work/**` им недоступны. Один model response ограничен
+8192 токенами, а provider request — 180 секундами.
 
 ## Результат
 
@@ -128,8 +129,9 @@ results.json / .csv / .txt       итоговая таблица
   candidate-eval/                assembled submission, result и profile
 ```
 
-Agent workspace дополнительно содержит `references/`; точный список файлов
-записан в публичном `task.json.references`.
+Agent workspace дополнительно содержит `references/` и
+`.opencode/skills/cute-fp8-kernels/`; точные локальные пути записаны в
+публичных `task.json.references` и `task.json.agent_skills`.
 
 API keys в artifacts не сохраняются.
 

@@ -11,8 +11,10 @@
   "prompt": "TASK.md",
   "starter": "starter.py",
   "references": [
-    "../../docs/agent/CUTE_DSL_REFERENCE.md",
     "TASK_REFERENCE.md"
+  ],
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
   ],
   "baseline": "../../cute_kernels/level2_76_gemm_add_relu_fp8/submission.py",
   "precision": {

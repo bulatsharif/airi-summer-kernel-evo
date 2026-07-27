@@ -140,9 +140,10 @@ def build_agent_prompt(
     return f"""Solve the CuTe task in the current workspace.
 
 Read TASK.md, task.json, and submission.py. Edit only submission.py.
-Before planning or delegating, read every local file listed in
-task.json.references. Those files contain the supported CuTe API and design
-patterns for this dataset.
+Before planning or delegating, load every local OpenCode skill listed in
+task.json.agent_skills, then read every file in task.json.references. The skill
+contains the detailed CuTe handbook; task references contain dataset-specific
+design constraints.
 The final candidate must implement task {task_id} and must not define main();
 the evaluation harness owns input generation, reference computation, timing,
 and PASS reporting.

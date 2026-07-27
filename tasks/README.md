@@ -14,12 +14,16 @@ smoke-тестов инфраструктуры и не должна попад�
 Минимальная единица агентского запуска:
 
 ```text
-TASK.md + public references + candidate prefix -> agent submission.py
+TASK.md + OpenCode skill + public references + candidate prefix
+  -> agent submission.py
 ```
 
 Агент не получает evaluator suffix. Перед remote run harness объединяет
 прошедший policy candidate с evaluator в один standalone-файл, совместимый с
 текущим API.
 
-References объявляются в `task.json.references` и копируются в изолированный
-workspace. Baseline, предыдущие runs и workspaces в этот список не входят.
+Skills и references объявляются в `task.json.agent_skills` и
+`task.json.references`, затем копируются в изолированный workspace. Подробный
+общий handbook загружается через skill прогрессивно, а `TASK_REFERENCE.md`
+всегда задаёт специфику задачи. Baseline, предыдущие runs и workspaces туда не
+входят.

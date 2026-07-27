@@ -71,6 +71,19 @@ def install_task_references(task: TaskSpec, workspace: Path) -> list[str]:
     return installed
 
 
+def install_task_agent_skills(task: TaskSpec, workspace: Path) -> list[str]:
+    skills_dir = workspace / ".opencode" / "skills"
+    installed: list[str] = []
+    for skill_path in task.agent_skill_paths:
+        skills_dir.mkdir(parents=True, exist_ok=True)
+        destination = skills_dir / skill_path.name
+        shutil.copytree(skill_path, destination)
+        installed.append(
+            (destination / "SKILL.md").relative_to(workspace).as_posix()
+        )
+    return installed
+
+
 def assemble_submission(
     task: TaskSpec,
     candidate_path: Path,

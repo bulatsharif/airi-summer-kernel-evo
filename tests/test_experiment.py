@@ -80,13 +80,19 @@ class ExperimentRunnerTests(unittest.TestCase):
             self.assertEqual(public["problem"]["seed"], 0)
             self.assertEqual(
                 public["references"],
-                [
-                    "references/CUTE_DSL_REFERENCE.md",
-                    "references/TASK_REFERENCE.md",
-                ],
+                ["references/TASK_REFERENCE.md"],
             )
             for reference in public["references"]:
                 self.assertTrue((workspace / reference).is_file())
+            self.assertEqual(
+                public["agent_skills"],
+                [
+                    ".opencode/skills/cute-fp8-kernels/SKILL.md",
+                ],
+            )
+            skill = workspace / public["agent_skills"][0]
+            self.assertTrue(skill.is_file())
+            self.assertTrue((skill.parent / "references" / "fp8.md").is_file())
             with (workspace / "submission.py").open(
                 "a",
                 encoding="utf-8",
