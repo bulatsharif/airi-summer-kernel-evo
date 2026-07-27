@@ -45,6 +45,15 @@ class TaskManifestTests(unittest.TestCase):
                     report = check_submission(task, candidate)
                 self.assertTrue(report.passed, report.errors)
 
+    def test_all_tasks_declare_public_reference_files(self):
+        for task in discover_tasks().values():
+            with self.subTest(task=task.id):
+                self.assertGreaterEqual(len(task.reference_paths), 2)
+                for path in task.reference_paths:
+                    self.assertTrue(path.is_file())
+                    self.assertNotIn("cute_kernels", path.parts)
+                    self.assertNotIn("runs", path.parts)
+
     def test_evaluators_do_not_depend_on_candidate_problem_constants(self):
         public_constants = {
             "level1_01_square_matrix_multiplication_fp8": {
@@ -121,6 +130,15 @@ class CliTests(unittest.TestCase):
             public = json.loads((output / "task.json").read_text("utf-8"))
             self.assertNotIn("baseline", public)
             self.assertEqual(public["starter"], "submission.py")
+            self.assertEqual(
+                public["references"],
+                [
+                    "references/CUTE_DSL_REFERENCE.md",
+                    "references/TASK_REFERENCE.md",
+                ],
+            )
+            for reference in public["references"]:
+                self.assertTrue((output / reference).is_file())
             candidate = (output / "submission.py").read_text("utf-8")
             self.assertNotIn(EVALUATOR_MARKER, candidate)
             self.assertNotIn("def main(", candidate)

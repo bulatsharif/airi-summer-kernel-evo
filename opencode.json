@@ -32,7 +32,7 @@
     "*": "allow",
     "webfetch": "deny",
     "websearch": "deny",
-    "task": "deny",
+    "doom_loop": "deny",
     "external_directory": "deny",
     "read": {
       "*": "allow",
@@ -46,11 +46,12 @@
       "remote_agent_smoke/**": "deny",
       "tasks/**": "deny",
       "cute_harness/**": "deny",
-      "tests/**": "deny"
+      "tests/**": "deny",
+      "runs/**": "deny",
+      "work/**": "deny"
     },
     "edit": {
-      "*": "deny",
-      "work/*/submission.py": "allow"
+      "*": "deny"
     },
     "glob": "deny",
     "grep": "deny",

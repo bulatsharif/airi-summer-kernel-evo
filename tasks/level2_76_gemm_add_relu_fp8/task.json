@@ -10,6 +10,10 @@
   },
   "prompt": "TASK.md",
   "starter": "starter.py",
+  "references": [
+    "../../docs/agent/CUTE_DSL_REFERENCE.md",
+    "TASK_REFERENCE.md"
+  ],
   "baseline": "../../cute_kernels/level2_76_gemm_add_relu_fp8/submission.py",
   "precision": {
     "gemm_inputs": "float8_e4m3fn",

@@ -20,6 +20,7 @@ from .assembly import (
     baseline_candidate,
     candidate_starter,
     default_evaluation_config,
+    install_task_references,
 )
 from .client import HarnessClient, RemoteHarnessError
 from .policy import CheckReport, check_submission
@@ -331,6 +332,10 @@ def command_prepare(args: argparse.Namespace) -> int:
     )
     public_manifest = task.public_manifest()
     public_manifest["starter"] = "submission.py"
+    public_manifest["references"] = install_task_references(
+        task,
+        output_dir,
+    )
     (output_dir / "task.json").write_text(
         json.dumps(public_manifest, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",

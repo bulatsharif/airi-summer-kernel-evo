@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import shutil
 
 from .tasks import TaskSpec
 
@@ -57,6 +58,17 @@ def baseline_candidate(task: TaskSpec) -> str:
     source = task.baseline_path.read_text(encoding="utf-8")
     candidate, _ = _split_source(source, f"{task.id}: baseline")
     return candidate
+
+
+def install_task_references(task: TaskSpec, workspace: Path) -> list[str]:
+    references_dir = workspace / "references"
+    installed: list[str] = []
+    for reference_path in task.reference_paths:
+        references_dir.mkdir(exist_ok=True)
+        destination = references_dir / reference_path.name
+        shutil.copy2(reference_path, destination)
+        installed.append(destination.relative_to(workspace).as_posix())
+    return installed
 
 
 def assemble_submission(

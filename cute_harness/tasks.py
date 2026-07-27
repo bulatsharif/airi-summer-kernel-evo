@@ -61,6 +61,27 @@ class TaskSpec:
     def baseline_path(self) -> Path:
         return self.member_path("baseline")
 
+    @property
+    def reference_paths(self) -> tuple[Path, ...]:
+        values = self.data.get("references", [])
+        if not isinstance(values, list):
+            raise TaskError(f"{self.id}: 'references' must be a path list")
+        paths: list[Path] = []
+        for index, value in enumerate(values):
+            if not isinstance(value, str) or not value:
+                raise TaskError(
+                    f"{self.id}: references[{index}] must be a path string"
+                )
+            path = (self.directory / value).resolve()
+            try:
+                path.relative_to(REPO_ROOT)
+            except ValueError as error:
+                raise TaskError(
+                    f"{self.id}: reference escapes the repository: {value}"
+                ) from error
+            paths.append(path)
+        return tuple(paths)
+
     def public_manifest(self) -> dict[str, Any]:
         public = dict(self.data)
         public.pop("baseline", None)
@@ -140,6 +161,15 @@ def _validate_manifest(data: Any, manifest_path: Path) -> TaskSpec:
         path = spec.member_path(field)
         if not path.is_file():
             raise TaskError(f"{manifest_path}: missing {field} file: {path}")
+    reference_names: set[str] = set()
+    for path in spec.reference_paths:
+        if not path.is_file():
+            raise TaskError(f"{manifest_path}: missing reference file: {path}")
+        if path.name in reference_names:
+            raise TaskError(
+                f"{manifest_path}: duplicate reference basename: {path.name}"
+            )
+        reference_names.add(path.name)
     return spec
 
 

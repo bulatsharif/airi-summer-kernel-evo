@@ -10,6 +10,10 @@
   },
   "prompt": "TASK.md",
   "starter": "starter.py",
+  "references": [
+    "../../docs/agent/CUTE_DSL_REFERENCE.md",
+    "TASK_REFERENCE.md"
+  ],
   "baseline": "../../cute_kernels/level1_01_square_matrix_multiplication_fp8/submission.py",
   "precision": {
     "inputs": "float8_e4m3fn",

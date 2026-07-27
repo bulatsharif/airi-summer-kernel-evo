@@ -140,11 +140,13 @@ def build_agent_prompt(
     return f"""Solve the CuTe task in the current workspace.
 
 Read TASK.md, task.json, and submission.py. Edit only submission.py.
+Before planning or delegating, read every local file listed in
+task.json.references. Those files contain the supported CuTe API and design
+patterns for this dataset.
 The final candidate must implement task {task_id} and must not define main();
 the evaluation harness owns input generation, reference computation, timing,
 and PASS reporting.
-Work directly in this session. Do not spawn subagents or spend time exploring
-unavailable source trees.
+Do not inspect previous runs, workspaces, known baselines, or evaluator source.
 
 Use these commands for feedback:
 
@@ -152,9 +154,61 @@ python -m cute_harness check {task_id} {candidate_path}
 python -m cute_harness run {task_id} {candidate_path} --seed {seed} --timeout {gpu_timeout}
 
 Establish correctness before optimizing. Leave the best final candidate at
-{candidate_path}. Do not inspect known baselines or evaluator source. Finish
-only after a successful harness result or an exact blocker.
+{candidate_path}. Finish only after a successful harness result or an exact
+blocker.
 """
+
+
+def build_workspace_inline_config(
+    repo_root: Path,
+    workspace: Path,
+    existing: str | None = None,
+) -> str:
+    try:
+        payload = json.loads(existing) if existing else {}
+    except json.JSONDecodeError as error:
+        raise RuntimeError(
+            f"OPENCODE_CONFIG_CONTENT is not valid JSON: {error}"
+        ) from error
+    if not isinstance(payload, dict):
+        raise RuntimeError("OPENCODE_CONFIG_CONTENT must be a JSON object")
+
+    permission = payload.setdefault("permission", {})
+    if not isinstance(permission, dict):
+        raise RuntimeError("inline OpenCode permission must be an object")
+    read = permission.setdefault("read", {})
+    edit = permission.setdefault("edit", {})
+    if not isinstance(read, dict) or not isinstance(edit, dict):
+        raise RuntimeError("inline OpenCode read/edit permissions must be objects")
+
+    repo_root = repo_root.resolve()
+    workspace = workspace.resolve()
+    patterns = [f"{workspace.as_posix()}/**"]
+    try:
+        relative = workspace.relative_to(repo_root).as_posix()
+    except ValueError:
+        external = permission.setdefault("external_directory", {})
+        if not isinstance(external, dict):
+            raise RuntimeError(
+                "inline external_directory permission must be an object"
+            )
+        external[patterns[0]] = "allow"
+    else:
+        patterns.append(f"{relative}/**")
+
+    for pattern in patterns:
+        read[pattern] = "allow"
+    candidate = (workspace / "submission.py").as_posix()
+    edit[candidate] = "allow"
+    try:
+        relative_candidate = (workspace / "submission.py").relative_to(
+            repo_root
+        )
+    except ValueError:
+        pass
+    else:
+        edit[relative_candidate.as_posix()] = "allow"
+    return json.dumps(payload, separators=(",", ":"))
 
 
 def run_agent(
@@ -196,6 +250,11 @@ def run_agent(
         str(repo_root)
         if not existing_pythonpath
         else os.pathsep.join((str(repo_root), existing_pythonpath))
+    )
+    environment["OPENCODE_CONFIG_CONTENT"] = build_workspace_inline_config(
+        repo_root,
+        workspace,
+        environment.get("OPENCODE_CONFIG_CONTENT"),
     )
 
     started = time.monotonic()

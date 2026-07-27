@@ -6,10 +6,12 @@
 tasks/<task_id>/
   task.json
   TASK.md
+  TASK_REFERENCE.md
   starter.py
 ```
 
 Known-good baseline хранится отдельно и не копируется в agent workspace.
+Общий публичный CuTe reference может лежать в `docs/agent/`.
 
 ## `task.json`
 
@@ -20,9 +22,11 @@ Manifest фиксирует:
 - shapes, seed и параметры операции;
 - numerical tolerances и success pattern;
 - минимальные candidate CuTe primitives;
+- список публичных reference-файлов;
 - private baseline path.
 
-Команда `prepare` удаляет baseline path из публичной копии.
+Команда `prepare` удаляет baseline path из публичной копии и устанавливает
+reference-файлы в `references/`, переписывая manifest на локальные пути.
 
 ## `TASK.md`
 
@@ -31,6 +35,7 @@ candidate ABI, acceptance thresholds и команды `check`/`run`.
 
 Candidate ABI v1:
 
+- агент сначала читает каждый путь из `task.json.references`;
 - агент редактирует только `submission.py`;
 - candidate содержит constants, kernels и JIT entrypoint;
 - candidate не определяет и не вызывает `main()`;
@@ -65,7 +70,7 @@ Artifacts включают отдельно `candidate.py` и отправлен
 
 ## Добавление задачи
 
-1. Создать `task.json`, `TASK.md`, `starter.py`.
+1. Создать `task.json`, `TASK.md`, `starter.py` и нужные public references.
 2. Добавить evaluator marker ровно один раз.
 3. Реализовать private evaluator suffix и known-good baseline.
 4. Настроить candidate policy.

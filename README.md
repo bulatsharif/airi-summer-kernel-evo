@@ -95,9 +95,11 @@ calls и ответы evaluator. Тот же вывод сохраняется �
 Если baseline не проходит, agent attempts не запускаются: без валидного
 baseline невозможно посчитать корректный speedup.
 
-Eval-конфигурация запрещает OpenCode subagents, ограничивает один model response
-до 8192 токенов и один provider request до 180 секунд. Это не даёт скрытому
-explore-session съесть большую часть общего agent timeout.
+Каждый workspace содержит объявленный task’ом локальный reference pack с
+поддерживаемыми CuTe API и design patterns. Subagents разрешены и наследуют тот
+же reference pack и файловую изоляцию; предыдущие `runs/**` и `work/**` им
+недоступны. Один model response ограничен 8192 токенами, а provider request —
+180 секундами.
 
 ## Результат
 
@@ -125,6 +127,9 @@ results.json / .csv / .txt       итоговая таблица
   candidate.py                   финальное решение агента
   candidate-eval/                assembled submission, result и profile
 ```
+
+Agent workspace дополнительно содержит `references/`; точный список файлов
+записан в публичном `task.json.references`.
 
 API keys в artifacts не сохраняются.
 

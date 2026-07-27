@@ -9,7 +9,7 @@ import time
 import unittest
 
 from cute_harness.tasks import REPO_ROOT
-from experiment.agent import AgentMetrics
+from experiment.agent import AgentMetrics, build_workspace_inline_config
 from experiment.evaluation import EvaluationResult
 from experiment.process import run_streaming
 from experiment.runner import ExperimentConfig, run_experiment
@@ -24,16 +24,47 @@ def evaluation_record(kernel_time_ms, profile_id):
 
 
 class ExperimentRunnerTests(unittest.TestCase):
-    def test_agent_config_bounds_requests_and_disables_subagents(self):
+    def test_agent_config_bounds_requests_without_disabling_subagents(self):
         config = json.loads(
             (REPO_ROOT / "opencode.json").read_text(encoding="utf-8")
         )
         provider = config["provider"]["qwen-server"]
         model = provider["models"]["qwen3.6-35b-a3b"]
 
-        self.assertEqual(config["permission"]["task"], "deny")
+        self.assertNotEqual(config["permission"].get("task"), "deny")
+        self.assertEqual(config["permission"]["doom_loop"], "deny")
+        self.assertEqual(
+            config["permission"]["read"]["runs/**"],
+            "deny",
+        )
+        self.assertEqual(
+            config["permission"]["read"]["work/**"],
+            "deny",
+        )
         self.assertLessEqual(model["limit"]["output"], 8192)
         self.assertLessEqual(provider["options"]["timeout"], 180000)
+
+    def test_inline_config_reopens_only_the_current_workspace(self):
+        workspace = REPO_ROOT / "work" / "current-attempt"
+        inline = json.loads(
+            build_workspace_inline_config(
+                REPO_ROOT,
+                workspace,
+                '{"instructions":["existing.md"]}',
+            )
+        )
+
+        self.assertEqual(inline["instructions"], ["existing.md"])
+        self.assertEqual(
+            inline["permission"]["read"]["work/current-attempt/**"],
+            "allow",
+        )
+        self.assertEqual(
+            inline["permission"]["edit"][
+                "work/current-attempt/submission.py"
+            ],
+            "allow",
+        )
 
     def test_one_task_combines_agent_eval_and_baseline_metrics(self):
         workspaces = []
@@ -47,6 +78,15 @@ class ExperimentRunnerTests(unittest.TestCase):
                 (workspace / "task.json").read_text(encoding="utf-8")
             )
             self.assertEqual(public["problem"]["seed"], 0)
+            self.assertEqual(
+                public["references"],
+                [
+                    "references/CUTE_DSL_REFERENCE.md",
+                    "references/TASK_REFERENCE.md",
+                ],
+            )
+            for reference in public["references"]:
+                self.assertTrue((workspace / reference).is_file())
             with (workspace / "submission.py").open(
                 "a",
                 encoding="utf-8",
