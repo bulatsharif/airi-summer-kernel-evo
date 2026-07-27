@@ -95,6 +95,10 @@ calls и ответы evaluator. Тот же вывод сохраняется �
 Если baseline не проходит, agent attempts не запускаются: без валидного
 baseline невозможно посчитать корректный speedup.
 
+Eval-конфигурация запрещает OpenCode subagents, ограничивает один model response
+до 8192 токенов и один provider request до 180 секунд. Это не даёт скрытому
+explore-session съесть большую часть общего agent timeout.
+
 ## Результат
 
 В конце печатается таблица:

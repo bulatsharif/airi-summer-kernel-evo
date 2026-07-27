@@ -8,6 +8,7 @@ import tempfile
 import time
 import unittest
 
+from cute_harness.tasks import REPO_ROOT
 from experiment.agent import AgentMetrics
 from experiment.evaluation import EvaluationResult
 from experiment.process import run_streaming
@@ -23,6 +24,17 @@ def evaluation_record(kernel_time_ms, profile_id):
 
 
 class ExperimentRunnerTests(unittest.TestCase):
+    def test_agent_config_bounds_requests_and_disables_subagents(self):
+        config = json.loads(
+            (REPO_ROOT / "opencode.json").read_text(encoding="utf-8")
+        )
+        provider = config["provider"]["qwen-server"]
+        model = provider["models"]["qwen3.6-35b-a3b"]
+
+        self.assertEqual(config["permission"]["task"], "deny")
+        self.assertLessEqual(model["limit"]["output"], 8192)
+        self.assertLessEqual(provider["options"]["timeout"], 180000)
+
     def test_one_task_combines_agent_eval_and_baseline_metrics(self):
         workspaces = []
 

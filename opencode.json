@@ -14,14 +14,15 @@
       "name": "Qwen3.6 Server",
       "options": {
         "baseURL": "{env:QWEN_BASE_URL}",
-        "apiKey": "{env:QWEN_API_KEY}"
+        "apiKey": "{env:QWEN_API_KEY}",
+        "timeout": 180000
       },
       "models": {
         "qwen3.6-35b-a3b": {
           "name": "Qwen3.6 35B A3B Q8_0",
           "limit": {
             "context": 262144,
-            "output": 32768
+            "output": 8192
           }
         }
       }
@@ -31,6 +32,7 @@
     "*": "allow",
     "webfetch": "deny",
     "websearch": "deny",
+    "task": "deny",
     "external_directory": "deny",
     "read": {
       "*": "allow",

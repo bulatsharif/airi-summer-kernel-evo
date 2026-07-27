@@ -143,6 +143,8 @@ Read TASK.md, task.json, and submission.py. Edit only submission.py.
 The final candidate must implement task {task_id} and must not define main();
 the evaluation harness owns input generation, reference computation, timing,
 and PASS reporting.
+Work directly in this session. Do not spawn subagents or spend time exploring
+unavailable source trees.
 
 Use these commands for feedback:
 
