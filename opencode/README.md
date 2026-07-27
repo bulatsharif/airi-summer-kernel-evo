@@ -1,7 +1,23 @@
 # Headless OpenCode runner
 
 Runs one OpenCode prompt detached from the terminal. It keeps progress, supports
-timeouts, and reports final token usage.
+timeouts, and reports final token usage. This folder also contains the
+project-local `cute-fp8-kernels` skill and the instructions for the shared B300
+runner.
+
+## CuTe FP8 setup
+
+Run OpenCode with this `opencode` folder as its working directory. That lets
+OpenCode discover both `AGENTS.md` and:
+
+```text
+.opencode/skills/cute-fp8-kernels/SKILL.md
+```
+
+Kernel files can live in sibling task directories. Name the target path in the
+prompt. No separate local harness, specification directory, or candidate
+directory is required: the prompt is the operation specification, and the task's
+single `submission.py` contains the current kernel and its checks.
 
 ## Run
 
@@ -34,6 +50,47 @@ With all options:
 ```
 
 OpenCode must already be installed, configured, and connected to its model.
+
+## Example CuTe FP8 task
+
+From this `opencode` directory:
+
+```bash
+./opencode-headless.sh \
+  --foreground \
+  --dir . \
+  --timeout 30m \
+  -- "
+Load the cute-fp8-kernels skill first.
+
+Work on ../fp8-example/submission.py.
+
+Implement a single-file CuTe DSL Python kernel for C = A @ B on the remote B300:
+- M=N=K=1024
+- A and B use E4M3FN FP8
+- accumulate in FP32
+- output FP16
+- A is logically MxK and B is logically KxN
+- use the native Blackwell FP8 MMA path
+
+Use deterministic inputs. Compute the correctness reference from the actual
+quantized inputs converted to FP32; do not compare kernel error against the
+original unquantized inputs. PyTorch matmul is allowed only for the reference.
+The implementation itself must use CuTe DSL, not torch.matmul, Triton, or CUDA
+C++.
+
+Keep the file self-contained with main(). Submit it through the remote GPU
+service described in AGENTS.md. Establish remote correctness before measuring
+performance. Warm up, report median kernel-only latency over repeated runs, and
+exit nonzero on failure.
+
+Do not stop after writing code: finish only after a successful remote run, or
+report the exact blocker and remote error.
+"
+```
+
+`--foreground` is useful while developing. Remove it to run detached; the
+command will print a run directory and an exact `--attach` command.
 
 ## Options
 

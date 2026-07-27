@@ -1,34 +1,48 @@
-# Remote GPU runner
+# CuTe DSL FP8 kernel work
 
-When CUDA-kernel correctness or performance needs to be checked, you may submit a
-self-contained Python file to the shared remote GPU service with `curl`.
+This repository uses OpenCode to author NVIDIA CuTe DSL kernels in Python,
+especially FP8 kernels for the shared B300 GPU.
+
+## Required workflow
+
+- Load the `cute-fp8-kernels` skill before writing, debugging, or optimizing an
+  FP8 or block-scaled kernel.
+- Implement the requested GPU operation with CuTe DSL Python. Do not substitute
+  Triton, CUDA C++, a CUTLASS C++ wrapper, `torch.compile`, or a PyTorch operator.
+- PyTorch may generate inputs and compute a correctness reference. It must not
+  be the submitted GPU implementation.
+- Treat the user's prompt as the operation specification. Identify the
+  operation, layouts, FP8 format, scaling convention, accumulator/output types,
+  required shapes, correctness rule, and performance goal before coding.
+- Keep the submitted Python file self-contained apart from packages installed
+  on the runner. It must define `main()` and call it from
+  `if __name__ == "__main__":`.
+- Establish correctness before optimizing. Build the reference from the actual
+  quantized inputs and specified scales; report quantization error separately.
+- Do not weaken tolerances, skip required shapes, catch an implementation error
+  and report success, or use a reference operation as the kernel.
+- Compile once, warm up before timing, and exclude compilation, allocation,
+  input generation, and reference computation from kernel latency.
+- Verify the intended FP8 MMA path before claiming native FP8 acceleration.
+- Leave the requested submission in place and report remote correctness,
+  latency, assumptions, and limitations.
+
+## Remote GPU runner
+
+Submit a self-contained Python file to the shared remote GPU service with
+`curl` when CUDA-kernel correctness or performance needs to be checked.
 
 - Base URL: `http://109.236.57.62:18080`
 - Authentication: read `CUTE_HARNESS_API_KEY` from the environment. Never print,
   embed, or commit the key.
-- A submission should define `main()` and call it from
-  `if __name__ == "__main__":`.
 
-## Submission template
+## Submission contents
 
-Save a self-contained submission such as the following as `submission.py`:
-
-```python
-import torch
-
-
-def main() -> None:
-    torch.manual_seed(0)
-    left = torch.randn((1024, 1024), device="cuda")
-    right = torch.randn((1024, 1024), device="cuda")
-    result = left @ right
-    torch.cuda.synchronize()
-    print(f"result={result[0, 0].item():.6f}")
-
-
-if __name__ == "__main__":
-    main()
-```
+A task submission normally contains the CuTe kernel, its JIT launcher, and a
+`main()` that creates deterministic inputs, computes a reference, compiles and
+launches the kernel, checks every required case, warms up, and measures repeated
+kernel-only executions. Keep this in the task's single `submission.py`; no
+additional local harness files are required.
 
 Submit and profile the file:
 
