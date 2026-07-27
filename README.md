@@ -88,6 +88,10 @@ python -m experiment run \
 несколько development evals; после его завершения orchestrator всегда запускает
 отдельный authoritative eval финального файла.
 
+Во время запуска терминал сразу показывает текущий этап, текст агента, tool
+calls и ответы evaluator. Тот же вывод сохраняется в `baseline-eval.log`,
+`attempt-*/agent.log` и `attempt-*/candidate-eval.log`.
+
 ## Результат
 
 В конце печатается таблица:

@@ -126,6 +126,9 @@ def command_run(args: argparse.Namespace) -> int:
         repeats=args.repeats,
         output_dir=output_dir,
     )
+    print(f"experiment output: {output_dir}", flush=True)
+    print(f"model: {args.model}", flush=True)
+    print(f"tasks: {', '.join(task_ids)}", flush=True)
     all_passed, rows = run_experiment(config)
     print(render_table(rows))
     print()

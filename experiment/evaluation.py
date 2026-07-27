@@ -4,9 +4,10 @@ from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
-import subprocess
 import sys
 from typing import Any
+
+from .process import run_streaming
 
 
 @dataclass(frozen=True)
@@ -92,34 +93,24 @@ def run_evaluation(
         if not existing_pythonpath
         else os.pathsep.join((str(repo_root), existing_pythonpath))
     )
-    try:
-        process = subprocess.run(
-            command,
-            cwd=repo_root,
-            env=environment,
-            check=False,
-            capture_output=True,
-            text=True,
-            errors="replace",
-            timeout=gpu_timeout + 45.0,
-        )
-        output = process.stdout
-        if process.stderr:
-            output += "\n--- evaluator stderr ---\n" + process.stderr
-        exit_code = process.returncode
-        diagnostic = (process.stderr or process.stdout).strip()
-        error = (
-            None
-            if exit_code == 0
-            else diagnostic[-2000:] or "evaluation command failed"
-        )
-    except subprocess.TimeoutExpired as timeout:
-        stdout = timeout.stdout if isinstance(timeout.stdout, str) else ""
-        stderr = timeout.stderr if isinstance(timeout.stderr, str) else ""
-        output = stdout + "\n--- evaluator timeout ---\n" + stderr
-        exit_code = 124
+    process = run_streaming(
+        command,
+        cwd=repo_root,
+        environment=environment,
+        log_path=log_path,
+        timeout=gpu_timeout + 45.0,
+    )
+    exit_code = process.exit_code
+    if process.timed_out:
         error = "evaluation process timed out"
-    log_path.write_text(output, encoding="utf-8")
+    elif exit_code != 0:
+        diagnostic = log_path.read_text(
+            encoding="utf-8",
+            errors="replace",
+        ).strip()
+        error = diagnostic[-2000:] or "evaluation command failed"
+    else:
+        error = None
 
     result_path = output_dir / "result.json"
     record = None

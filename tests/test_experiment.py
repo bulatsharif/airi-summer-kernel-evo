@@ -1,10 +1,16 @@
+from contextlib import redirect_stdout
+import io
 import json
+import os
 from pathlib import Path
+import sys
 import tempfile
+import time
 import unittest
 
 from experiment.agent import AgentMetrics
 from experiment.evaluation import EvaluationResult
+from experiment.process import run_streaming
 from experiment.runner import ExperimentConfig, run_experiment
 
 
@@ -104,6 +110,58 @@ class ExperimentRunnerTests(unittest.TestCase):
             self.assertTrue((root / "run" / "results.txt").is_file())
 
         self.assertEqual(len(workspaces), 1)
+
+
+class StreamingProcessTests(unittest.TestCase):
+    def test_output_is_teed_to_terminal_and_log(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = io.StringIO()
+            with redirect_stdout(output):
+                result = run_streaming(
+                    [
+                        sys.executable,
+                        "-c",
+                        "print('visible immediately', flush=True)",
+                    ],
+                    cwd=root,
+                    environment=os.environ,
+                    log_path=root / "process.log",
+                    timeout=5.0,
+                )
+
+            self.assertEqual(result.exit_code, 0)
+            self.assertFalse(result.timed_out)
+            self.assertEqual(output.getvalue(), "visible immediately\n")
+            self.assertEqual(
+                (root / "process.log").read_text(encoding="utf-8"),
+                "visible immediately\n",
+            )
+
+    def test_timeout_stops_process_group(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            started = time.monotonic()
+            with redirect_stdout(io.StringIO()):
+                result = run_streaming(
+                    [
+                        sys.executable,
+                        "-c",
+                        "import time; time.sleep(30)",
+                    ],
+                    cwd=root,
+                    environment=os.environ,
+                    log_path=root / "timeout.log",
+                    timeout=0.1,
+                )
+
+            self.assertEqual(result.exit_code, 124)
+            self.assertTrue(result.timed_out)
+            self.assertLess(time.monotonic() - started, 10.0)
+            self.assertIn(
+                "process timed out after 0.1s",
+                (root / "timeout.log").read_text(encoding="utf-8"),
+            )
 
 
 if __name__ == "__main__":

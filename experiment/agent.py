@@ -9,6 +9,8 @@ import subprocess
 import time
 from typing import Any
 
+from .process import run_streaming
+
 
 SESSION_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
@@ -195,28 +197,15 @@ def run_agent(
     )
 
     started = time.monotonic()
-    try:
-        process = subprocess.run(
-            command,
-            cwd=repo_root,
-            env=environment,
-            check=False,
-            capture_output=True,
-            text=True,
-            errors="replace",
-            timeout=agent_timeout + 45.0,
-        )
-        exit_code = process.returncode
-        output = process.stdout
-        if process.stderr:
-            output += "\n--- runner stderr ---\n" + process.stderr
-    except subprocess.TimeoutExpired as error:
-        exit_code = 124
-        stdout = error.stdout if isinstance(error.stdout, str) else ""
-        stderr = error.stderr if isinstance(error.stderr, str) else ""
-        output = stdout + "\n--- runner timeout ---\n" + stderr
+    process = run_streaming(
+        command,
+        cwd=repo_root,
+        environment=environment,
+        log_path=log_path,
+        timeout=agent_timeout + 45.0,
+    )
+    exit_code = process.exit_code
     wall_seconds = time.monotonic() - started
-    log_path.write_text(output, encoding="utf-8")
 
     session_id = _session_id_from_events(events_path)
     row: dict[str, Any] = {}
@@ -255,6 +244,6 @@ def run_agent(
         wall_seconds=wall_seconds,
         session_wall_seconds=session_wall_seconds,
         exit_code=exit_code,
-        timed_out=exit_code == 124,
+        timed_out=process.timed_out or exit_code == 124,
         metrics_error=metrics_error,
     )

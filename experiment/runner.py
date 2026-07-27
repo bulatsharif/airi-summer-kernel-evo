@@ -190,6 +190,7 @@ def run_experiment(
         task_dir = output_dir / task_id
         task_dir.mkdir()
         baseline_dir = task_dir / "baseline"
+        print(f"\n=== {task_id}: baseline evaluation ===", flush=True)
         baseline = evaluation_runner(
             repo_root=REPO_ROOT,
             task_id=task_id,
@@ -220,6 +221,10 @@ def run_experiment(
             workspace = work_root / workspace_name
             _prepare_workspace(task, workspace, config.seed)
 
+            print(
+                f"\n=== {task_id}: agent {attempt_index}/{config.attempts} ===",
+                flush=True,
+            )
             agent_metrics = agent_runner(
                 repo_root=REPO_ROOT,
                 workspace=workspace,
@@ -239,6 +244,10 @@ def run_experiment(
             final_candidate = attempt_dir / "candidate.py"
             shutil.copy2(workspace / "submission.py", final_candidate)
             candidate_eval_dir = attempt_dir / "candidate-eval"
+            print(
+                f"\n=== {task_id}: authoritative candidate evaluation ===",
+                flush=True,
+            )
             candidate = evaluation_runner(
                 repo_root=REPO_ROOT,
                 task_id=task_id,
