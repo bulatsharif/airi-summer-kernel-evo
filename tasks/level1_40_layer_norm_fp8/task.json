@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "level1_40_layer_norm_fp8",
+  "title": "LayerNorm with CuTe FP8 input and FP32 reductions",
+  "source": {
+    "suite": "KernelBench",
+    "level": 1,
+    "number": 40,
+    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level1/40_LayerNorm.py"
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "baseline": "../../cute_kernels/level1_40_layer_norm_fp8/submission.py",
+  "precision": {
+    "input": "float8_e4m3fn",
+    "reduction": "float32",
+    "output": "float32"
+  },
+  "problem": {
+    "input_shape": [16, 64, 256, 256],
+    "normalized_shape": [64, 256, 256],
+    "epsilon": 0.00001,
+    "weight_initialization": "ones",
+    "bias_initialization": "zeros",
+    "seed": 20260726
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=level1_40_layer_norm .* PASS$",
+    "full_max_absolute_error_vs_torch": 0.01
+  },
+  "policy": {
+    "minimum_cute_kernels": 1,
+    "minimum_cute_jit_functions": 1,
+    "required_calls": [
+      "cute.rsqrt",
+      "cute.arch.shuffle_sync_bfly"
+    ]
+  }
+}

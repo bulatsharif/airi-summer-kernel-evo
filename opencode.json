@@ -1,0 +1,76 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "qwen-server/qwen3.6-35b-a3b",
+  "small_model": "qwen-server/qwen3.6-35b-a3b",
+  "enabled_providers": [
+    "qwen-server"
+  ],
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "provider": {
+    "qwen-server": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qwen3.6 Server",
+      "options": {
+        "baseURL": "{env:QWEN_BASE_URL}",
+        "apiKey": "{env:QWEN_API_KEY}"
+      },
+      "models": {
+        "qwen3.6-35b-a3b": {
+          "name": "Qwen3.6 35B A3B Q8_0",
+          "limit": {
+            "context": 262144,
+            "output": 32768
+          }
+        }
+      }
+    }
+  },
+  "permission": {
+    "*": "allow",
+    "webfetch": "deny",
+    "websearch": "deny",
+    "external_directory": "deny",
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      "cute_kernels/**": "deny",
+      "submissions/**": "deny",
+      "profiles/**": "deny",
+      "results/**": "deny",
+      "remote_agent_smoke/**": "deny",
+      "tasks/**": "deny",
+      "cute_harness/**": "deny",
+      "tests/**": "deny"
+    },
+    "edit": {
+      "*": "deny",
+      "work/*/submission.py": "allow"
+    },
+    "glob": "deny",
+    "grep": "deny",
+    "bash": {
+      "*": "deny",
+      "python -m cute_harness *": "allow",
+      "python.exe -m cute_harness *": "allow",
+      "py -m cute_harness *": "allow"
+    }
+  },
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 12000
+  },
+  "watcher": {
+    "ignore": [
+      ".git/**",
+      "**/__pycache__/**",
+      "profiles/**",
+      "results/**",
+      "runs/**"
+    ]
+  }
+}
