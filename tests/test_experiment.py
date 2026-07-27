@@ -203,6 +203,35 @@ class StreamingProcessTests(unittest.TestCase):
                 (root / "timeout.log").read_text(encoding="utf-8"),
             )
 
+    def test_heartbeat_reports_a_silent_live_process(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = io.StringIO()
+            with redirect_stdout(output):
+                result = run_streaming(
+                    [
+                        sys.executable,
+                        "-c",
+                        "import time; time.sleep(0.15)",
+                    ],
+                    cwd=root,
+                    environment=os.environ,
+                    log_path=root / "heartbeat.log",
+                    timeout=5.0,
+                    heartbeat_interval=0.05,
+                )
+
+            self.assertEqual(result.exit_code, 0)
+            self.assertFalse(result.timed_out)
+            self.assertIn(
+                "[experiment] still running",
+                output.getvalue(),
+            )
+            self.assertIn(
+                "no output for",
+                (root / "heartbeat.log").read_text(encoding="utf-8"),
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

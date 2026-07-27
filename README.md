@@ -90,7 +90,8 @@ python -m experiment run \
 
 Во время запуска терминал сразу показывает текущий этап, текст агента, tool
 calls и ответы evaluator. Тот же вывод сохраняется в `baseline-eval.log`,
-`attempt-*/agent.log` и `attempt-*/candidate-eval.log`.
+`attempt-*/agent.log` и `attempt-*/candidate-eval.log`. Если дочерний процесс
+жив, но 30 секунд ничего не печатает, orchestrator выводит heartbeat.
 Если baseline не проходит, agent attempts не запускаются: без валидного
 baseline невозможно посчитать корректный speedup.
 
