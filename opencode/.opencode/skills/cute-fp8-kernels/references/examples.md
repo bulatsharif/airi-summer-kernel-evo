@@ -6,7 +6,14 @@ imports/signatures. Relevant source paths commonly include:
 
 Candidate-only eval workspaces must use
 [candidate-gemm-api.md](candidate-gemm-api.md) for exact installed signatures.
+They must also use
+[candidate-kernel-patterns.md](candidate-kernel-patterns.md) for exact
+participant/token transitions.
 The ellipses below identify helper families; they are not callable examples.
+
+The upstream paths below may not be mounted in a restricted candidate
+workspace. They identify recipe provenance, not files the agent is expected to
+open. The local candidate references are self-contained for the pinned API.
 
 ## Contents
 

@@ -20,7 +20,8 @@ GMEM A/B[/SFA/SFB]
 
 Assign each operation to a warp/warp group:
 
-- TMA producer: acquire stage, issue asynchronous copies, commit bytes
+- TMA producer: acquire a stage token and issue asynchronous copies against
+  its barrier; byte arrival completes the producer phase
 - MMA consumer: wait for full stage, issue MMA, release stage
 - epilogue: wait for accumulator, load TMEM fragments, convert/store
 
@@ -49,12 +50,40 @@ without a compatible cluster layout.
 ## Pipeline protocol
 
 A staged pipeline is a ring of storage plus barrier phases, not an ordinary
-index:
+index. The conceptual protocol is:
 
 ```text
 producer: acquire -> issue async work -> commit -> advance
 consumer: wait -> consume -> release -> advance
 ```
+
+Do not translate those conceptual verbs into guessed participant methods.
+Candidate-mode `PipelineTmaUmma` folds advance into
+`acquire_and_advance()`, and TMA byte arrival completes the producer phase:
+
+```text
+ab_producer.acquire_and_advance()
+  -> issue TMA copies using token.barrier
+ab_consumer.wait_and_advance()
+  -> consume
+  -> consumer_token.release()
+```
+
+There is no `ab_producer.commit()` in that protocol. By contrast, the
+`PipelineUmmaAsync` accumulator producer returns a token that is explicitly
+committed:
+
+```text
+acc_producer.acquire_and_advance()
+  -> issue all UMMA contributions
+  -> producer_token.commit()
+acc_consumer.wait_and_advance()
+  -> read/store accumulator
+  -> consumer_token.release()
+```
+
+Exact candidate-mode code is in
+[candidate-kernel-patterns.md](candidate-kernel-patterns.md).
 
 Create pipeline storage/state with the installed helpers. Preserve:
 
