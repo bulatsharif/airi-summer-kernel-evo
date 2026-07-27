@@ -5,6 +5,7 @@ __pycache__/
 !.env.example
 .opencode.local.ps1
 runs/
+ab_runs/
 work/
 tmp/
 profiles/

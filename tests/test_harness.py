@@ -22,13 +22,19 @@ from cute_harness.tasks import REPO_ROOT, discover_tasks
 
 
 class TaskManifestTests(unittest.TestCase):
-    def test_three_tasks_are_discoverable(self):
+    def test_nine_tasks_are_discoverable(self):
         tasks = discover_tasks()
         self.assertEqual(
             set(tasks),
             {
                 "level1_01_square_matrix_multiplication_fp8",
                 "level1_40_layer_norm_fp8",
+                "level1_72_conv_transpose3d_fp8",
+                "level2_09_matmul_subtract_multiply_relu_fp8",
+                "level2_12_gemm_multiply_leaky_relu_fp8",
+                "level2_14_gemm_divide_sum_scaling_fp8",
+                "level2_40_matmul_scaling_residual_add_fp8",
+                "level2_63_gemm_relu_divide_fp8",
                 "level2_76_gemm_add_relu_fp8",
             },
         )
@@ -120,6 +126,17 @@ class TaskManifestTests(unittest.TestCase):
             self.assertNotIn(leaked_task_detail, patterns)
 
     def test_evaluators_do_not_depend_on_candidate_problem_constants(self):
+        gemm_constants = {
+            "M",
+            "N",
+            "K",
+            "FP8_MAX",
+            "WEIGHT_BOUND",
+            "SCALE_A",
+            "SCALE_B",
+            "FP8_DTYPE",
+            "AB_DTYPE",
+        }
         public_constants = {
             "level1_01_square_matrix_multiplication_fp8": {
                 "N",
@@ -142,17 +159,28 @@ class TaskManifestTests(unittest.TestCase):
                 "INPUT_SCALE",
                 "FP8_DTYPE",
             },
-            "level2_76_gemm_add_relu_fp8": {
-                "M",
-                "N",
-                "K",
+            "level1_72_conv_transpose3d_fp8": {
+                "BATCH_SIZE",
+                "IN_CHANNELS",
+                "OUT_CHANNELS",
+                "GROUPS",
+                "IN_D",
+                "IN_H",
+                "IN_W",
+                "OUT_D",
+                "OUT_H",
+                "OUT_W",
                 "FP8_MAX",
-                "WEIGHT_BOUND",
-                "SCALE_A",
-                "SCALE_B",
+                "INPUT_SCALE",
+                "WEIGHT_SCALE",
                 "FP8_DTYPE",
-                "AB_DTYPE",
             },
+            "level2_09_matmul_subtract_multiply_relu_fp8": gemm_constants,
+            "level2_12_gemm_multiply_leaky_relu_fp8": gemm_constants,
+            "level2_14_gemm_divide_sum_scaling_fp8": gemm_constants,
+            "level2_40_matmul_scaling_residual_add_fp8": gemm_constants,
+            "level2_63_gemm_relu_divide_fp8": gemm_constants,
+            "level2_76_gemm_add_relu_fp8": gemm_constants,
         }
         for task in discover_tasks().values():
             with self.subTest(task=task.id):

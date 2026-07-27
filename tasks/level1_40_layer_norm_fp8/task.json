@@ -38,6 +38,7 @@
   "policy": {
     "minimum_cute_kernels": 1,
     "minimum_cute_jit_functions": 1,
+    "entrypoint_jit": "layer_norm",
     "required_calls": [
       "cute.rsqrt",
       "cute.arch.shuffle_sync_bfly"

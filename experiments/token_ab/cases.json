@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "recommended_trials_per_arm": 3,
+  "remote_attempts_per_trial": 1,
+  "tasks": [
+    {
+      "id": "level1_01_square_matrix_multiplication_fp8",
+      "level": 1,
+      "operation": "square FP8 matrix multiplication"
+    },
+    {
+      "id": "level1_40_layer_norm_fp8",
+      "level": 1,
+      "operation": "FP8 LayerNorm"
+    }
+  ]
+}

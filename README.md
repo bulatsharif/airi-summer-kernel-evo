@@ -158,6 +158,12 @@ API keys в artifacts не сохраняются.
 | --- | --- | --- |
 | `level1_01_square_matrix_multiplication_fp8` | `4096² × 4096²` GEMM | FP8 → FP32 |
 | `level1_40_layer_norm_fp8` | LayerNorm `[16,64,256,256]` | FP8 → FP32 |
+| `level1_72_conv_transpose3d_fp8` | Grouped asymmetric ConvTranspose3d | FP8 → FP32 |
+| `level2_09_matmul_subtract_multiply_relu_fp8` | GEMM + Subtract + Multiply + ReLU | FP8/FP32 epilogue |
+| `level2_12_gemm_multiply_leaky_relu_fp8` | GEMM + Multiply + LeakyReLU | FP8/FP32 epilogue |
+| `level2_14_gemm_divide_sum_scaling_fp8` | GEMM + Divide + row Sum + Scaling | FP8/FP32 reduction |
+| `level2_40_matmul_scaling_residual_add_fp8` | GEMM + Scaling + ResidualAdd | FP8/FP32 epilogue |
+| `level2_63_gemm_relu_divide_fp8` | GEMM + ReLU + Divide | FP8/FP32 epilogue |
 | `level2_76_gemm_add_relu_fp8` | GEMM + Bias + ReLU | FP8/FP32 epilogue |
 
 Q8_0 относится к квантизации Qwen в `llama.cpp`; FP8 task’и отдельно

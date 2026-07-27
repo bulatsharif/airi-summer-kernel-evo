@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "id": "level1_72_conv_transpose3d_fp8",
+  "title": "Grouped asymmetric ConvTranspose3d with CuTe FP8",
+  "source": {
+    "suite": "KernelBench",
+    "level": 1,
+    "number": 72,
+    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level1/72_conv_transposed_3D_asymmetric_input_asymmetric_kernel___strided_padded_grouped_.py"
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "references": [
+    "TASK_REFERENCE.md"
+  ],
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
+  ],
+  "baseline": "../../probes/level1_72_conv_transpose3d_fp8_baseline.py",
+  "precision": {
+    "input": "float8_e4m3fn",
+    "weight": "float8_e4m3fn",
+    "accumulator": "float32",
+    "output": "float32"
+  },
+  "problem": {
+    "input_shape": [2, 8, 7, 9, 11],
+    "logical_weight_shape": [8, 6, 3, 5, 7],
+    "physical_weight_shape": [8, 640],
+    "output_shape": [2, 12, 14, 18, 33],
+    "kernel_size": [3, 5, 7],
+    "stride": [2, 2, 3],
+    "padding": [1, 2, 3],
+    "output_padding": [1, 1, 2],
+    "groups": 2,
+    "bias": false,
+    "seed": 20260727
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=level1_72_conv_transpose3d .* PASS$",
+    "full_max_absolute_error_vs_torch_fp8": 0.01
+  },
+  "policy": {
+    "minimum_cute_kernels": 1,
+    "minimum_cute_jit_functions": 1,
+    "entrypoint_jit": "conv_transpose3d",
+    "required_calls": [
+      "cute.arch.thread_idx",
+      "cute.arch.block_idx"
+    ]
+  }
+}

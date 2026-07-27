@@ -1,0 +1,23 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "webfetch": "allow",
+    "websearch": "allow",
+    "skill": {
+      "*": "deny"
+    },
+    "read": {
+      "*": "allow",
+      "AGENTS.md": "deny",
+      "opencode.json": "deny",
+      "ab_runs/**": "deny",
+      "docs/**": "deny",
+      "opencode/**": "deny",
+      "cute_kernels/**": "deny",
+      "submissions/**": "deny",
+      "profiles/**": "deny",
+      "results/**": "deny",
+      "remote_agent_smoke/**": "deny"
+    }
+  }
+}
