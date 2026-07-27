@@ -26,6 +26,13 @@ especially FP8 kernels for the shared B300 GPU.
 - Verify the intended FP8 MMA path before claiming native FP8 acceleration.
 - Leave the requested submission in place and report remote correctness,
   latency, assumptions, and limitations.
+- Never search from `/`, the home directory, or another broad filesystem root
+  for CUTLASS examples. Resolve the installed package path through Python import
+  metadata and search only that package or known project paths. If CUTLASS is
+  unavailable locally, use the bundled references and a small remote probe.
+- Never search shell startup files, history, `.env` files, or the home directory
+  for credentials. Use `CUTE_HARNESS_API_KEY` only when it is already present in
+  the inherited environment; if absent, stop and report the blocker.
 
 ## Remote GPU runner
 

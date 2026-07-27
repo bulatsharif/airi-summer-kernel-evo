@@ -304,8 +304,6 @@ def square_gemm(
         tiled_mma,
     )
 
-    print(f"[CuTe] FP8 MMA: {tiled_mma}")
-    print(f"[CuTe] CTA tile: {MMA_TILER_MNK}")
     square_gemm_kernel(
         tiled_mma,
         tma_atom_a,
@@ -321,6 +319,7 @@ def square_gemm(
     )
 
 
+# === CUTE_HARNESS_EVALUATOR_V1 ===
 def main():
     if not torch.cuda.is_available():
         raise RuntimeError("A Blackwell CUDA device is required")

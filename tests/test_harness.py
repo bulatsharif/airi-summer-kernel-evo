@@ -8,11 +8,13 @@ from unittest.mock import patch
 
 from cute_harness.assembly import (
     EVALUATOR_MARKER,
+    EvaluationConfig,
     assemble_submission,
+    baseline_candidate,
     candidate_starter,
 )
 from cute_harness.client import build_multipart
-from cute_harness.cli import _safe_print, main
+from cute_harness.cli import _kernel_time_ms, _safe_print, main
 from cute_harness.policy import check_submission
 from cute_harness.tasks import discover_tasks
 
@@ -32,11 +34,13 @@ class TaskManifestTests(unittest.TestCase):
     def test_all_known_baselines_pass_policy(self):
         for task in discover_tasks().values():
             with self.subTest(task=task.id):
-                report = check_submission(
-                    task,
-                    task.baseline_path,
-                    candidate_mode=False,
-                )
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    candidate = Path(temp_dir) / "candidate.py"
+                    candidate.write_text(
+                        baseline_candidate(task),
+                        encoding="utf-8",
+                    )
+                    report = check_submission(task, candidate)
                 self.assertTrue(report.passed, report.errors)
 
     def test_starters_are_incomplete_but_syntactically_valid(self):
@@ -82,10 +86,17 @@ class CliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             candidate = Path(temp_dir) / "candidate.py"
             candidate.write_text(candidate_starter(task), encoding="utf-8")
-            assembled = assemble_submission(task, candidate)
+            assembled = assemble_submission(
+                task,
+                candidate,
+                EvaluationConfig(seed=7, warmup=3, repeats=9),
+            )
         self.assertIn(EVALUATOR_MARKER, assembled)
         self.assertIn("def main(", assembled)
         self.assertIn(" PASS", assembled)
+        self.assertIn("_CUTE_HARNESS_SEED = 7", assembled)
+        self.assertIn("_CUTE_HARNESS_WARMUP = 3", assembled)
+        self.assertIn("_CUTE_HARNESS_REPEATS = 9", assembled)
 
     def test_run_uses_one_immutable_candidate_snapshot(self):
         task_id = "level1_01_square_matrix_multiplication_fp8"
@@ -195,6 +206,71 @@ class CliTests(unittest.TestCase):
             self.assertIn(b'name="file"', body)
             self.assertIn(b'name="profiler"', body)
             self.assertIn(b"pytorch", body)
+
+    def test_kernel_time_is_parsed_from_evaluator_stdout(self):
+        self.assertEqual(
+            _kernel_time_ms(
+                {
+                    "stdout": (
+                        "task=example kernel_time_ms=1.250000 PASS\n"
+                    )
+                }
+            ),
+            1.25,
+        )
+
+    def test_baseline_uses_shared_evaluator_and_records_kernel_time(self):
+        task_id = "level1_01_square_matrix_multiplication_fp8"
+        response = {
+            "success": True,
+            "exit_code": 0,
+            "stdout": (
+                "task=level1_01_square_matrix_multiplication "
+                "kernel_time_ms=0.750000 PASS\n"
+            ),
+            "stderr": "",
+            "device_time_ms": 10.0,
+            "profile_id": "profile-test",
+            "timed_out": False,
+        }
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "baseline"
+            with patch.dict(
+                os.environ,
+                {"CUTE_HARNESS_API_KEY": "test-only-placeholder"},
+            ), patch(
+                "cute_harness.cli.HarnessClient.run_file",
+                return_value=response,
+            ), patch(
+                "cute_harness.cli.HarnessClient.download_profile",
+                return_value=b"{}",
+            ):
+                code = main(
+                    [
+                        "run",
+                        task_id,
+                        "--baseline",
+                        "--seed",
+                        "0",
+                        "--warmup",
+                        "2",
+                        "--repeats",
+                        "5",
+                        "--output",
+                        str(output),
+                    ]
+                )
+            record = json.loads(
+                (output / "result.json").read_text(encoding="utf-8")
+            )
+            assembled = (output / "submission.py").read_text(encoding="utf-8")
+
+        self.assertEqual(code, 0)
+        self.assertEqual(record["candidate_kind"], "baseline")
+        self.assertEqual(record["benchmark"]["seed"], 0)
+        self.assertEqual(record["benchmark"]["kernel_time_ms"], 0.75)
+        self.assertIn("_CUTE_HARNESS_SEED = 0", assembled)
+        self.assertIn("kernel_time_ms=", assembled)
 
 
 if __name__ == "__main__":

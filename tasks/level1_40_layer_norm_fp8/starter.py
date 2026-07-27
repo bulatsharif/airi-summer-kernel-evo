@@ -50,7 +50,7 @@ def main():
     if not torch.cuda.is_available():
         raise RuntimeError("A CUDA device with FP8 support is required")
 
-    torch.manual_seed(SEED)
+    torch.manual_seed(_CUTE_HARNESS_SEED)
     source = torch.rand(
         (BATCH_SIZE, ROW_SIZE),
         device="cuda",
@@ -75,7 +75,20 @@ def main():
     output_tensor = from_dlpack(output).mark_layout_dynamic(leading_dim=1)
 
     compiled = cute.compile(layer_norm, input_tensor, output_tensor)
-    compiled(input_tensor, output_tensor)
+    for _ in range(_CUTE_HARNESS_WARMUP):
+        compiled(input_tensor, output_tensor)
+    torch.cuda.synchronize()
+
+    timings_ms = []
+    for _ in range(_CUTE_HARNESS_REPEATS):
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+        start.record()
+        compiled(input_tensor, output_tensor)
+        end.record()
+        end.synchronize()
+        timings_ms.append(start.elapsed_time(end))
+    kernel_time_ms = sorted(timings_ms)[len(timings_ms) // 2]
 
     dequantized = storage.view(torch.float8_e4m3fn).float() * INPUT_SCALE
     reference = F.layer_norm(
@@ -97,7 +110,8 @@ def main():
     print(
         "task=level1_40_layer_norm "
         f"full_max_abs={max_abs:.6f} "
-        f"full_mean_abs={mean_abs:.9f} PASS"
+        f"full_mean_abs={mean_abs:.9f} "
+        f"kernel_time_ms={kernel_time_ms:.6f} PASS"
     )
     torch.cuda.synchronize()
 

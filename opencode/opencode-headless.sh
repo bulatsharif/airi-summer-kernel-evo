@@ -18,16 +18,20 @@ Usage:
   $PROGRAM_NAME [options] "prompt"
   $PROGRAM_NAME [options] -- "prompt"
   $PROGRAM_NAME --attach RUN_DIR
+  $PROGRAM_NAME --cancel RUN_DIR
 
 Options:
   -d, --dir PATH          Working directory (default: current directory)
   -t, --timeout DURATION  Whole-task timeout, for example 30m or 2h
   -o, --progress PATH     Write the raw OpenCode JSONL stream to PATH
   -a, --agents PATH       Explicit instruction/AGENTS.md file to add
+  -m, --model MODEL       OpenCode provider/model identifier
       --kill-after TIME   Force-kill grace period after timeout (default: 10s)
       --run-dir PATH      Detached run state directory (default: temporary)
       --foreground        Stay attached to the current terminal
       --attach RUN_DIR    Follow a detached run's output
+      --cancel RUN_DIR    Stop a detached run and its child processes
+      --require-cute-key  Fail before launch unless CUTE_HARNESS_API_KEY is set
   -p, --prompt TEXT       Prompt as an option instead of a positional argument
   -h, --help              Show this help
 
@@ -61,6 +65,9 @@ status_exit_code() {
       ;;
     timed_out)
       return 124
+      ;;
+    cancelled)
+      return 130
       ;;
     failed:*)
       local code=${1#*:}
@@ -150,6 +157,95 @@ attach_run() {
   status_exit_code "$run_status"
 }
 
+collect_descendant_pids() {
+  local parent_pid=$1
+  local child_pid
+
+  while IFS= read -r child_pid; do
+    [[ "$child_pid" =~ ^[1-9][0-9]*$ ]] || continue
+    collect_descendant_pids "$child_pid"
+    printf '%s\n' "$child_pid"
+  done < <(pgrep -P "$parent_pid" 2>/dev/null || true)
+}
+
+cancel_run() {
+  local requested_dir=$1
+  local run_dir
+  local pid_file
+  local status_file
+  local exit_file
+  local run_pid
+  local run_status="unknown"
+  local run_command
+  local descendant_pids
+  local all_pids
+  local target_pid
+  local attempt=0
+  local any_alive=0
+
+  if [[ "$requested_dir" != /* ]]; then
+    requested_dir="$INVOCATION_DIR/$requested_dir"
+  fi
+  [[ -d "$requested_dir" ]] || fail "run directory does not exist: $1"
+  run_dir=$(cd "$requested_dir" 2>/dev/null && pwd -P) ||
+    fail "cannot access run directory: $1"
+
+  pid_file="$run_dir/pid"
+  status_file="$run_dir/status"
+  exit_file="$run_dir/exit-code"
+  [[ -f "$pid_file" ]] || fail "run PID does not exist: $pid_file"
+  run_pid=$(head -n 1 "$pid_file")
+  [[ "$run_pid" =~ ^[1-9][0-9]*$ ]] || fail "run PID is invalid: $run_pid"
+
+  if [[ -f "$status_file" ]]; then
+    run_status=$(head -n 1 "$status_file")
+  fi
+  if [[ ! "$run_status" =~ ^(starting|running)$ ]]; then
+    printf 'Run is not active; status is %s.\n' "$run_status"
+    return 0
+  fi
+  kill -0 "$run_pid" 2>/dev/null ||
+    fail "run status is $run_status but PID $run_pid is not alive"
+  command -v pgrep >/dev/null 2>&1 || fail "pgrep is required for --cancel"
+
+  run_command=$(ps -p "$run_pid" -o command= 2>/dev/null || true)
+  if [[ "$run_command" != *"opencode-headless.sh"* ||
+        "$run_command" != *"--_detached-child"* ]]; then
+    fail "PID $run_pid does not look like an OpenCode detached runner; refusing to signal it"
+  fi
+
+  descendant_pids=$(collect_descendant_pids "$run_pid")
+  all_pids="$descendant_pids $run_pid"
+
+  # Signal leaves before parents so tools are not left orphaned.
+  for target_pid in $all_pids; do
+    kill -TERM "$target_pid" 2>/dev/null || true
+  done
+
+  while [[ "$attempt" -lt 50 ]]; do
+    any_alive=0
+    for target_pid in $all_pids; do
+      if kill -0 "$target_pid" 2>/dev/null; then
+        any_alive=1
+        break
+      fi
+    done
+    [[ "$any_alive" -eq 0 ]] && break
+    sleep 0.1
+    attempt=$((attempt + 1))
+  done
+
+  for target_pid in $all_pids; do
+    if kill -0 "$target_pid" 2>/dev/null; then
+      kill -KILL "$target_pid" 2>/dev/null || true
+    fi
+  done
+
+  printf 'cancelled\n' >"$status_file"
+  printf '130\n' >"$exit_file"
+  printf 'Cancelled run: %s\n' "$run_dir"
+}
+
 absolute_existing_file() {
   local input_path=$1
   local parent
@@ -172,17 +268,26 @@ if [[ "${1-}" == "--attach" ]]; then
   exit $?
 fi
 
+if [[ "${1-}" == "--cancel" ]]; then
+  require_value "$1" "${2-}"
+  [[ $# -eq 2 ]] || fail "--cancel accepts exactly one run directory"
+  cancel_run "$2"
+  exit $?
+fi
+
 WORKING_DIR=$INVOCATION_DIR
 TIMEOUT_DURATION=""
 KILL_AFTER=$DEFAULT_KILL_AFTER
 PROGRESS_ARGUMENT=""
 AGENTS_ARGUMENT=""
+MODEL_ARGUMENT=""
 PROMPT_OPTION=""
 RUN_DIR_ARGUMENT=""
 DETACH=1
 DETACHED_CHILD=0
 DETACHED_RUN_DIR=""
 DETACHED_FINALIZED=0
+REQUIRE_CUTE_KEY=0
 TEMPORARY_PROGRESS=0
 PROGRESS_FILE=""
 declare -a PROMPT_PARTS=()
@@ -225,6 +330,15 @@ while [[ $# -gt 0 ]]; do
       AGENTS_ARGUMENT=${1#*=}
       shift
       ;;
+    -m|--model)
+      require_value "$1" "${2-}"
+      MODEL_ARGUMENT=$2
+      shift 2
+      ;;
+    --model=*)
+      MODEL_ARGUMENT=${1#*=}
+      shift
+      ;;
     --kill-after)
       require_value "$1" "${2-}"
       KILL_AFTER=$2
@@ -245,6 +359,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --foreground)
       DETACH=0
+      shift
+      ;;
+    --require-cute-key)
+      REQUIRE_CUTE_KEY=1
       shift
       ;;
     --detach)
@@ -305,7 +423,19 @@ cleanup() {
     printf 'failed:%s\n' "$exit_status" >"$DETACHED_RUN_DIR/status"
   fi
 }
+
+handle_signal() {
+  if [[ "$DETACHED_CHILD" -eq 1 && -n "$DETACHED_RUN_DIR" &&
+        -d "$DETACHED_RUN_DIR" ]]; then
+    printf 'cancelled\n' >"$DETACHED_RUN_DIR/status"
+    printf '130\n' >"$DETACHED_RUN_DIR/exit-code"
+    DETACHED_FINALIZED=1
+  fi
+  exit 130
+}
+
 trap cleanup EXIT
+trap handle_signal INT TERM
 
 if [[ "$DETACHED_CHILD" -eq 1 ]]; then
   [[ -d "$DETACHED_RUN_DIR" ]] ||
@@ -323,6 +453,11 @@ if [[ ${#PROMPT_PARTS[@]} -gt 0 ]]; then
   PROMPT="${PROMPT_PARTS[*]}"
 fi
 [[ -n "$PROMPT" ]] || fail "a non-empty prompt is required"
+
+if [[ "$REQUIRE_CUTE_KEY" -eq 1 &&
+      -z "${CUTE_HARNESS_API_KEY:-}" ]]; then
+  fail "CUTE_HARNESS_API_KEY is not set; export it before launching this task"
+fi
 
 command -v opencode >/dev/null 2>&1 || fail "opencode is not available on PATH"
 command -v jq >/dev/null 2>&1 || fail "jq is required"
@@ -469,8 +604,11 @@ declare -a OPENCODE_COMMAND=(
   opencode run
   --format json
   --dir "$WORKING_DIR"
-  "$PROMPT"
 )
+if [[ -n "$MODEL_ARGUMENT" ]]; then
+  OPENCODE_COMMAND+=(--model "$MODEL_ARGUMENT")
+fi
+OPENCODE_COMMAND+=("$PROMPT")
 
 declare -a TASK_COMMAND=()
 if [[ -n "$INLINE_CONFIG" ]]; then
@@ -499,6 +637,11 @@ if [[ -n "$AGENTS_FILE" ]]; then
 else
   printf 'Instructions:      OpenCode AGENTS.md auto-discovery\n'
 fi
+if [[ -n "$MODEL_ARGUMENT" ]]; then
+  printf 'Model:             %s\n' "$MODEL_ARGUMENT"
+else
+  printf 'Model:             OpenCode configuration default\n'
+fi
 if [[ "$TEMPORARY_PROGRESS" -eq 0 ]]; then
   printf 'Progress JSONL:     %s\n' "$PROGRESS_FILE"
 else
@@ -508,6 +651,11 @@ if [[ -n "$TIMEOUT_DURATION" ]]; then
   printf 'Task timeout:       %s (force-kill after %s)\n' "$TIMEOUT_DURATION" "$KILL_AFTER"
 else
   printf 'Task timeout:       none\n'
+fi
+if [[ -n "${CUTE_HARNESS_API_KEY:-}" ]]; then
+  printf 'CuTe harness key:   available\n'
+else
+  printf 'CuTe harness key:   not set\n'
 fi
 printf '\n'
 

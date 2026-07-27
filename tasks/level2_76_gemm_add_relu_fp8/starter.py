@@ -51,7 +51,7 @@ def main():
     if not torch.cuda.is_available():
         raise RuntimeError("A Blackwell CUDA device is required")
 
-    torch.manual_seed(SEED)
+    torch.manual_seed(_CUTE_HARNESS_SEED)
     source_a = torch.rand((M, K), device="cuda", dtype=torch.float32)
     source_b_nk = torch.empty(
         (N, K),
@@ -85,7 +85,20 @@ def main():
         bias_tensor,
         output_tensor,
     )
-    compiled(matrix_a, matrix_b_nk, bias_tensor, output_tensor)
+    for _ in range(_CUTE_HARNESS_WARMUP):
+        compiled(matrix_a, matrix_b_nk, bias_tensor, output_tensor)
+    torch.cuda.synchronize()
+
+    timings_ms = []
+    for _ in range(_CUTE_HARNESS_REPEATS):
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+        start.record()
+        compiled(matrix_a, matrix_b_nk, bias_tensor, output_tensor)
+        end.record()
+        end.synchronize()
+        timings_ms.append(start.elapsed_time(end))
+    kernel_time_ms = sorted(timings_ms)[len(timings_ms) // 2]
 
     a_fp8 = storage_a.view(torch.float8_e4m3fn)
     b_fp8 = storage_b.view(torch.float8_e4m3fn)
@@ -132,7 +145,8 @@ def main():
     print(
         "task=level2_76_gemm_add_relu "
         f"full_max_abs={full_max_abs:.6f} "
-        f"sample_max_abs={sample_max_abs:.6f} PASS"
+        f"sample_max_abs={sample_max_abs:.6f} "
+        f"kernel_time_ms={kernel_time_ms:.6f} PASS"
     )
     torch.cuda.synchronize()
 

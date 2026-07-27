@@ -5,6 +5,12 @@ timeouts, and reports final token usage. This folder also contains the
 project-local `cute-fp8-kernels` skill and the instructions for the shared B300
 runner.
 
+> This directory documents the standalone/manual workflow where the agent owns
+> a complete `submission.py`. Reproducible benchmark runs use
+> `python -m experiment run` from the repository root. That workflow gives the
+> agent a candidate-only file and keeps `main()` and validation in
+> `cute_harness`; do not mix the two submission contracts in one run.
+
 ## CuTe FP8 setup
 
 Run OpenCode with this `opencode` folder as its working directory. That lets
@@ -71,6 +77,15 @@ command for following the run:
 Attaching is read-only: it shows the latest output and exits when the run
 finishes. Press `Ctrl+C` to stop watching; the detached task continues.
 
+Cancel the detached task and its tool subprocesses with:
+
+```bash
+./opencode-headless.sh --cancel /path/to/run-directory
+```
+
+The run status becomes `cancelled`. Killing `--attach` alone only stops the
+viewer.
+
 With all options:
 
 ```bash
@@ -85,6 +100,21 @@ With all options:
 
 OpenCode must already be installed, configured, and connected to its model.
 
+## CuTe harness API key
+
+The runner inherits `CUTE_HARNESS_API_KEY` and passes it to detached OpenCode
+and its shell tools without printing the value. Export it before launch:
+
+```bash
+read -r -s CUTE_HARNESS_API_KEY
+export CUTE_HARNESS_API_KEY
+./opencode-headless.sh --require-cute-key --timeout 30m -- "Your kernel task"
+```
+
+`--require-cute-key` fails before creating the task if the variable is absent.
+Do not pass the key as a prompt or command-line option, and do not store it in
+the repository.
+
 ## Example CuTe FP8 task
 
 From this `opencode` directory:
@@ -92,6 +122,7 @@ From this `opencode` directory:
 ```bash
 ./opencode-headless.sh \
   --dir . \
+  --require-cute-key \
   --timeout 30m \
   -- "
 Work on ../fp8-example/submission.py.
@@ -133,10 +164,13 @@ changes only how the shell process is run, not the prompt or agent behavior.
 | `-t, --timeout TIME` | Whole-task limit such as `90s`, `30m`, or `2h` |
 | `-o, --progress PATH` | Save raw JSONL progress; replaces the file |
 | `-a, --agents PATH` | Add a specific Markdown instruction file |
+| `-m, --model MODEL` | Select the OpenCode provider/model |
 | `--kill-after TIME` | Grace period before force-killing; default `10s` |
 | `--run-dir PATH` | Store detached state in a new or empty directory |
 | `--foreground` | Run in the current terminal instead of detaching |
 | `--attach RUN_DIR` | Follow a detached run |
+| `--cancel RUN_DIR` | Stop a detached run and its tool subprocesses |
+| `--require-cute-key` | Require inherited `CUTE_HARNESS_API_KEY` |
 | `-p, --prompt TEXT` | Provide the prompt as an option |
 | `-h, --help` | Show help |
 
@@ -167,7 +201,7 @@ Counts depend on usage metadata reported by the model server.
 
 ## Requirements
 
-- `opencode`, Bash, `jq`, `tee`, `nohup`, and `tail`
+- `opencode`, Bash, `jq`, `tee`, `nohup`, `tail`, and `pgrep`
 - GNU `timeout` only when using `--timeout`
 
 On macOS:

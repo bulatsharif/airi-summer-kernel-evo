@@ -321,8 +321,6 @@ def gemm_add_relu(
         tiled_mma,
     )
 
-    print(f"[CuTe] FP8 MMA: {tiled_mma}")
-    print("[CuTe] epilogue: separate FP32 BiasAdd + ReLU kernel")
     fp8_gemm_kernel(
         tiled_mma,
         tma_atom_a,
@@ -342,6 +340,7 @@ def gemm_add_relu(
     )
 
 
+# === CUTE_HARNESS_EVALUATOR_V1 ===
 def main():
     if not torch.cuda.is_available():
         raise RuntimeError("A Blackwell CUDA device is required")

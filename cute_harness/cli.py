@@ -14,7 +14,13 @@ import time
 from typing import Any
 
 from . import __version__
-from .assembly import assemble_submission, candidate_starter
+from .assembly import (
+    EvaluationConfig,
+    assemble_submission,
+    baseline_candidate,
+    candidate_starter,
+    default_evaluation_config,
+)
 from .client import HarnessClient, RemoteHarnessError
 from .policy import CheckReport, check_submission
 from .tasks import REPO_ROOT, TaskError, TaskSpec, discover_tasks, load_task
@@ -105,6 +111,20 @@ def _acceptance(task: TaskSpec, response: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _kernel_time_ms(response: dict[str, Any]) -> float | None:
+    stdout = response.get("stdout")
+    if not isinstance(stdout, str):
+        return None
+    matches = re.findall(
+        r"(?<![A-Za-z0-9_])kernel_time_ms=([0-9]+(?:\.[0-9]+)?)",
+        stdout,
+    )
+    if not matches:
+        return None
+    value = float(matches[-1])
+    return value if value > 0 else None
+
+
 def _write_run_artifacts(
     output_dir: Path,
     task: TaskSpec,
@@ -117,6 +137,8 @@ def _write_run_artifacts(
     response: dict[str, Any],
     acceptance: dict[str, Any],
     run_label: str | None,
+    candidate_kind: str,
+    evaluation: EvaluationConfig,
 ) -> dict[str, Any]:
     _ensure_new_directory(output_dir)
     shutil.copy2(submission, output_dir / "submission.py")
@@ -145,12 +167,20 @@ def _write_run_artifacts(
         "candidate_sha256": (
             _sha256(candidate) if candidate is not None else None
         ),
+        "candidate_kind": candidate_kind,
         "run_label": run_label,
         "harness_url": harness_url,
         "profiler": profiler,
         "started_at": started_at,
         "finished_at": datetime.now(timezone.utc).isoformat(),
         "wall_seconds": wall_seconds,
+        "benchmark": {
+            "seed": evaluation.seed,
+            "warmup": evaluation.warmup,
+            "repeats": evaluation.repeats,
+            "kernel_time_ms": _kernel_time_ms(response),
+            "profiler_device_time_ms": response.get("device_time_ms"),
+        },
         "acceptance": acceptance,
         "response": response,
     }
@@ -165,7 +195,6 @@ def _run_one(
     task: TaskSpec,
     candidate: Path,
     submission: Path,
-    candidate_mode: bool,
     output_dir: Path,
     harness_url: str,
     api_key: str,
@@ -173,11 +202,13 @@ def _run_one(
     timeout_seconds: float,
     download_profile: bool,
     run_label: str | None,
+    candidate_kind: str,
+    evaluation: EvaluationConfig,
 ) -> tuple[bool, dict[str, Any]]:
     report = check_submission(
         task,
         candidate,
-        candidate_mode=candidate_mode,
+        candidate_mode=True,
     )
     _print_check(report)
     if not report.passed:
@@ -194,7 +225,7 @@ def _run_one(
         output_dir,
         task,
         submission,
-        candidate if candidate_mode else None,
+        candidate,
         harness_url,
         profiler,
         started_at,
@@ -202,6 +233,8 @@ def _run_one(
         response,
         acceptance,
         run_label,
+        candidate_kind,
+        evaluation,
     )
 
     profile_id = response.get("profile_id")
@@ -237,6 +270,7 @@ def _run_one(
     status = "PASS" if acceptance["passed"] else "FAIL"
     print(
         f"result={status} task={task.id} "
+        f"kernel_time_ms={record['benchmark']['kernel_time_ms']} "
         f"device_time_ms={response.get('device_time_ms')} "
         f"profile_id={response.get('profile_id')} "
         f"artifacts={output_dir}"
@@ -262,11 +296,15 @@ def command_doctor(args: argparse.Namespace) -> int:
     tasks = discover_tasks()
     failures = 0
     for task in tasks.values():
-        report = check_submission(
-            task,
-            task.baseline_path,
-            candidate_mode=False,
-        )
+        with tempfile.TemporaryDirectory(
+            prefix="cute-harness-doctor-"
+        ) as temp_dir:
+            baseline_path = Path(temp_dir) / "candidate.py"
+            baseline_path.write_text(
+                baseline_candidate(task),
+                encoding="utf-8",
+            )
+            report = check_submission(task, baseline_path)
         status = "PASS" if report.passed else "FAIL"
         print(f"baseline={status} task={task.id}")
         if not report.passed:
@@ -308,9 +346,22 @@ def command_check(args: argparse.Namespace) -> int:
     return 0 if report.passed else 1
 
 
+def _evaluation_config(
+    task: TaskSpec,
+    args: argparse.Namespace,
+) -> EvaluationConfig:
+    default = default_evaluation_config(task)
+    return EvaluationConfig(
+        seed=default.seed if args.seed is None else args.seed,
+        warmup=args.warmup,
+        repeats=args.repeats,
+    )
+
+
 def command_run(args: argparse.Namespace) -> int:
     task = load_task(args.task_id)
     submission = _resolve_submission(task, args.submission, args.baseline)
+    evaluation = _evaluation_config(task, args)
     api_key = os.environ.get(API_KEY_ENV, "")
     if not api_key:
         raise RuntimeError(
@@ -324,12 +375,28 @@ def command_run(args: argparse.Namespace) -> int:
         / "runs"
         / f"{_timestamp_slug()}_{task.id}"
     )
-    if args.baseline:
+    with tempfile.TemporaryDirectory(
+        prefix="cute-harness-assembly-"
+    ) as temp_dir:
+        candidate_snapshot = Path(temp_dir) / "candidate.py"
+        if args.baseline:
+            candidate_snapshot.write_text(
+                baseline_candidate(task),
+                encoding="utf-8",
+            )
+            candidate_kind = "baseline"
+        else:
+            candidate_snapshot.write_bytes(submission.read_bytes())
+            candidate_kind = "agent"
+        assembled = Path(temp_dir) / "submission.py"
+        assembled.write_text(
+            assemble_submission(task, candidate_snapshot, evaluation),
+            encoding="utf-8",
+        )
         passed, _ = _run_one(
             task,
-            submission,
-            submission,
-            False,
+            candidate_snapshot,
+            assembled,
             output_dir,
             harness_url,
             api_key,
@@ -337,31 +404,9 @@ def command_run(args: argparse.Namespace) -> int:
             args.timeout,
             not args.no_download_profile,
             args.label,
+            candidate_kind,
+            evaluation,
         )
-    else:
-        with tempfile.TemporaryDirectory(
-            prefix="cute-harness-assembly-"
-        ) as temp_dir:
-            candidate_snapshot = Path(temp_dir) / "candidate.py"
-            candidate_snapshot.write_bytes(submission.read_bytes())
-            assembled = Path(temp_dir) / "submission.py"
-            assembled.write_text(
-                assemble_submission(task, candidate_snapshot),
-                encoding="utf-8",
-            )
-            passed, _ = _run_one(
-                task,
-                candidate_snapshot,
-                assembled,
-                True,
-                output_dir,
-                harness_url,
-                api_key,
-                args.profiler,
-                args.timeout,
-                not args.no_download_profile,
-                args.label,
-            )
     return 0 if passed else 1
 
 
@@ -385,23 +430,39 @@ def command_run_all(args: argparse.Namespace) -> int:
     for task in tasks.values():
         task_output = suite_dir / task.id
         try:
-            passed, record = _run_one(
-                task,
-                task.baseline_path,
-                task.baseline_path,
-                False,
-                task_output,
-                harness_url,
-                api_key,
-                args.profiler,
-                args.timeout,
-                not args.no_download_profile,
-                args.label,
-            )
+            evaluation = _evaluation_config(task, args)
+            with tempfile.TemporaryDirectory(
+                prefix="cute-harness-baseline-"
+            ) as temp_dir:
+                candidate = Path(temp_dir) / "candidate.py"
+                candidate.write_text(
+                    baseline_candidate(task),
+                    encoding="utf-8",
+                )
+                assembled = Path(temp_dir) / "submission.py"
+                assembled.write_text(
+                    assemble_submission(task, candidate, evaluation),
+                    encoding="utf-8",
+                )
+                passed, record = _run_one(
+                    task,
+                    candidate,
+                    assembled,
+                    task_output,
+                    harness_url,
+                    api_key,
+                    args.profiler,
+                    args.timeout,
+                    not args.no_download_profile,
+                    args.label,
+                    "baseline",
+                    evaluation,
+                )
             summary.append(
                 {
                     "task_id": task.id,
                     "passed": passed,
+                    "benchmark": record["benchmark"],
                     "response": record["response"],
                 }
             )
@@ -482,6 +543,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--server")
     run_parser.add_argument("--profiler", default="pytorch")
     run_parser.add_argument("--timeout", type=float, default=360.0)
+    run_parser.add_argument("--seed", type=int)
+    run_parser.add_argument("--warmup", type=int, default=2)
+    run_parser.add_argument("--repeats", type=int, default=5)
     run_parser.add_argument("--output")
     run_parser.add_argument(
         "--label",
@@ -497,6 +561,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_all_parser.add_argument("--server")
     run_all_parser.add_argument("--profiler", default="pytorch")
     run_all_parser.add_argument("--timeout", type=float, default=360.0)
+    run_all_parser.add_argument("--seed", type=int)
+    run_all_parser.add_argument("--warmup", type=int, default=2)
+    run_all_parser.add_argument("--repeats", type=int, default=5)
     run_all_parser.add_argument("--output")
     run_all_parser.add_argument(
         "--label",
