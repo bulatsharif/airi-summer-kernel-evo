@@ -1,6 +1,10 @@
 # Task reference: FP8 GEMM + Bias + ReLU
 
 Load the `cute-fp8-kernels` skill listed in `task.json.agent_skills` first.
+Before coding, read the skill's
+`.opencode/skills/cute-fp8-kernels/references/candidate-gemm-api.md` chapter.
+It contains the exact candidate-mode dense GEMM signatures installed on the
+worker.
 
 ## Data contract
 

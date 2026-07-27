@@ -1,6 +1,9 @@
 # Task reference: FP8 square GEMM
 
 Load the `cute-fp8-kernels` skill listed in `task.json.agent_skills` first.
+Before coding, read the skill's
+`.opencode/skills/cute-fp8-kernels/references/candidate-gemm-api.md` chapter.
+It contains the exact candidate-mode signatures installed on the worker.
 
 ## Data contract
 

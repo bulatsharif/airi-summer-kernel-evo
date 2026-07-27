@@ -18,7 +18,7 @@ from cute_harness.assembly import (
 from cute_harness.client import build_multipart
 from cute_harness.cli import _kernel_time_ms, _safe_print, main
 from cute_harness.policy import check_submission
-from cute_harness.tasks import discover_tasks
+from cute_harness.tasks import REPO_ROOT, discover_tasks
 
 
 class TaskManifestTests(unittest.TestCase):
@@ -60,6 +60,35 @@ class TaskManifestTests(unittest.TestCase):
                 for path in task.agent_skill_paths:
                     self.assertTrue((path / "SKILL.md").is_file())
                     self.assertTrue((path / "references").is_dir())
+
+    def test_dense_gemm_skill_pins_candidate_api_signatures(self):
+        skill = (
+            REPO_ROOT
+            / "opencode"
+            / ".opencode"
+            / "skills"
+            / "cute-fp8-kernels"
+        )
+        reference = (
+            skill / "references" / "candidate-gemm-api.md"
+        ).read_text(encoding="utf-8")
+        skill_body = (skill / "SKILL.md").read_text(encoding="utf-8")
+
+        for snippet in (
+            "utils.LayoutEnum.from_tensor",
+            "sm100_utils.make_trivial_tiled_mma(",
+            "tcgen05.CtaGroup.ONE",
+            "cute.nvgpu.make_tiled_tma_atom_A(",
+            "pipeline.PipelineTmaUmma.create(",
+            "tiled_mma.make_fragment_C(",
+            "cute.gemm(",
+            "cute.ceil_div(",
+        ):
+            self.assertIn(snippet, reference)
+        self.assertIn(
+            "[candidate-gemm-api.md](references/candidate-gemm-api.md)",
+            skill_body,
+        )
 
     def test_evaluators_do_not_depend_on_candidate_problem_constants(self):
         public_constants = {

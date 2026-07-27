@@ -14,6 +14,8 @@ Python.
 If the workspace contains `task.json` with
 `validation.mode = local_owned_evaluator_v1`, use candidate-only mode:
 
+- for dense FP8 GEMM, read
+  [candidate-gemm-api.md](references/candidate-gemm-api.md) before coding;
 - edit only `submission.py`;
 - preserve the starter's JIT entrypoint;
 - do not add `main()`, inputs, an oracle, timing, or PASS reporting;
@@ -45,6 +47,8 @@ conservative default and report it.
 ## Load references progressively
 
 - Every FP8 task: [fp8.md](references/fp8.md).
+- Candidate-only dense FP8 GEMM:
+  [candidate-gemm-api.md](references/candidate-gemm-api.md).
 - New/changed kernel: [cute-dsl.md](references/cute-dsl.md),
   [layouts.md](references/layouts.md),
   [memory-pipelines.md](references/memory-pipelines.md), and
@@ -58,8 +62,11 @@ conservative default and report it.
 - Failed run: [debugging.md](references/debugging.md).
 - Correct kernel being tuned: [performance.md](references/performance.md).
 
-These references are sufficient for design. Inspect examples shipped with the
-installed CUTLASS package only to confirm release-specific APIs.
+In candidate-only mode, do not read `correctness.md`, `b300.md`, or
+`submission.md`; they describe the standalone contract. The version-pinned
+candidate API chapter plus the remote compiler are sufficient. In standalone
+mode, inspect examples shipped with the installed CUTLASS package only to
+confirm release-specific APIs.
 
 ## Workflow
 
