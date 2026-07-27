@@ -174,6 +174,7 @@ def conv_transpose3d(
     )
 
 
+# === CUTE_HARNESS_EVALUATOR_V1 ===
 def main():
     if not torch.cuda.is_available():
         raise RuntimeError("A CUDA device with FP8 support is required")

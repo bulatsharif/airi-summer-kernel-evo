@@ -20,6 +20,25 @@ class StreamingProcessResult:
 def _stop_process_group(process: subprocess.Popen[str]) -> None:
     if process.poll() is not None:
         return
+    if os.name == "nt":
+        subprocess.run(
+            [
+                "taskkill",
+                "/PID",
+                str(process.pid),
+                "/T",
+                "/F",
+            ],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        try:
+            process.wait(timeout=5.0)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+        return
     try:
         os.killpg(process.pid, signal.SIGTERM)
         process.wait(timeout=5.0)
@@ -46,6 +65,9 @@ def run_streaming(
     if heartbeat_interval is not None and heartbeat_interval <= 0:
         raise ValueError("heartbeat interval must be positive")
 
+    creationflags = (
+        subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
+    )
     process = subprocess.Popen(
         list(command),
         cwd=cwd,
@@ -56,7 +78,8 @@ def run_streaming(
         text=True,
         errors="replace",
         bufsize=1,
-        start_new_session=True,
+        start_new_session=os.name != "nt",
+        creationflags=creationflags,
     )
     assert process.stdout is not None
 

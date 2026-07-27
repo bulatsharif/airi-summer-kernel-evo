@@ -11,8 +11,8 @@ FP8_MAX = 448.0
 WEIGHT_BOUND = K ** -0.5
 SCALE_A = 1.0 / FP8_MAX
 SCALE_B = WEIGHT_BOUND / FP8_MAX
-MULTIPLIER = 2.0
-NEGATIVE_SLOPE = 0.1
+DIVISOR = 2.0
+SCALING_FACTOR = 1.5
 FP8_DTYPE = cutlass.Float8E4M3FN
 
 
@@ -20,26 +20,26 @@ FP8_DTYPE = cutlass.Float8E4M3FN
 def fp8_gemm_kernel(
     matrix_a: cute.Tensor,
     matrix_b_nk: cute.Tensor,
-    output: cute.Tensor,
+    scratch: cute.Tensor,
 ):
-    # TODO: FP8 tcgen05 GEMM with FP32 accumulation and output.
+    # TODO: FP8 tcgen05 GEMM with FP32 accumulation and scratch output.
     pass
 
 
 @cute.kernel
-def multiply_leaky_relu_kernel(output: cute.Tensor, bias: cute.Tensor):
-    # TODO: apply the declared elementwise operations in exact order.
+def divide_sum_scale_kernel(scratch: cute.Tensor, output: cute.Tensor):
+    # TODO: one-warp FP32 row reduction into output[row, 0].
     pass
 
 
 @cute.jit
-def gemm_multiply_leaky_relu(
+def gemm_divide_sum_scaling(
     matrix_a: cute.Tensor,
     matrix_b_nk: cute.Tensor,
-    bias: cute.Tensor,
+    scratch: cute.Tensor,
     output: cute.Tensor,
 ):
-    # TODO: construct and launch GEMM, then launch the epilogue.
+    # TODO: launch GEMM then the row reduction.
     pass
 
 
@@ -72,41 +72,35 @@ def main():
     source_b_nk = _cute_harness_torch.empty(
         (_CUTE_HARNESS_N, _CUTE_HARNESS_K), device="cuda", dtype=_cute_harness_torch.float32
     ).uniform_(-_CUTE_HARNESS_WEIGHT_BOUND, _CUTE_HARNESS_WEIGHT_BOUND)
-    bias = _cute_harness_torch.randn(
-        (_CUTE_HARNESS_N,), device="cuda", dtype=_cute_harness_torch.float32
-    )
-    storage_a = _cute_harness_torch.empty(
-        (_CUTE_HARNESS_M, _CUTE_HARNESS_K), device="cuda", dtype=_cute_harness_torch.uint8
-    )
-    storage_b = _cute_harness_torch.empty(
-        (_CUTE_HARNESS_N, _CUTE_HARNESS_K), device="cuda", dtype=_cute_harness_torch.uint8
+    storage_a = _cute_harness_torch.empty_like(source_a, dtype=_cute_harness_torch.uint8)
+    storage_b = _cute_harness_torch.empty_like(source_b_nk, dtype=_cute_harness_torch.uint8)
+    scratch = _cute_harness_torch.empty(
+        (_CUTE_HARNESS_M, _CUTE_HARNESS_N), device="cuda", dtype=_cute_harness_torch.float32
     )
     output = _cute_harness_torch.empty(
-        (_CUTE_HARNESS_M, _CUTE_HARNESS_N), device="cuda", dtype=_cute_harness_torch.float32
+        (_CUTE_HARNESS_M, 1), device="cuda", dtype=_cute_harness_torch.float32
     )
     matrix_a = _cute_harness_create_fp8(
         storage_a, _CUTE_HARNESS_FP8_DTYPE, 1, source_a * _CUTE_HARNESS_FP8_MAX
     )
     matrix_b_nk = _cute_harness_create_fp8(
-        storage_b,
-        _CUTE_HARNESS_FP8_DTYPE,
-        1,
+        storage_b, _CUTE_HARNESS_FP8_DTYPE, 1,
         source_b_nk * (_CUTE_HARNESS_FP8_MAX / _CUTE_HARNESS_WEIGHT_BOUND),
     )
-    bias_tensor = _cute_harness_from_dlpack(bias)
+    scratch_tensor = _cute_harness_from_dlpack(scratch).mark_layout_dynamic(leading_dim=1)
     output_tensor = _cute_harness_from_dlpack(output).mark_layout_dynamic(leading_dim=1)
     compiled = _cute_harness_cute.compile(
-        gemm_multiply_leaky_relu, matrix_a, matrix_b_nk, bias_tensor, output_tensor
+        gemm_divide_sum_scaling, matrix_a, matrix_b_nk, scratch_tensor, output_tensor
     )
     for _ in range(_CUTE_HARNESS_WARMUP):
-        compiled(matrix_a, matrix_b_nk, bias_tensor, output_tensor)
+        compiled(matrix_a, matrix_b_nk, scratch_tensor, output_tensor)
     _cute_harness_torch.cuda.synchronize()
     timings_ms = []
     for _ in range(_CUTE_HARNESS_REPEATS):
         start = _cute_harness_torch.cuda.Event(enable_timing=True)
         end = _cute_harness_torch.cuda.Event(enable_timing=True)
         start.record()
-        compiled(matrix_a, matrix_b_nk, bias_tensor, output_tensor)
+        compiled(matrix_a, matrix_b_nk, scratch_tensor, output_tensor)
         end.record()
         end.synchronize()
         timings_ms.append(start.elapsed_time(end))
@@ -119,34 +113,28 @@ def main():
     scale_b = _cute_harness_torch.tensor(
         _CUTE_HARNESS_SCALE_B, device="cuda", dtype=_cute_harness_torch.float32
     )
-    linear = _cute_harness_torch._scaled_mm(
-        a_fp8, b_fp8.t(), scale_a=scale_a, scale_b=scale_b,
-        out_dtype=_cute_harness_torch.float32,
-    ) + bias
-    reference = _cute_harness_torch.nn.functional.leaky_relu(linear * 2.0, negative_slope=0.1)
+    reference = (
+        _cute_harness_torch._scaled_mm(
+            a_fp8, b_fp8.t(), scale_a=scale_a, scale_b=scale_b,
+            out_dtype=_cute_harness_torch.float32,
+        ) / 2.0
+    ).sum(dim=1, keepdim=True) * 1.5
     full_max_abs = (output - reference).abs().max().item()
     rows = _cute_harness_torch.tensor([0, 1, 7, 31, 127, 255, 511, 1023], device="cuda")
-    columns = _cute_harness_torch.tensor(
-        [0, 3, 31, 255, 1023, 2047, 4095, 8191], device="cuda"
-    )
-    linear = (
-        source_a.index_select(0, rows)
-        @ source_b_nk.index_select(0, columns).t()
-        + bias.index_select(0, columns)
-    )
-    fp32_reference = _cute_harness_torch.nn.functional.leaky_relu(linear * 2.0, negative_slope=0.1)
-    actual = output.index_select(0, rows).index_select(1, columns)
-    sample_max_abs = (actual - fp32_reference).abs().max().item()
+    fp32_reference = (
+        (source_a.index_select(0, rows) @ source_b_nk.t()) / 2.0
+    ).sum(dim=1, keepdim=True) * 1.5
+    sample_max_abs = (output.index_select(0, rows) - fp32_reference).abs().max().item()
     if (
         not _cute_harness_torch.isfinite(output).all().item()
-        or full_max_abs > 0.01
-        or sample_max_abs > 0.2
+        or full_max_abs > 0.05
+        or sample_max_abs > 3.0
     ):
         raise RuntimeError(
             f"validation failed: full_abs={full_max_abs:.6f}, sample_abs={sample_max_abs:.6f}"
         )
     print(
-        "task=level2_12_gemm_multiply_leaky_relu "
+        "task=level2_14_gemm_divide_sum_scaling "
         f"full_max_abs={full_max_abs:.6f} "
         f"sample_max_abs={sample_max_abs:.6f} "
         f"kernel_time_ms={kernel_time_ms:.6f} PASS"

@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "id": "level2_12_gemm_multiply_leaky_relu_fp8",
-  "title": "GEMM plus Multiply plus LeakyReLU with CuTe FP8",
+  "id": "level2_14_gemm_divide_sum_scaling_fp8",
+  "title": "GEMM plus Divide plus Sum plus Scaling with CuTe FP8",
   "source": {
     "suite": "KernelBench",
     "level": 2,
-    "number": 12,
-    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level2/12_Gemm_Multiply_LeakyReLU.py"
+    "number": 14,
+    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level2/14_Gemm_Divide_Sum_Scaling.py"
   },
   "prompt": "TASK.md",
   "starter": "starter.py",
@@ -20,27 +20,28 @@
   "precision": {
     "gemm_inputs": "float8_e4m3fn",
     "accumulator": "float32",
-    "bias": "float32",
+    "reduction": "float32",
     "output": "float32"
   },
   "problem": {
-    "operation": "Y = leaky_relu((X @ W.T + bias) * 2.0, 0.1)",
+    "operation": "Y = sum((X @ W.T) / 2.0, dim=1, keepdim=True) * 1.5",
     "batch_size": 1024,
     "in_features": 8192,
-    "out_features": 8192,
+    "hidden_size": 8192,
     "seed": 20260727
   },
   "validation": {
     "mode": "local_owned_evaluator_v1",
-    "success_pattern": "(?m)^task=level2_12_gemm_multiply_leaky_relu .* PASS$",
-    "full_max_absolute_error_vs_torch_fp8": 0.01,
-    "sample_max_absolute_error_vs_fp32": 0.2
+    "success_pattern": "(?m)^task=level2_14_gemm_divide_sum_scaling .* PASS$",
+    "full_max_absolute_error_vs_torch_fp8": 0.05,
+    "sample_max_absolute_error_vs_fp32": 3.0
   },
   "policy": {
     "minimum_cute_kernels": 2,
     "minimum_cute_jit_functions": 1,
     "required_calls": [
-      "cute.gemm"
+      "cute.gemm",
+      "cute.arch.shuffle_sync_bfly"
     ]
   }
 }

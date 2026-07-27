@@ -10,7 +10,12 @@
   },
   "prompt": "TASK.md",
   "starter": "starter.py",
-  "api_context": "../../opencode/.opencode/skills/cute-fp8-kernels/references/scalar-fp8-docs",
+  "references": [
+    "TASK_REFERENCE.md"
+  ],
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
+  ],
   "baseline": "../../probes/level1_72_conv_transpose3d_fp8_baseline.py",
   "precision": {
     "input": "float8_e4m3fn",

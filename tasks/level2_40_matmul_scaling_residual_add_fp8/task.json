@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "id": "level2_12_gemm_multiply_leaky_relu_fp8",
-  "title": "GEMM plus Multiply plus LeakyReLU with CuTe FP8",
+  "id": "level2_40_matmul_scaling_residual_add_fp8",
+  "title": "Matmul plus Scaling plus ResidualAdd with CuTe FP8",
   "source": {
     "suite": "KernelBench",
     "level": 2,
-    "number": 12,
-    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level2/12_Gemm_Multiply_LeakyReLU.py"
+    "number": 40,
+    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level2/40_Matmul_Scaling_ResidualAdd.py"
   },
   "prompt": "TASK.md",
   "starter": "starter.py",
@@ -24,7 +24,7 @@
     "output": "float32"
   },
   "problem": {
-    "operation": "Y = leaky_relu((X @ W.T + bias) * 2.0, 0.1)",
+    "operation": "linear = X @ W.T + bias; Y = linear * 0.5 + linear",
     "batch_size": 1024,
     "in_features": 8192,
     "out_features": 8192,
@@ -32,7 +32,7 @@
   },
   "validation": {
     "mode": "local_owned_evaluator_v1",
-    "success_pattern": "(?m)^task=level2_12_gemm_multiply_leaky_relu .* PASS$",
+    "success_pattern": "(?m)^task=level2_40_matmul_scaling_residual_add .* PASS$",
     "full_max_absolute_error_vs_torch_fp8": 0.01,
     "sample_max_absolute_error_vs_fp32": 0.2
   },

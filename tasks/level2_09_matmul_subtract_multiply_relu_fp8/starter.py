@@ -11,8 +11,8 @@ FP8_MAX = 448.0
 WEIGHT_BOUND = K ** -0.5
 SCALE_A = 1.0 / FP8_MAX
 SCALE_B = WEIGHT_BOUND / FP8_MAX
-MULTIPLIER = 2.0
-NEGATIVE_SLOPE = 0.1
+SUBTRACT_VALUE = 2.0
+MULTIPLY_VALUE = 1.5
 FP8_DTYPE = cutlass.Float8E4M3FN
 
 
@@ -27,13 +27,13 @@ def fp8_gemm_kernel(
 
 
 @cute.kernel
-def multiply_leaky_relu_kernel(output: cute.Tensor, bias: cute.Tensor):
+def subtract_multiply_relu_kernel(output: cute.Tensor, bias: cute.Tensor):
     # TODO: apply the declared elementwise operations in exact order.
     pass
 
 
 @cute.jit
-def gemm_multiply_leaky_relu(
+def matmul_subtract_multiply_relu(
     matrix_a: cute.Tensor,
     matrix_b_nk: cute.Tensor,
     bias: cute.Tensor,
@@ -96,7 +96,7 @@ def main():
     bias_tensor = _cute_harness_from_dlpack(bias)
     output_tensor = _cute_harness_from_dlpack(output).mark_layout_dynamic(leading_dim=1)
     compiled = _cute_harness_cute.compile(
-        gemm_multiply_leaky_relu, matrix_a, matrix_b_nk, bias_tensor, output_tensor
+        matmul_subtract_multiply_relu, matrix_a, matrix_b_nk, bias_tensor, output_tensor
     )
     for _ in range(_CUTE_HARNESS_WARMUP):
         compiled(matrix_a, matrix_b_nk, bias_tensor, output_tensor)
@@ -123,7 +123,7 @@ def main():
         a_fp8, b_fp8.t(), scale_a=scale_a, scale_b=scale_b,
         out_dtype=_cute_harness_torch.float32,
     ) + bias
-    reference = _cute_harness_torch.nn.functional.leaky_relu(linear * 2.0, negative_slope=0.1)
+    reference = _cute_harness_torch.relu((linear - 2.0) * 1.5)
     full_max_abs = (output - reference).abs().max().item()
     rows = _cute_harness_torch.tensor([0, 1, 7, 31, 127, 255, 511, 1023], device="cuda")
     columns = _cute_harness_torch.tensor(
@@ -134,7 +134,7 @@ def main():
         @ source_b_nk.index_select(0, columns).t()
         + bias.index_select(0, columns)
     )
-    fp32_reference = _cute_harness_torch.nn.functional.leaky_relu(linear * 2.0, negative_slope=0.1)
+    fp32_reference = _cute_harness_torch.relu((linear - 2.0) * 1.5)
     actual = output.index_select(0, rows).index_select(1, columns)
     sample_max_abs = (actual - fp32_reference).abs().max().item()
     if (
@@ -146,7 +146,7 @@ def main():
             f"validation failed: full_abs={full_max_abs:.6f}, sample_abs={sample_max_abs:.6f}"
         )
     print(
-        "task=level2_12_gemm_multiply_leaky_relu "
+        "task=level2_09_matmul_subtract_multiply_relu "
         f"full_max_abs={full_max_abs:.6f} "
         f"sample_max_abs={sample_max_abs:.6f} "
         f"kernel_time_ms={kernel_time_ms:.6f} PASS"

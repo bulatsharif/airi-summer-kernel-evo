@@ -15,6 +15,11 @@ SCALE_A = 1.0 / FP8_MAX
 SCALE_B = WEIGHT_BOUND / FP8_MAX
 MULTIPLIER = 2.0
 NEGATIVE_SLOPE = 0.1
+SUBTRACT_VALUE = 2.0
+POST_MULTIPLY_VALUE = 1.5
+DIVISOR = 2.0
+SCALING_FACTOR = 0.5
+SUM_SCALING_FACTOR = 1.5
 FP8_DTYPE = cutlass.Float8E4M3FN
 ACC_DTYPE = cutlass.Float32
 MMA_TILER_MNK = (128, 128, 64)
@@ -233,10 +238,9 @@ def multiply_leaky_relu_kernel(output: cute.Tensor, bias: cute.Tensor):
 
 
 @cute.jit
-def gemm_multiply_leaky_relu(
+def launch_fp8_gemm(
     matrix_a: cute.Tensor,
     matrix_b_nk: cute.Tensor,
-    bias: cute.Tensor,
     output: cute.Tensor,
 ):
     a_major = utils.LayoutEnum.from_tensor(matrix_a).mma_major_mode()
@@ -288,12 +292,131 @@ def gemm_multiply_leaky_relu(
         grid=(M // MMA_TILER_MNK[0], N // MMA_TILER_MNK[1], 1),
         block=(THREADS_PER_CTA, 1, 1),
     )
+
+
+@cute.kernel
+def subtract_multiply_relu_kernel(output: cute.Tensor, bias: cute.Tensor):
+    thread_idx, _, _ = cute.arch.thread_idx()
+    row_idx, _, _ = cute.arch.block_idx()
+    for iteration in cutlass.range(N // THREADS_PER_CTA):
+        column = iteration * THREADS_PER_CTA + thread_idx
+        value = output[row_idx, column].to(cutlass.Float32)
+        value = value * (SCALE_A * SCALE_B) + bias[column]
+        value = (value - SUBTRACT_VALUE) * POST_MULTIPLY_VALUE
+        output[row_idx, column] = value * (value > 0.0)
+
+
+@cute.kernel
+def scale_residual_kernel(output: cute.Tensor, bias: cute.Tensor):
+    thread_idx, _, _ = cute.arch.thread_idx()
+    row_idx, _, _ = cute.arch.block_idx()
+    for iteration in cutlass.range(N // THREADS_PER_CTA):
+        column = iteration * THREADS_PER_CTA + thread_idx
+        value = output[row_idx, column].to(cutlass.Float32)
+        value = value * (SCALE_A * SCALE_B) + bias[column]
+        output[row_idx, column] = value * SCALING_FACTOR + value
+
+
+@cute.kernel
+def relu_divide_kernel(output: cute.Tensor, bias: cute.Tensor):
+    thread_idx, _, _ = cute.arch.thread_idx()
+    row_idx, _, _ = cute.arch.block_idx()
+    for iteration in cutlass.range(N // THREADS_PER_CTA):
+        column = iteration * THREADS_PER_CTA + thread_idx
+        value = output[row_idx, column].to(cutlass.Float32)
+        value = value * (SCALE_A * SCALE_B) + bias[column]
+        output[row_idx, column] = value * (value > 0.0) / DIVISOR
+
+
+@cute.kernel
+def divide_sum_scale_kernel(scratch: cute.Tensor, output: cute.Tensor):
+    lane, _, _ = cute.arch.thread_idx()
+    row, _, _ = cute.arch.block_idx()
+    partial = cutlass.Float32(0.0)
+    for iteration in cutlass.range(N // 32):
+        column = iteration * 32 + lane
+        value = scratch[row, column].to(cutlass.Float32)
+        partial += value * (SCALE_A * SCALE_B) / 2.0
+    partial += cute.arch.shuffle_sync_bfly(partial, 16)
+    partial += cute.arch.shuffle_sync_bfly(partial, 8)
+    partial += cute.arch.shuffle_sync_bfly(partial, 4)
+    partial += cute.arch.shuffle_sync_bfly(partial, 2)
+    partial += cute.arch.shuffle_sync_bfly(partial, 1)
+    if lane == 0:
+        output[row, 0] = partial * SUM_SCALING_FACTOR
+
+
+@cute.jit
+def gemm_multiply_leaky_relu(
+    matrix_a: cute.Tensor,
+    matrix_b_nk: cute.Tensor,
+    bias: cute.Tensor,
+    output: cute.Tensor,
+):
+    launch_fp8_gemm(matrix_a, matrix_b_nk, output)
     multiply_leaky_relu_kernel(output, bias).launch(
         grid=(M, 1, 1),
         block=(THREADS_PER_CTA, 1, 1),
     )
 
 
+@cute.jit
+def matmul_subtract_multiply_relu(
+    matrix_a: cute.Tensor,
+    matrix_b_nk: cute.Tensor,
+    bias: cute.Tensor,
+    output: cute.Tensor,
+):
+    launch_fp8_gemm(matrix_a, matrix_b_nk, output)
+    subtract_multiply_relu_kernel(output, bias).launch(
+        grid=(M, 1, 1),
+        block=(THREADS_PER_CTA, 1, 1),
+    )
+
+
+@cute.jit
+def matmul_scaling_residual_add(
+    matrix_a: cute.Tensor,
+    matrix_b_nk: cute.Tensor,
+    bias: cute.Tensor,
+    output: cute.Tensor,
+):
+    launch_fp8_gemm(matrix_a, matrix_b_nk, output)
+    scale_residual_kernel(output, bias).launch(
+        grid=(M, 1, 1),
+        block=(THREADS_PER_CTA, 1, 1),
+    )
+
+
+@cute.jit
+def gemm_relu_divide(
+    matrix_a: cute.Tensor,
+    matrix_b_nk: cute.Tensor,
+    bias: cute.Tensor,
+    output: cute.Tensor,
+):
+    launch_fp8_gemm(matrix_a, matrix_b_nk, output)
+    relu_divide_kernel(output, bias).launch(
+        grid=(M, 1, 1),
+        block=(THREADS_PER_CTA, 1, 1),
+    )
+
+
+@cute.jit
+def gemm_divide_sum_scaling(
+    matrix_a: cute.Tensor,
+    matrix_b_nk: cute.Tensor,
+    scratch: cute.Tensor,
+    output: cute.Tensor,
+):
+    launch_fp8_gemm(matrix_a, matrix_b_nk, scratch)
+    divide_sum_scale_kernel(scratch, output).launch(
+        grid=(M, 1, 1),
+        block=(32, 1, 1),
+    )
+
+
+# === CUTE_HARNESS_EVALUATOR_V1 ===
 import torch as _harness_torch
 
 import cutlass as _harness_cutlass

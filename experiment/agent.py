@@ -15,6 +15,31 @@ from .process import run_streaming
 SESSION_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
+def _bash_path(path: Path) -> str:
+    resolved = path.resolve().as_posix()
+    if os.name == "nt" and len(resolved) >= 3 and resolved[1:3] == ":/":
+        return f"/{resolved[0].lower()}/{resolved[3:]}"
+    return resolved
+
+
+def _headless_runner_prefix(runner: Path) -> list[str]:
+    if os.name != "nt":
+        return [str(runner)]
+    candidates = (
+        Path(os.environ.get("ProgramFiles", r"C:\Program Files"))
+        / "Git"
+        / "bin"
+        / "bash.exe",
+        Path(r"C:\msys64\usr\bin\bash.exe"),
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return [str(candidate), _bash_path(runner)]
+    raise RuntimeError(
+        "OpenCode headless experiments on Windows require Git Bash or MSYS2"
+    )
+
+
 @dataclass(frozen=True)
 class AgentMetrics:
     requested_model: str
@@ -242,16 +267,16 @@ def run_agent(
     candidate = workspace / "submission.py"
     prompt = build_agent_prompt(task_id, candidate, seed, gpu_timeout)
     command = [
-        str(runner),
+        *_headless_runner_prefix(runner),
         "--foreground",
         "--dir",
-        str(workspace),
+        _bash_path(workspace),
         "--timeout",
         f"{agent_timeout}s",
         "--progress",
-        str(events_path),
+        _bash_path(events_path),
         "--agents",
-        str(workspace / "AGENTS.md"),
+        _bash_path(workspace / "AGENTS.md"),
         "--model",
         model,
         "--require-cute-key",
