@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "webfetch": "deny",
+    "websearch": "deny",
+    "skill": {
+      "*": "deny",
+      "cute-fp8-kernels": "allow"
+    },
+    "read": {
+      "*": "allow",
+      "AGENTS.md": "deny",
+      "opencode.json": "deny",
+      "ab_runs/**": "deny",
+      "docs/**": "deny",
+      "opencode/**": "deny",
+      "opencode/.opencode/skills/cute-fp8-kernels/**": "allow",
+      "cute_kernels/**": "deny",
+      "submissions/**": "deny",
+      "profiles/**": "deny",
+      "results/**": "deny",
+      "remote_agent_smoke/**": "deny"
+    }
+  }
+}

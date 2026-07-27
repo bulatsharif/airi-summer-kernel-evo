@@ -102,6 +102,13 @@ remote endpoint по-прежнему исполняет один собранн
 Подробно: [цель и pipeline](docs/PROJECT_AND_PIPELINE.md) и
 [формат задач](docs/TASK_FORMAT.md).
 
+## A/B по токенам
+
+Эксперимент [`experiments/token_ab`](experiments/token_ab/README.md) сравнивает
+одну модель в двух изолированных режимах: web-документация против локального
+CuTe handbook. Оба режима используют одинаковые task starters и ровно одну
+внешнюю B300-проверку; runner считает токены основной сессии и subagents.
+
 ## Проверка локальной части
 
 ```powershell
