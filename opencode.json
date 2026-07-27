@@ -14,14 +14,15 @@
       "name": "Qwen3.6 Server",
       "options": {
         "baseURL": "{env:QWEN_BASE_URL}",
-        "apiKey": "{env:QWEN_API_KEY}"
+        "apiKey": "{env:QWEN_API_KEY}",
+        "timeout": 180000
       },
       "models": {
         "qwen3.6-35b-a3b": {
           "name": "Qwen3.6 35B A3B Q8_0",
           "limit": {
             "context": 262144,
-            "output": 32768
+            "output": 8192
           }
         }
       }
@@ -31,6 +32,7 @@
     "*": "allow",
     "webfetch": "deny",
     "websearch": "deny",
+    "doom_loop": "deny",
     "external_directory": "deny",
     "read": {
       "*": "allow",
@@ -44,16 +46,18 @@
       "remote_agent_smoke/**": "deny",
       "tasks/**": "deny",
       "cute_harness/**": "deny",
-      "tests/**": "deny"
+      "tests/**": "deny",
+      "runs/**": "deny",
+      "work/**": "deny"
     },
     "edit": {
-      "*": "deny",
-      "work/*/submission.py": "allow"
+      "*": "deny"
     },
     "glob": "deny",
     "grep": "deny",
     "bash": {
       "*": "deny",
+      "python3 -m cute_harness *": "allow",
       "python -m cute_harness *": "allow",
       "python.exe -m cute_harness *": "allow",
       "py -m cute_harness *": "allow"

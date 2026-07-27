@@ -9,14 +9,16 @@ from unittest.mock import patch
 
 from cute_harness.assembly import (
     EVALUATOR_MARKER,
+    EvaluationConfig,
     assemble_submission,
+    baseline_candidate,
     candidate_starter,
     split_starter,
 )
 from cute_harness.client import build_multipart
-from cute_harness.cli import _safe_print, main
+from cute_harness.cli import _kernel_time_ms, _safe_print, main
 from cute_harness.policy import check_submission
-from cute_harness.tasks import discover_tasks
+from cute_harness.tasks import REPO_ROOT, discover_tasks
 
 
 class TaskManifestTests(unittest.TestCase):
@@ -36,12 +38,104 @@ class TaskManifestTests(unittest.TestCase):
     def test_all_known_baselines_pass_policy(self):
         for task in discover_tasks().values():
             with self.subTest(task=task.id):
-                report = check_submission(
-                    task,
-                    task.baseline_path,
-                    candidate_mode=False,
-                )
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    candidate = Path(temp_dir) / "candidate.py"
+                    candidate.write_text(
+                        baseline_candidate(task),
+                        encoding="utf-8",
+                    )
+                    report = check_submission(task, candidate)
                 self.assertTrue(report.passed, report.errors)
+
+    def test_all_tasks_declare_public_context(self):
+        for task in discover_tasks().values():
+            with self.subTest(task=task.id):
+                self.assertGreaterEqual(len(task.reference_paths), 1)
+                for path in task.reference_paths:
+                    self.assertTrue(path.is_file())
+                    self.assertNotIn("cute_kernels", path.parts)
+                    self.assertNotIn("runs", path.parts)
+                self.assertEqual(
+                    [path.name for path in task.agent_skill_paths],
+                    ["cute-fp8-kernels"],
+                )
+                for path in task.agent_skill_paths:
+                    self.assertTrue((path / "SKILL.md").is_file())
+                    self.assertTrue((path / "references").is_dir())
+
+    def test_dense_gemm_skill_pins_candidate_api_signatures(self):
+        skill = (
+            REPO_ROOT
+            / "opencode"
+            / ".opencode"
+            / "skills"
+            / "cute-fp8-kernels"
+        )
+        reference = (
+            skill / "references" / "candidate-gemm-api.md"
+        ).read_text(encoding="utf-8")
+        skill_body = (skill / "SKILL.md").read_text(encoding="utf-8")
+
+        for snippet in (
+            "utils.LayoutEnum.from_tensor",
+            "sm100_utils.make_trivial_tiled_mma(",
+            "tcgen05.CtaGroup.ONE",
+            "cute.nvgpu.make_tiled_tma_atom_A(",
+            "pipeline.PipelineTmaUmma.create(",
+            "tiled_mma.make_fragment_C(",
+            "cute.gemm(",
+            "cute.ceil_div(",
+        ):
+            self.assertIn(snippet, reference)
+        self.assertIn(
+            "[candidate-gemm-api.md](references/candidate-gemm-api.md)",
+            skill_body,
+        )
+
+    def test_evaluators_do_not_depend_on_candidate_problem_constants(self):
+        public_constants = {
+            "level1_01_square_matrix_multiplication_fp8": {
+                "N",
+                "FP8_MAX",
+                "INPUT_SCALE",
+                "OUTPUT_SCALE",
+                "FP8_DTYPE",
+                "AB_DTYPE",
+            },
+            "level1_40_layer_norm_fp8": {
+                "BATCH_SIZE",
+                "FEATURES",
+                "DIM_1",
+                "DIM_2",
+                "ROW_SIZE",
+                "INPUT_SHAPE",
+                "NORMALIZED_SHAPE",
+                "EPSILON",
+                "FP8_MAX",
+                "INPUT_SCALE",
+                "FP8_DTYPE",
+            },
+            "level2_76_gemm_add_relu_fp8": {
+                "M",
+                "N",
+                "K",
+                "FP8_MAX",
+                "WEIGHT_BOUND",
+                "SCALE_A",
+                "SCALE_B",
+                "FP8_DTYPE",
+                "AB_DTYPE",
+            },
+        }
+        for task in discover_tasks().values():
+            with self.subTest(task=task.id):
+                _, evaluator = split_starter(task)
+                names = {
+                    node.id
+                    for node in ast.walk(ast.parse(evaluator))
+                    if isinstance(node, ast.Name)
+                }
+                self.assertFalse(names & public_constants[task.id])
 
     def test_starters_are_incomplete_but_syntactically_valid(self):
         for task in discover_tasks().values():
@@ -76,6 +170,7 @@ class CliTests(unittest.TestCase):
 
     def test_prepare_excludes_baseline_path(self):
         task_id = "level1_01_square_matrix_multiplication_fp8"
+        task = discover_tasks()[task_id]
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "agent-work"
             code = main(["prepare", task_id, "--output", str(output)])
@@ -85,6 +180,31 @@ class CliTests(unittest.TestCase):
             public = json.loads((output / "task.json").read_text("utf-8"))
             self.assertNotIn("baseline", public)
             self.assertEqual(public["starter"], "submission.py")
+            self.assertEqual(
+                public["references"],
+                ["references/TASK_REFERENCE.md"],
+            )
+            for reference in public["references"]:
+                self.assertTrue((output / reference).is_file())
+            self.assertEqual(
+                public["agent_skills"],
+                [
+                    ".opencode/skills/cute-fp8-kernels/SKILL.md",
+                ],
+            )
+            skill = output / public["agent_skills"][0]
+            self.assertTrue(skill.is_file())
+            source_chapters = {
+                path.name
+                for path in (
+                    task.agent_skill_paths[0] / "references"
+                ).glob("*.md")
+            }
+            installed_chapters = {
+                path.name
+                for path in (skill.parent / "references").glob("*.md")
+            }
+            self.assertEqual(installed_chapters, source_chapters)
             candidate = (output / "submission.py").read_text("utf-8")
             self.assertNotIn(EVALUATOR_MARKER, candidate)
             self.assertNotIn("def main(", candidate)
@@ -120,10 +240,17 @@ class CliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             candidate = Path(temp_dir) / "candidate.py"
             candidate.write_text(candidate_starter(task), encoding="utf-8")
-            assembled = assemble_submission(task, candidate)
+            assembled = assemble_submission(
+                task,
+                candidate,
+                EvaluationConfig(seed=7, warmup=3, repeats=9),
+            )
         self.assertIn(EVALUATOR_MARKER, assembled)
         self.assertIn("def main(", assembled)
         self.assertIn(" PASS", assembled)
+        self.assertIn("_CUTE_HARNESS_SEED = 7", assembled)
+        self.assertIn("_CUTE_HARNESS_WARMUP = 3", assembled)
+        self.assertIn("_CUTE_HARNESS_REPEATS = 9", assembled)
 
     def test_evaluator_runtime_prelude_is_candidate_independent(self):
         for task in discover_tasks().values():
@@ -761,6 +888,71 @@ def invalid_v9_patterns(x: cute.Tensor):
             self.assertIn(b'name="file"', body)
             self.assertIn(b'name="profiler"', body)
             self.assertIn(b"pytorch", body)
+
+    def test_kernel_time_is_parsed_from_evaluator_stdout(self):
+        self.assertEqual(
+            _kernel_time_ms(
+                {
+                    "stdout": (
+                        "task=example kernel_time_ms=1.250000 PASS\n"
+                    )
+                }
+            ),
+            1.25,
+        )
+
+    def test_baseline_uses_shared_evaluator_and_records_kernel_time(self):
+        task_id = "level1_01_square_matrix_multiplication_fp8"
+        response = {
+            "success": True,
+            "exit_code": 0,
+            "stdout": (
+                "task=level1_01_square_matrix_multiplication "
+                "kernel_time_ms=0.750000 PASS\n"
+            ),
+            "stderr": "",
+            "device_time_ms": 10.0,
+            "profile_id": "profile-test",
+            "timed_out": False,
+        }
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "baseline"
+            with patch.dict(
+                os.environ,
+                {"CUTE_HARNESS_API_KEY": "test-only-placeholder"},
+            ), patch(
+                "cute_harness.cli.HarnessClient.run_file",
+                return_value=response,
+            ), patch(
+                "cute_harness.cli.HarnessClient.download_profile",
+                return_value=b"{}",
+            ):
+                code = main(
+                    [
+                        "run",
+                        task_id,
+                        "--baseline",
+                        "--seed",
+                        "0",
+                        "--warmup",
+                        "2",
+                        "--repeats",
+                        "5",
+                        "--output",
+                        str(output),
+                    ]
+                )
+            record = json.loads(
+                (output / "result.json").read_text(encoding="utf-8")
+            )
+            assembled = (output / "submission.py").read_text(encoding="utf-8")
+
+        self.assertEqual(code, 0)
+        self.assertEqual(record["candidate_kind"], "baseline")
+        self.assertEqual(record["benchmark"]["seed"], 0)
+        self.assertEqual(record["benchmark"]["kernel_time_ms"], 0.75)
+        self.assertIn("_CUTE_HARNESS_SEED = 0", assembled)
+        self.assertIn("kernel_time_ms=", assembled)
 
 
 if __name__ == "__main__":

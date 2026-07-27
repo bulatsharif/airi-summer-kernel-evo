@@ -10,6 +10,12 @@
   },
   "prompt": "TASK.md",
   "starter": "starter.py",
+  "references": [
+    "TASK_REFERENCE.md"
+  ],
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
+  ],
   "baseline": "../../cute_kernels/level1_40_layer_norm_fp8/submission.py",
   "precision": {
     "input": "float8_e4m3fn",

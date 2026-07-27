@@ -62,20 +62,50 @@ class TaskSpec:
         return self.member_path("baseline")
 
     @property
-    def api_context_path(self) -> Path | None:
-        value = self.data.get("api_context")
-        if value is None:
-            return None
-        if not isinstance(value, str) or not value:
-            raise TaskError(
-                f"{self.id}: field 'api_context' must be a path string"
-            )
-        return self.member_path("api_context")
+    def reference_paths(self) -> tuple[Path, ...]:
+        values = self.data.get("references", [])
+        if not isinstance(values, list):
+            raise TaskError(f"{self.id}: 'references' must be a path list")
+        paths: list[Path] = []
+        for index, value in enumerate(values):
+            if not isinstance(value, str) or not value:
+                raise TaskError(
+                    f"{self.id}: references[{index}] must be a path string"
+                )
+            path = (self.directory / value).resolve()
+            try:
+                path.relative_to(REPO_ROOT)
+            except ValueError as error:
+                raise TaskError(
+                    f"{self.id}: reference escapes the repository: {value}"
+                ) from error
+            paths.append(path)
+        return tuple(paths)
+
+    @property
+    def agent_skill_paths(self) -> tuple[Path, ...]:
+        values = self.data.get("agent_skills", [])
+        if not isinstance(values, list):
+            raise TaskError(f"{self.id}: 'agent_skills' must be a path list")
+        paths: list[Path] = []
+        for index, value in enumerate(values):
+            if not isinstance(value, str) or not value:
+                raise TaskError(
+                    f"{self.id}: agent_skills[{index}] must be a path string"
+                )
+            path = (self.directory / value).resolve()
+            try:
+                path.relative_to(REPO_ROOT)
+            except ValueError as error:
+                raise TaskError(
+                    f"{self.id}: agent skill escapes the repository: {value}"
+                ) from error
+            paths.append(path)
+        return tuple(paths)
 
     def public_manifest(self) -> dict[str, Any]:
         public = dict(self.data)
         public.pop("baseline", None)
-        public.pop("api_context", None)
         return public
 
 
@@ -152,22 +182,26 @@ def _validate_manifest(data: Any, manifest_path: Path) -> TaskSpec:
         path = spec.member_path(field)
         if not path.is_file():
             raise TaskError(f"{manifest_path}: missing {field} file: {path}")
-    if spec.api_context_path is not None:
-        context_path = spec.api_context_path
-        if not context_path.exists():
+    reference_names: set[str] = set()
+    for path in spec.reference_paths:
+        if not path.is_file():
+            raise TaskError(f"{manifest_path}: missing reference file: {path}")
+        if path.name in reference_names:
             raise TaskError(
-                f"{manifest_path}: missing api_context path: {context_path}"
+                f"{manifest_path}: duplicate reference basename: {path.name}"
             )
-        if context_path.is_dir() and not (context_path / "INDEX.md").is_file():
+        reference_names.add(path.name)
+    skill_names: set[str] = set()
+    for path in spec.agent_skill_paths:
+        if not path.is_dir() or not (path / "SKILL.md").is_file():
             raise TaskError(
-                f"{manifest_path}: api_context directory must contain "
-                f"INDEX.md: {context_path}"
+                f"{manifest_path}: invalid agent skill directory: {path}"
             )
-        if not context_path.is_dir() and not context_path.is_file():
+        if path.name in skill_names:
             raise TaskError(
-                f"{manifest_path}: api_context must be a file or directory: "
-                f"{context_path}"
+                f"{manifest_path}: duplicate agent skill name: {path.name}"
             )
+        skill_names.add(path.name)
     return spec
 
 

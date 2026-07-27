@@ -127,16 +127,13 @@ def layer_norm(
     input_tensor: cute.Tensor,
     output_tensor: cute.Tensor,
 ):
-    print(
-        "[CuTe] LayerNorm: one streaming CTA per row, "
-        f"{THREADS_PER_CTA} threads, FP32 reductions"
-    )
     layer_norm_kernel(input_tensor, output_tensor).launch(
         grid=(BATCH_SIZE, 1, 1),
         block=(THREADS_PER_CTA, 1, 1),
     )
 
 
+# === CUTE_HARNESS_EVALUATOR_V1 ===
 def main():
     if not torch.cuda.is_available():
         raise RuntimeError("A CUDA device with FP8 support is required")

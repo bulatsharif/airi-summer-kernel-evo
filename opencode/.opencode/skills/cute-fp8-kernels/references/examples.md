@@ -4,6 +4,10 @@ Baseline: CUTLASS 4.6.1 commit
 `e05f953a5b3d38adc240df2ff928e0421c2abba3`. Installed examples decide exact
 imports/signatures. Relevant source paths commonly include:
 
+Candidate-only eval workspaces must use
+[candidate-gemm-api.md](candidate-gemm-api.md) for exact installed signatures.
+The ellipses below identify helper families; they are not callable examples.
+
 ## Contents
 
 [Dense FP8 recipe](#dense-fp8-recipe) ·

@@ -5,18 +5,32 @@ description: Write, debug, validate, and optimize NVIDIA CuTe DSL Python kernels
 
 # CuTe DSL FP8 kernels
 
-Implement the requested kernel in the task's existing Python submission. The
-task decides which of two modes applies:
+Implement the requested kernel in the task's existing Python submission.
+PyTorch may support evaluation, but the GPU implementation must be CuTe DSL
+Python.
 
-- **Harness-owned evaluator:** edit only candidate code; do not define/call
-  `main()`, allocate inputs, compute a PyTorch reference, or print `PASS`.
-  Preserve the task's candidate entry points. The harness appends validation.
-- **Standalone submission:** keep the file self-contained with allocation,
-  oracle, checks, and `main()` as requested by that task.
+## Select the submission contract
 
-The explicit `TASK.md` contract always overrides generic handbook examples.
-Do not create another harness/spec/candidate tree unless requested. The GPU
-implementation must be CuTe DSL Python in both modes.
+If the workspace contains `task.json` with
+`validation.mode = local_owned_evaluator_v1`, use candidate-only mode:
+
+- for dense FP8 GEMM, read
+  [candidate-gemm-api.md](references/candidate-gemm-api.md) before coding;
+- edit only `submission.py`;
+- preserve the starter's JIT entrypoint;
+- do not add `main()`, inputs, an oracle, timing, or PASS reporting;
+- use `python3 -m cute_harness check` and `python3 -m cute_harness run`;
+- run those commands plainly, without pipes, redirects, command chaining, or
+  added shell utilities;
+- use the read tool for workspace/skill files; arbitrary shell and
+  `python3 -c` probes are intentionally unavailable;
+- treat the remote harness compiler as the installed CuTe API oracle and fix
+  its first concrete diagnostic before delegating exploration;
+- treat the harness result as authoritative.
+
+Otherwise use standalone mode: keep the complete self-contained submission,
+including `main()`, input creation, validation, and bounded timing. Do not
+create a harness/spec/candidate tree unless requested.
 
 ## Establish the contract
 
@@ -32,37 +46,42 @@ conservative default and report it.
 
 ## Load references progressively
 
-Read the smallest task-specific route; do not preload the whole handbook:
-
-- Elementwise or reduction task: [reductions.md](references/reductions.md).
-- Dense or block-scaled GEMM: [examples.md](references/examples.md), then
-  [api-cutlass-4.6.1.md](references/api-cutlass-4.6.1.md).
-- FP8 scale/format ambiguity: [fp8.md](references/fp8.md).
-- Only when building a TMA/TMEM GEMM pipeline:
-  [layouts.md](references/layouts.md) and
-  [memory-pipelines.md](references/memory-pipelines.md).
-- General DSL tracing question: [cute-dsl.md](references/cute-dsl.md).
-- Correctness implementation: [correctness.md](references/correctness.md).
-- Remote compatibility/submission: [b300.md](references/b300.md) and
-  [submission.md](references/submission.md).
+- Every FP8 task: [fp8.md](references/fp8.md).
+- Candidate-only dense FP8 GEMM:
+  [candidate-gemm-api.md](references/candidate-gemm-api.md).
+- New/changed kernel: [cute-dsl.md](references/cute-dsl.md),
+  [layouts.md](references/layouts.md),
+  [memory-pipelines.md](references/memory-pipelines.md), and
+  [examples.md](references/examples.md).
+- Standalone correctness implementation:
+  [correctness.md](references/correctness.md).
+- Standalone remote compatibility/submission:
+  [b300.md](references/b300.md) and
+  [submission.md](references/submission.md). In candidate-only mode the local
+  harness owns these concerns.
 - Failed run: [debugging.md](references/debugging.md).
 - Correct kernel being tuned: [performance.md](references/performance.md).
 
-Start editing after the task-specific reference. Load a second reference only
-for a concrete unresolved question or a compiler diagnostic. Runtime feedback
-is authoritative when an installed signature still differs.
+In candidate-only mode, do not read `correctness.md`, `b300.md`, or
+`submission.md`; they describe the standalone contract. The version-pinned
+candidate API chapter plus the remote compiler are sufficient. In standalone
+mode, inspect examples shipped with the installed CUTLASS package only to
+confirm release-specific APIs.
 
 ## Workflow
 
-1. Identify harness-owned versus standalone mode and preserve its entry point.
+1. Select candidate-only or standalone mode and preserve that contract.
 2. Start from the closest local dense/MXFP8 recipe.
 3. Keep static configuration explicit; compile once per specialization.
-4. Enforce dtype/layout/alignment/tail restrictions in `can_implement`.
-5. Build the oracle from actual quantized inputs and exact scale semantics.
-6. In harness-owned mode use the exact `cute_harness check/run` commands from
-   the prompt. In standalone mode submit as directed by the task.
+4. Enforce dtype/layout/alignment/tail restrictions, using `can_implement`
+   when the submission exposes it.
+5. In standalone mode, build the oracle from actual quantized inputs and exact
+   scale semantics. In candidate-only mode, do not duplicate the harness oracle.
+6. Run the evaluator for the selected mode and treat any failure as a failure.
 7. Optimize only after every required correctness case passes.
-8. Warm up, measure repeated kernel-only execution, and verify native FP8 MMA.
+8. In standalone mode, own warmup and repeated kernel-only timing. In
+   candidate-only mode, rely on the harness measurement. Verify native FP8 MMA
+   in both modes.
 
 Never replace the implementation with PyTorch/Triton/CUDA C++, weaken tests,
 hide an error, or run an uncontrolled tuning loop.

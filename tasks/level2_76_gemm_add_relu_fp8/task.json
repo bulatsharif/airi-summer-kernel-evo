@@ -10,7 +10,12 @@
   },
   "prompt": "TASK.md",
   "starter": "starter.py",
-  "api_context": "../../opencode/.opencode/skills/cute-fp8-kernels/references/blackwell-fp8-docs",
+  "references": [
+    "TASK_REFERENCE.md"
+  ],
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
+  ],
   "baseline": "../../cute_kernels/level2_76_gemm_add_relu_fp8/submission.py",
   "precision": {
     "gemm_inputs": "float8_e4m3fn",
@@ -34,16 +39,8 @@
   "policy": {
     "minimum_cute_kernels": 2,
     "minimum_cute_jit_functions": 1,
-    "entrypoint_jit": "gemm_add_relu",
     "required_calls": [
-      "cute.nvgpu.make_tiled_tma_atom_A",
-      "cute.nvgpu.make_tiled_tma_atom_B",
-      "cpasync.tma_partition",
-      "pipeline.PipelineTmaUmma.create",
-      "pipeline.PipelineUmmaAsync.create",
-      "cute.gemm",
-      "tcgen05.make_tmem_copy",
-      "cute.autovec_copy"
+      "cute.gemm"
     ]
   }
 }
