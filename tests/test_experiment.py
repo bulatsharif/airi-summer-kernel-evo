@@ -111,6 +111,46 @@ class ExperimentRunnerTests(unittest.TestCase):
 
         self.assertEqual(len(workspaces), 1)
 
+    def test_baseline_failure_skips_agent_attempts(self):
+        def unexpected_agent(**_kwargs):
+            self.fail("agent must not run when the baseline is invalid")
+
+        def failed_baseline(**kwargs):
+            self.assertTrue(kwargs["baseline"])
+            return EvaluationResult(
+                exit_code=1,
+                record=None,
+                error="baseline evaluator failed",
+            )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            config = ExperimentConfig(
+                model="qwen-server/qwen3.6-35b-a3b",
+                task_ids=(
+                    "level1_01_square_matrix_multiplication_fp8",
+                ),
+                attempts=3,
+                agent_timeout=600,
+                gpu_timeout=600,
+                seed=0,
+                warmup=2,
+                repeats=5,
+                output_dir=root / "run",
+                work_root=root / "work",
+            )
+            passed, rows = run_experiment(
+                config,
+                agent_runner=unexpected_agent,
+                evaluation_runner=failed_baseline,
+            )
+
+            self.assertFalse(passed)
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["status"], "BASELINE_FAIL")
+            self.assertIsNone(rows[0]["attempt"])
+            self.assertEqual(list((root / "work").iterdir()), [])
+
 
 class StreamingProcessTests(unittest.TestCase):
     def test_output_is_teed_to_terminal_and_log(self):

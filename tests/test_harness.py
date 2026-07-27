@@ -1,3 +1,4 @@
+import ast
 import io
 import json
 import os
@@ -12,6 +13,7 @@ from cute_harness.assembly import (
     assemble_submission,
     baseline_candidate,
     candidate_starter,
+    split_starter,
 )
 from cute_harness.client import build_multipart
 from cute_harness.cli import _kernel_time_ms, _safe_print, main
@@ -42,6 +44,51 @@ class TaskManifestTests(unittest.TestCase):
                     )
                     report = check_submission(task, candidate)
                 self.assertTrue(report.passed, report.errors)
+
+    def test_evaluators_do_not_depend_on_candidate_problem_constants(self):
+        public_constants = {
+            "level1_01_square_matrix_multiplication_fp8": {
+                "N",
+                "FP8_MAX",
+                "INPUT_SCALE",
+                "OUTPUT_SCALE",
+                "FP8_DTYPE",
+                "AB_DTYPE",
+            },
+            "level1_40_layer_norm_fp8": {
+                "BATCH_SIZE",
+                "FEATURES",
+                "DIM_1",
+                "DIM_2",
+                "ROW_SIZE",
+                "INPUT_SHAPE",
+                "NORMALIZED_SHAPE",
+                "EPSILON",
+                "FP8_MAX",
+                "INPUT_SCALE",
+                "FP8_DTYPE",
+            },
+            "level2_76_gemm_add_relu_fp8": {
+                "M",
+                "N",
+                "K",
+                "FP8_MAX",
+                "WEIGHT_BOUND",
+                "SCALE_A",
+                "SCALE_B",
+                "FP8_DTYPE",
+                "AB_DTYPE",
+            },
+        }
+        for task in discover_tasks().values():
+            with self.subTest(task=task.id):
+                _, evaluator = split_starter(task)
+                names = {
+                    node.id
+                    for node in ast.walk(ast.parse(evaluator))
+                    if isinstance(node, ast.Name)
+                }
+                self.assertFalse(names & public_constants[task.id])
 
     def test_starters_are_incomplete_but_syntactically_valid(self):
         for task in discover_tasks().values():

@@ -210,6 +210,37 @@ def run_experiment(
         )
         _write_json(task_dir / "baseline-result.json", baseline.to_dict())
         all_passed = all_passed and baseline.passed
+        if not baseline.passed:
+            print(
+                f"baseline failed; skipping {config.attempts} agent "
+                f"attempt(s): {baseline.error or 'unknown evaluator error'}",
+                flush=True,
+            )
+            row = {
+                "model": config.model,
+                "requested_model": config.model,
+                "task": task_id,
+                "attempt": None,
+                "status": "BASELINE_FAIL",
+                "baseline_ms": baseline.kernel_time_ms,
+                "agent_ms": None,
+                "speedup": None,
+                "input_uncached": None,
+                "input_cached": None,
+                "output_tokens": None,
+                "reasoning_tokens": None,
+                "agent_wall_seconds": None,
+                "agent_session_id": None,
+                "agent_sessions": None,
+                "agent_exit_code": None,
+                "profile_id": None,
+                "workspace": None,
+                "artifacts": str(task_dir),
+            }
+            rows.append(row)
+            _write_json(task_dir / "result.json", row)
+            write_reports(output_dir, rows)
+            continue
 
         for attempt_index in range(1, config.attempts + 1):
             attempt_name = f"attempt-{attempt_index:03d}"

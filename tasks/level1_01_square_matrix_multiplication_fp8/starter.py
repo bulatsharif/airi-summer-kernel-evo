@@ -38,32 +38,70 @@ def square_gemm(
 
 
 # === CUTE_HARNESS_EVALUATOR_V1 ===
+import torch as _cute_harness_torch
+
+import cutlass as _cute_harness_cutlass
+import cutlass.cute as _cute_harness_cute
+from cutlass.cute.runtime import from_dlpack as _cute_harness_from_dlpack
+from cutlass.utils import (
+    create_cute_tensor_for_fp8 as _cute_harness_create_fp8,
+)
+
+
+_CUTE_HARNESS_N = 4096
+_CUTE_HARNESS_FP8_MAX = 448.0
+_CUTE_HARNESS_INPUT_SCALE = 1.0 / _CUTE_HARNESS_FP8_MAX
+_CUTE_HARNESS_FP8_DTYPE = _cute_harness_cutlass.Float8E4M3FN
+
+
 def main():
-    if not torch.cuda.is_available():
+    if not _cute_harness_torch.cuda.is_available():
         raise RuntimeError("A Blackwell CUDA device is required")
 
-    torch.manual_seed(_CUTE_HARNESS_SEED)
-    source_a = torch.rand((N, N), device="cuda", dtype=torch.float32)
-    source_b_nk = torch.rand((N, N), device="cuda", dtype=torch.float32)
-    storage_a = torch.empty((N, N), device="cuda", dtype=torch.uint8)
-    storage_b = torch.empty((N, N), device="cuda", dtype=torch.uint8)
-    output = torch.empty((N, N), device="cuda", dtype=torch.float32)
+    _cute_harness_torch.manual_seed(_CUTE_HARNESS_SEED)
+    source_a = _cute_harness_torch.rand(
+        (_CUTE_HARNESS_N, _CUTE_HARNESS_N),
+        device="cuda",
+        dtype=_cute_harness_torch.float32,
+    )
+    source_b_nk = _cute_harness_torch.rand(
+        (_CUTE_HARNESS_N, _CUTE_HARNESS_N),
+        device="cuda",
+        dtype=_cute_harness_torch.float32,
+    )
+    storage_a = _cute_harness_torch.empty(
+        (_CUTE_HARNESS_N, _CUTE_HARNESS_N),
+        device="cuda",
+        dtype=_cute_harness_torch.uint8,
+    )
+    storage_b = _cute_harness_torch.empty(
+        (_CUTE_HARNESS_N, _CUTE_HARNESS_N),
+        device="cuda",
+        dtype=_cute_harness_torch.uint8,
+    )
+    output = _cute_harness_torch.empty(
+        (_CUTE_HARNESS_N, _CUTE_HARNESS_N),
+        device="cuda",
+        dtype=_cute_harness_torch.float32,
+    )
 
-    matrix_a = create_cute_tensor_for_fp8(
+    matrix_a = _cute_harness_create_fp8(
         storage_a,
-        FP8_DTYPE,
+        _CUTE_HARNESS_FP8_DTYPE,
         1,
-        source_a * FP8_MAX,
+        source_a * _CUTE_HARNESS_FP8_MAX,
     )
-    matrix_b_nk = create_cute_tensor_for_fp8(
+    matrix_b_nk = _cute_harness_create_fp8(
         storage_b,
-        FP8_DTYPE,
+        _CUTE_HARNESS_FP8_DTYPE,
         1,
-        source_b_nk * FP8_MAX,
+        source_b_nk * _CUTE_HARNESS_FP8_MAX,
     )
-    output_tensor = from_dlpack(output).mark_layout_dynamic(leading_dim=1)
+    output_tensor = _cute_harness_from_dlpack(output).mark_layout_dynamic(
+        leading_dim=1,
+    )
 
-    compiled = cute.compile(
+    compiled = _cute_harness_cute.compile(
         square_gemm,
         matrix_a,
         matrix_b_nk,
@@ -71,12 +109,12 @@ def main():
     )
     for _ in range(_CUTE_HARNESS_WARMUP):
         compiled(matrix_a, matrix_b_nk, output_tensor)
-    torch.cuda.synchronize()
+    _cute_harness_torch.cuda.synchronize()
 
     timings_ms = []
     for _ in range(_CUTE_HARNESS_REPEATS):
-        start = torch.cuda.Event(enable_timing=True)
-        end = torch.cuda.Event(enable_timing=True)
+        start = _cute_harness_torch.cuda.Event(enable_timing=True)
+        end = _cute_harness_torch.cuda.Event(enable_timing=True)
         start.record()
         compiled(matrix_a, matrix_b_nk, output_tensor)
         end.record()
@@ -84,23 +122,27 @@ def main():
         timings_ms.append(start.elapsed_time(end))
     kernel_time_ms = sorted(timings_ms)[len(timings_ms) // 2]
 
-    a_fp8 = storage_a.view(torch.float8_e4m3fn)
-    b_fp8 = storage_b.view(torch.float8_e4m3fn)
-    scale = torch.tensor(INPUT_SCALE, device="cuda", dtype=torch.float32)
-    reference = torch._scaled_mm(
+    a_fp8 = storage_a.view(_cute_harness_torch.float8_e4m3fn)
+    b_fp8 = storage_b.view(_cute_harness_torch.float8_e4m3fn)
+    scale = _cute_harness_torch.tensor(
+        _CUTE_HARNESS_INPUT_SCALE,
+        device="cuda",
+        dtype=_cute_harness_torch.float32,
+    )
+    reference = _cute_harness_torch._scaled_mm(
         a_fp8,
         b_fp8.t(),
         scale_a=scale,
         scale_b=scale,
-        out_dtype=torch.float32,
+        out_dtype=_cute_harness_torch.float32,
     )
     full_max_abs = (output - reference).abs().max().item()
 
-    rows = torch.tensor(
+    rows = _cute_harness_torch.tensor(
         [0, 1, 17, 255, 1023, 2047, 3071, 4095],
         device="cuda",
     )
-    columns = torch.tensor(
+    columns = _cute_harness_torch.tensor(
         [4095, 2048, 511, 7, 3072, 1536, 63, 0],
         device="cuda",
     )
@@ -115,7 +157,7 @@ def main():
     ).max().item()
 
     if (
-        not torch.isfinite(output).all().item()
+        not _cute_harness_torch.isfinite(output).all().item()
         or full_max_abs > 0.125
         or sample_max_rel > 0.01
     ):
@@ -130,7 +172,7 @@ def main():
         f"sample_max_rel={sample_max_rel:.6f} "
         f"kernel_time_ms={kernel_time_ms:.6f} PASS"
     )
-    torch.cuda.synchronize()
+    _cute_harness_torch.cuda.synchronize()
 
 
 main()
