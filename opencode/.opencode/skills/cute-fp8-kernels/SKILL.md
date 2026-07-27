@@ -28,60 +28,62 @@ report.
 
 ## Read the applicable references
 
-Read:
+For every task, read:
 
-- [references/fp8.md](references/fp8.md) for every task.
-- [references/b300.md](references/b300.md) before selecting an architecture or
-  benchmarking.
-- [references/examples.md](references/examples.md) before authoring a new GEMM
-  or copying an NVIDIA example.
-- [references/cute-dsl.md](references/cute-dsl.md) when authoring or debugging
-  CuTe layouts, JIT staging, copies, MMA, or pipelines.
+- [references/b300.md](references/b300.md) for the target and compatibility
+  contract.
+- [references/fp8.md](references/fp8.md) for datatype and scaling semantics.
+- [references/correctness.md](references/correctness.md) for the oracle and
+  acceptance gates.
+- [references/submission.md](references/submission.md) for the required
+  single-file structure and remote protocol.
 
-Prefer the installed CUTLASS package and version-matched NVIDIA examples over
-remembered APIs or examples from another release.
+Before creating or structurally changing a kernel, also read:
+
+- [references/cute-dsl.md](references/cute-dsl.md) for language/JIT semantics
+  and current limitations.
+- [references/layouts.md](references/layouts.md) for tensor and layout algebra.
+- [references/memory-pipelines.md](references/memory-pipelines.md) for TMA,
+  shared memory, TMEM, barriers, and warp roles.
+- [references/examples.md](references/examples.md) for dense FP8 and MXFP8
+  implementation recipes.
+
+When a run fails, read [references/debugging.md](references/debugging.md).
+After correctness passes, read
+[references/performance.md](references/performance.md) before tuning or making
+performance claims.
+
+Use these local references for the initial implementation. Prefer examples
+shipped with the installed CUTLASS package when exact API detail is still
+needed. Do not require web access for the normal workflow.
 
 ## Implement
 
 1. Inspect the current submission and preserve its required entry point.
-2. Start from the closest version-compatible CuTe DSL example when practical.
-3. Keep the GPU implementation in CuTe DSL Python. PyTorch operations are
+2. Write down the operation contract from `correctness.md`; keep it in the
+   submission or working notes rather than creating a new specification tree.
+3. Follow the local dense or block-scaled recipe. If the installed package
+   contains a matching example, use it to confirm exact API signatures.
+4. Keep the GPU implementation in CuTe DSL Python. PyTorch operations are
    allowed for input preparation and the reference, not as the implementation.
-4. Keep compile-time configuration explicit. Compile once and reuse the
+5. Keep compile-time configuration explicit. Compile once and reuse the
    executor during validation and timing.
-5. Preserve required alignment, layout, pipeline, barrier, and cluster
+6. Preserve required alignment, layout, pipeline, barrier, and cluster
    invariants. Do not make an unsupported tail shape appear supported by
    weakening its test.
-6. Make errors fail the process. Do not catch an implementation failure and
+7. Make errors fail the process. Do not catch an implementation failure and
    print a successful result.
 
 ## Validate correctness
 
-Build the reference from the actual quantized inputs and their specified scale
-factors. Compare kernel output to that reference. Report end-to-end quantization
-error against the original high-precision inputs separately.
-
-Use deterministic seeds and test every required shape. Include boundary or
-irregular shapes only when the operation contract promises them. Use both
-absolute and relative tolerances appropriate to the accumulator and output
-type. Never loosen tolerances solely because a candidate failed.
-
-Submit the self-contained file through the remote runner described in
-`AGENTS.md`. Correctness must pass remotely before optimization.
+Follow every applicable gate in `correctness.md`. Submit the self-contained file
+through the remote runner described in `AGENTS.md`. Correctness must pass
+remotely before optimization.
 
 ## Measure performance
 
-Exclude JIT compilation, input generation, allocation, and reference computation
-from kernel timing. Warm up the compiled kernel, synchronize correctly, collect
-multiple measurements, and report a robust statistic such as the median.
-
-Treat the service's single `device_time_ms` as directional because its PyTorch
-Profiler measurement has no controlled warmup. Repeat final candidates modestly.
-Do not run an uncontrolled tuning loop.
-
-Before claiming native FP8 acceleration, verify that the implementation selects
-the intended FP8 MMA path through CuTe configuration, generated code, or useful
-profile evidence. FP8 tensor storage alone is not proof.
+Follow the measurement protocol and tuning order in `performance.md`. Do not
+optimize a failing candidate or run an uncontrolled search.
 
 ## Finish
 

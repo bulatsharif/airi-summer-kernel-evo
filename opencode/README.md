@@ -19,6 +19,40 @@ prompt. No separate local harness, specification directory, or candidate
 directory is required: the prompt is the operation specification, and the task's
 single `submission.py` contains the current kernel and its checks.
 
+`AGENTS.md` is loaded automatically and tells OpenCode when to load the
+`cute-fp8-kernels` skill. The task prompt does not need to repeat that
+instruction. The skill body and its local references are loaded on demand rather
+than added to every prompt.
+
+`AGENTS.md` and the skill have different jobs:
+
+- `AGENTS.md` is the small always-on policy: use CuTe DSL, keep one
+  self-contained submission, validate remotely, and load the specialist skill
+  for FP8 kernel work.
+- `SKILL.md` is the workflow router: it selects the relevant local chapters and
+  defines the correctness/performance sequence.
+- `references/` is the detailed handbook. It is loaded progressively so a
+  simple prompt does not pay the context cost of all chapters at once.
+
+The local handbook contains:
+
+| File | Purpose |
+|---|---|
+| `b300.md` | Target detection, SM100/SM103 compatibility, and remote runner behavior |
+| `fp8.md` | E4M3/E5M2, dense versus MXFP8, scales, accumulation, and output semantics |
+| `cute-dsl.md` | JIT boundaries, specialization, caching, Python subset, and DLPack |
+| `layouts.md` | Shapes, strides, hierarchy, tiling, partitioning, and swizzles |
+| `memory-pipelines.md` | GMEM/SMEM/TMEM, TMA, warp roles, barriers, and pipeline state |
+| `examples.md` | Version-pinned dense FP8 and block-scaled implementation recipes |
+| `correctness.md` | Operation contract, reference oracle, tolerances, test matrix, and gates |
+| `debugging.md` | Failure diagnosis from imports and JIT through hangs and numerics |
+| `performance.md` | Warmup, timing, native-path evidence, tuning order, and reporting |
+| `submission.md` | One-file anatomy, framework boundary, remote submission, and exit behavior |
+
+This makes normal work independent of web documentation. The agent should
+inspect examples shipped with the installed CUTLASS package only when an exact
+release-specific symbol or signature differs.
+
 ## Run
 
 ```bash
@@ -57,12 +91,9 @@ From this `opencode` directory:
 
 ```bash
 ./opencode-headless.sh \
-  --foreground \
   --dir . \
   --timeout 30m \
   -- "
-Load the cute-fp8-kernels skill first.
-
 Work on ../fp8-example/submission.py.
 
 Implement a single-file CuTe DSL Python kernel for C = A @ B on the remote B300:
@@ -89,8 +120,10 @@ report the exact blocker and remote error.
 "
 ```
 
-`--foreground` is useful while developing. Remove it to run detached; the
-command will print a run directory and an exact `--attach` command.
+This example runs detached: the command returns immediately and prints a run
+directory plus an exact `--attach` command. Add `--foreground` to keep the
+current terminal attached and stream progress until OpenCode finishes. It
+changes only how the shell process is run, not the prompt or agent behavior.
 
 ## Options
 
