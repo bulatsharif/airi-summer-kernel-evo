@@ -57,6 +57,7 @@
     "grep": "deny",
     "bash": {
       "*": "deny",
+      "python3 -m cute_harness *": "allow",
       "python -m cute_harness *": "allow",
       "python.exe -m cute_harness *": "allow",
       "py -m cute_harness *": "allow"

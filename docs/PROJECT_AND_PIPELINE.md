@@ -38,7 +38,7 @@ PASS marker.
 
 ### Candidate policy
 
-`python -m cute_harness check` проверяет:
+`python3 -m cute_harness check` проверяет:
 
 - Python syntax и размер файла;
 - import allowlist;

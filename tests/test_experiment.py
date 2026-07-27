@@ -9,7 +9,11 @@ import time
 import unittest
 
 from cute_harness.tasks import REPO_ROOT
-from experiment.agent import AgentMetrics, build_workspace_inline_config
+from experiment.agent import (
+    AgentMetrics,
+    build_agent_prompt,
+    build_workspace_inline_config,
+)
 from experiment.evaluation import EvaluationResult
 from experiment.process import run_streaming
 from experiment.runner import ExperimentConfig, run_experiment
@@ -41,8 +45,24 @@ class ExperimentRunnerTests(unittest.TestCase):
             config["permission"]["read"]["work/**"],
             "deny",
         )
+        self.assertEqual(
+            config["permission"]["bash"]["python3 -m cute_harness *"],
+            "allow",
+        )
         self.assertLessEqual(model["limit"]["output"], 8192)
         self.assertLessEqual(provider["options"]["timeout"], 180000)
+
+    def test_agent_prompt_uses_permitted_python3_harness_command(self):
+        prompt = build_agent_prompt(
+            "task-id",
+            Path("/tmp/work/submission.py"),
+            seed=0,
+            gpu_timeout=600.0,
+        )
+
+        self.assertIn("python3 -m cute_harness check", prompt)
+        self.assertIn("python3 -m cute_harness run", prompt)
+        self.assertNotIn("\npython -m cute_harness", prompt)
 
     def test_inline_config_reopens_only_the_current_workspace(self):
         workspace = REPO_ROOT / "work" / "current-attempt"

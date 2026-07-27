@@ -38,6 +38,6 @@ bias:             zeros
 ## Iteration loop
 
 ```powershell
-python -m cute_harness check level1_40_layer_norm_fp8 submission.py
-python -m cute_harness run level1_40_layer_norm_fp8 submission.py
+python3 -m cute_harness check level1_40_layer_norm_fp8 submission.py
+python3 -m cute_harness run level1_40_layer_norm_fp8 submission.py
 ```

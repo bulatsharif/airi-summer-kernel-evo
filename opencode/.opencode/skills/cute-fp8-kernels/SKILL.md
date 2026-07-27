@@ -17,7 +17,7 @@ If the workspace contains `task.json` with
 - edit only `submission.py`;
 - preserve the starter's JIT entrypoint;
 - do not add `main()`, inputs, an oracle, timing, or PASS reporting;
-- use `python -m cute_harness check` and `python -m cute_harness run`;
+- use `python3 -m cute_harness check` and `python3 -m cute_harness run`;
 - treat the harness result as authoritative.
 
 Otherwise use standalone mode: keep the complete self-contained submission,

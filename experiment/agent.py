@@ -151,8 +151,8 @@ Do not inspect previous runs, workspaces, known baselines, or evaluator source.
 
 Use these commands for feedback:
 
-python -m cute_harness check {task_id} {candidate_path}
-python -m cute_harness run {task_id} {candidate_path} --seed {seed} --timeout {gpu_timeout}
+python3 -m cute_harness check {task_id} {candidate_path}
+python3 -m cute_harness run {task_id} {candidate_path} --seed {seed} --timeout {gpu_timeout}
 
 Establish correctness before optimizing. Leave the best final candidate at
 {candidate_path}. Finish only after a successful harness result or an exact

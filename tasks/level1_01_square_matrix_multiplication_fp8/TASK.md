@@ -35,6 +35,6 @@ C:    [4096, 4096]
 ## Iteration loop
 
 ```powershell
-python -m cute_harness check level1_01_square_matrix_multiplication_fp8 submission.py
-python -m cute_harness run level1_01_square_matrix_multiplication_fp8 submission.py
+python3 -m cute_harness check level1_01_square_matrix_multiplication_fp8 submission.py
+python3 -m cute_harness run level1_01_square_matrix_multiplication_fp8 submission.py
 ```

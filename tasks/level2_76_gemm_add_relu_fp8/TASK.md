@@ -37,6 +37,6 @@ BiasAdd + ReLU.
 ## Iteration loop
 
 ```powershell
-python -m cute_harness check level2_76_gemm_add_relu_fp8 submission.py
-python -m cute_harness run level2_76_gemm_add_relu_fp8 submission.py
+python3 -m cute_harness check level2_76_gemm_add_relu_fp8 submission.py
+python3 -m cute_harness run level2_76_gemm_add_relu_fp8 submission.py
 ```

@@ -33,7 +33,7 @@ Solve the task described in TASK.md and task.json.
 - Edit only submission.py.
 - Do not define or call main(); the evaluator owns main and correctness checks.
 - Do not inspect repository baselines, task evaluator source, or previous runs.
-- Use `python -m cute_harness check` and `python -m cute_harness run` for
+- Use `python3 -m cute_harness check` and `python3 -m cute_harness run` for
   compiler, runtime, correctness, and profiler feedback.
 - Establish correctness before optimizing.
 - Leave the best final candidate in submission.py.

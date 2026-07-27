@@ -83,6 +83,6 @@ Artifacts включают отдельно `candidate.py` и отправлен
 
 ```powershell
 python -m pytest -q
-python -m cute_harness doctor
-python -m cute_harness run <task_id> --baseline
+python3 -m cute_harness doctor
+python3 -m cute_harness run <task_id> --baseline
 ```

@@ -51,7 +51,7 @@ export CUTE_HARNESS_API_KEY
 Проверить OpenCode, задачи, переменные и model endpoint:
 
 ```bash
-python -m experiment doctor \
+python3 -m experiment doctor \
   --model qwen-server/qwen3.6-35b-a3b
 ```
 
@@ -64,7 +64,7 @@ python -m experiment doctor \
 Одна задача, один независимый agent run, timeout 10 минут:
 
 ```bash
-python -m experiment run \
+python3 -m experiment run \
   --model qwen-server/qwen3.6-35b-a3b \
   --task level1_01_square_matrix_multiplication_fp8 \
   --attempts 1 \
@@ -76,7 +76,7 @@ python -m experiment run \
 Все задачи:
 
 ```bash
-python -m experiment run \
+python3 -m experiment run \
   --model qwen-server/qwen3.6-35b-a3b \
   --all \
   --attempts 1 \
@@ -168,14 +168,14 @@ Q8_0 относится к квантизации Qwen в `llama.cpp`; FP8 task�
 Список задач и local checks:
 
 ```bash
-python -m cute_harness list
-python -m cute_harness doctor --require-key
+python3 -m cute_harness list
+python3 -m cute_harness doctor --require-key
 ```
 
 Запустить известный baseline без агента:
 
 ```bash
-python -m cute_harness run \
+python3 -m cute_harness run \
   level1_01_square_matrix_multiplication_fp8 \
   --baseline \
   --timeout 600 \
@@ -185,7 +185,7 @@ python -m cute_harness run \
 Локальные тесты не требуют GPU:
 
 ```bash
-python -m unittest -v
+python3 -m unittest -v
 ```
 
 ## Структура
