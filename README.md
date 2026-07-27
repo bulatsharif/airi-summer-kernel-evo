@@ -55,7 +55,9 @@ python -m experiment doctor \
   --model qwen-server/qwen3.6-35b-a3b
 ```
 
-Все строки должны показывать `set`/`reachable`; сейчас доступно три task’а.
+Ожидаемый результат: три ключа имеют статус `set`, `opencode` найден,
+`model_endpoint=reachable`, `tasks=3`, а requested model не помечена как
+`not advertised`.
 
 ## 3. Запустить эксперимент
 
@@ -87,6 +89,21 @@ python -m experiment run \
 независимых OpenCode sessions на каждый task. Внутри session агент может делать
 несколько development evals; после его завершения orchestrator всегда запускает
 отдельный authoritative eval финального файла.
+
+Основные параметры:
+
+- `--attempts` — число независимых agent sessions, а не число замеров kernel;
+- `--agent-timeout` — лимит всей OpenCode session;
+- `--gpu-timeout` — лимит одного обращения к B300 harness;
+- `--seed` — фиксирует входные данные evaluator; baseline и candidate получают
+  один seed;
+- `--warmup` — число запусков kernel перед измерением, по умолчанию `2`;
+- `--repeats` — число измеряемых запусков, по умолчанию `5`; в таблицу попадает
+  median.
+
+Для быстрого smoke test инфраструктуры можно добавить `--warmup 1 --repeats 1`.
+Такой единичный замер пригоден для проверки pipeline, но слишком шумный для
+сравнения производительности.
 
 Во время запуска терминал сразу показывает текущий этап, текст агента, tool
 calls и ответы evaluator. Тот же вывод сохраняется в `baseline-eval.log`,
@@ -178,7 +195,7 @@ experiment/      запускает OpenCode, собирает метрики и
 cute_harness/    проверяет/собирает candidate и вызывает B300 API
 tasks/           task contracts, prompts, starters и evaluators
 cute_kernels/    проверенные baseline implementations
-opencode/        headless OpenCode process runner
+opencode/        headless OpenCode runner и подробный CuTe skill/handbook
 ```
 
 Evaluator отделён от agent workspace, но исполняется с candidate в одном
