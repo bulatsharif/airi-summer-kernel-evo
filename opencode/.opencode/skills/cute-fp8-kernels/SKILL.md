@@ -18,6 +18,12 @@ If the workspace contains `task.json` with
 - preserve the starter's JIT entrypoint;
 - do not add `main()`, inputs, an oracle, timing, or PASS reporting;
 - use `python3 -m cute_harness check` and `python3 -m cute_harness run`;
+- run those commands plainly, without pipes, redirects, command chaining, or
+  added shell utilities;
+- use the read tool for workspace/skill files; arbitrary shell and
+  `python3 -c` probes are intentionally unavailable;
+- treat the remote harness compiler as the installed CuTe API oracle and fix
+  its first concrete diagnostic before delegating exploration;
 - treat the harness result as authoritative.
 
 Otherwise use standalone mode: keep the complete self-contained submission,

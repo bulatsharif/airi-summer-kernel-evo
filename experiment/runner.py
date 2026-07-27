@@ -33,8 +33,14 @@ Solve the task described in TASK.md and task.json.
 - Edit only submission.py.
 - Do not define or call main(); the evaluator owns main and correctness checks.
 - Do not inspect repository baselines, task evaluator source, or previous runs.
-- Use `python3 -m cute_harness check` and `python3 -m cute_harness run` for
-  compiler, runtime, correctness, and profiler feedback.
+- Shell access is intentionally limited to plain
+  `python3 -m cute_harness check ...` and
+  `python3 -m cute_harness run ...` commands.
+- Do not append pipes, redirects, command chains, or shell utilities. Use the
+  read tool for workspace and skill files; do not use `python3 -c` to inspect
+  local CUTLASS.
+- Treat remote harness compiler output as the installed CuTe API oracle. Fix
+  its first concrete diagnostic before delegating any exploration.
 - Establish correctness before optimizing.
 - Leave the best final candidate in submission.py.
 """

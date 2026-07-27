@@ -149,7 +149,20 @@ the evaluation harness owns input generation, reference computation, timing,
 and PASS reporting.
 Do not inspect previous runs, workspaces, known baselines, or evaluator source.
 
-Use these commands for feedback:
+Tool contract:
+
+- Use the read tool for TASK.md, task.json, submission.py, and the installed
+  skill/reference files.
+- Use the write/edit tool only for submission.py.
+- Shell access is intentionally limited to the two plain harness command forms
+  below. Do not add pipes, redirects, command chaining, wrappers, or shell
+  utilities such as head, ls, find, grep, or which.
+- Do not use python3 -c to inspect local CUTLASS: CuTe is authoritative only on
+  the remote worker. The remote harness compiler error is the API oracle.
+- After an error, fix the first concrete diagnostic and rerun the same harness
+  command. Do not delegate environment or API exploration before doing that.
+
+Allowed feedback commands:
 
 python3 -m cute_harness check {task_id} {candidate_path}
 python3 -m cute_harness run {task_id} {candidate_path} --seed {seed} --timeout {gpu_timeout}

@@ -63,6 +63,9 @@ class ExperimentRunnerTests(unittest.TestCase):
         self.assertIn("python3 -m cute_harness check", prompt)
         self.assertIn("python3 -m cute_harness run", prompt)
         self.assertNotIn("\npython -m cute_harness", prompt)
+        self.assertIn("Do not add pipes, redirects, command chaining", prompt)
+        self.assertIn("Do not use python3 -c", prompt)
+        self.assertIn("remote harness compiler error is the API oracle", prompt)
 
     def test_inline_config_reopens_only_the_current_workspace(self):
         workspace = REPO_ROOT / "work" / "current-attempt"
