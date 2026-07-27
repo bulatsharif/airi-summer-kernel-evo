@@ -16,6 +16,9 @@ If the workspace contains `task.json` with
 
 - for dense FP8 GEMM, read
   [candidate-gemm-api.md](references/candidate-gemm-api.md) before coding;
+- for the exact participant/token lifecycle, read
+  [candidate-kernel-patterns.md](references/candidate-kernel-patterns.md)
+  before writing a pipeline loop;
 - edit only `submission.py`;
 - preserve the starter's JIT entrypoint;
 - do not add `main()`, inputs, an oracle, timing, or PASS reporting;
@@ -48,7 +51,8 @@ conservative default and report it.
 
 - Every FP8 task: [fp8.md](references/fp8.md).
 - Candidate-only dense FP8 GEMM:
-  [candidate-gemm-api.md](references/candidate-gemm-api.md).
+  [candidate-gemm-api.md](references/candidate-gemm-api.md) and
+  [candidate-kernel-patterns.md](references/candidate-kernel-patterns.md).
 - New/changed kernel: [cute-dsl.md](references/cute-dsl.md),
   [layouts.md](references/layouts.md),
   [memory-pipelines.md](references/memory-pipelines.md), and

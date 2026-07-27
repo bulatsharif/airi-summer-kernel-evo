@@ -10,6 +10,10 @@ workspaces. It targets the CUTLASS CuTe DSL 4.6.1 API installed on the B300
 worker. It is an API skeleton, not a complete kernel: the candidate still owns
 tiling, pipeline flow, synchronization, accumulator state, and epilogue.
 
+Read [candidate-kernel-patterns.md](candidate-kernel-patterns.md) for the exact
+participant/token transitions. Its examples deliberately omit the
+task-specific layouts, partitions, epilogue, and launch design.
+
 The remote harness compiler remains authoritative if an error contradicts this
 chapter. Fix its first diagnostic before changing another part of the design.
 
@@ -239,7 +243,8 @@ acc_producer, acc_consumer = pipeline.PipelineUmmaAsync.create(
 ```
 
 Do not construct these as `tcgen05.PipelineTmaUmma` or replace them with an
-invented manual barrier.
+invented manual barrier. Do not substitute `PipelineUmmaAsync` for the A/B TMA
+pipeline.
 
 ## Global tiles, partitions, and fragments
 
@@ -291,6 +296,8 @@ tma_smem_b, tma_global_b = cute.nvgpu.cpasync.tma_partition(
 After acquiring an empty A/B stage, issue TMA copies with:
 
 ```python
+empty_ab = ab_producer.acquire_and_advance()
+
 cute.copy(
     tma_atom_a,
     tma_global_a[(None, empty_ab.count)],
@@ -304,6 +311,32 @@ cute.copy(
     tma_bar_ptr=empty_ab.barrier,
 )
 ```
+
+TMA completion is recorded by the configured transaction bytes arriving at
+`empty_ab.barrier`; there is no `ab_producer.commit()` call. Wait and release
+the corresponding consumer token:
+
+```python
+full_ab = ab_consumer.wait_and_advance()
+# Consume staged A/B fragments selected by full_ab.index.
+full_ab.release()
+```
+
+The accumulator pipeline has a different producer transition:
+
+```python
+empty_accumulator = acc_producer.acquire_and_advance()
+# Issue all UMMA contributions into this accumulator.
+empty_accumulator.commit()
+
+full_accumulator = acc_consumer.wait_and_advance()
+# Read TMEM and store the task-specific epilogue.
+full_accumulator.release()
+```
+
+The `commit()` and `release()` calls above belong to returned tokens, not to
+`acc_producer` or `acc_consumer`. See the linked kernel patterns for the
+complete nesting order and explicit invalid spellings.
 
 `cute.gemm` is a fragment-level MMA operation. It does not create TMA atoms,
 pipelines, SMEM, or the epilogue. Its five-argument order is:

@@ -72,6 +72,9 @@ class TaskManifestTests(unittest.TestCase):
         reference = (
             skill / "references" / "candidate-gemm-api.md"
         ).read_text(encoding="utf-8")
+        patterns = (
+            skill / "references" / "candidate-kernel-patterns.md"
+        ).read_text(encoding="utf-8")
         skill_body = (skill / "SKILL.md").read_text(encoding="utf-8")
 
         for snippet in (
@@ -89,6 +92,32 @@ class TaskManifestTests(unittest.TestCase):
             "[candidate-gemm-api.md](references/candidate-gemm-api.md)",
             skill_body,
         )
+        self.assertIn(
+            "[candidate-kernel-patterns.md]"
+            "(references/candidate-kernel-patterns.md)",
+            skill_body,
+        )
+        for snippet in (
+            "empty_ab = ab_producer.acquire_and_advance()",
+            "full_ab = ab_consumer.wait_and_advance()",
+            "full_ab.release()",
+            "empty_accumulator = acc_producer.acquire_and_advance()",
+            "empty_accumulator.commit()",
+            "full_accumulator = acc_consumer.wait_and_advance()",
+            "full_accumulator.release()",
+            "There is no",
+            "task-specific",
+        ):
+            self.assertIn(snippet, patterns)
+        for leaked_task_detail in (
+            "4096",
+            "1024",
+            "8192",
+            "OUTPUT_SCALE",
+            "FP8_MAX",
+            "relu(",
+        ):
+            self.assertNotIn(leaked_task_detail, patterns)
 
     def test_evaluators_do_not_depend_on_candidate_problem_constants(self):
         public_constants = {
