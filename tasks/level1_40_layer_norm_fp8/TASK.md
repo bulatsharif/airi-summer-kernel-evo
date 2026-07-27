@@ -1,6 +1,6 @@
 # Task: LayerNorm, CuTe FP8
 
-Реализуй candidate-код для:
+Implement candidate code for:
 
 ```text
 input shape:      [16, 64, 256, 256]
@@ -10,34 +10,36 @@ weight:           ones
 bias:             zeros
 ```
 
-Каждая batch row содержит `64 * 256 * 256 = 4,194,304` элементов.
+The evaluator presents the input and output as two-dimensional tensors with
+shape `[16, 4_194_304]`. Each row is normalized independently.
 
 ## Precision contract
 
-- Input storage — FP8 E4M3FN.
-- Dequantization, mean, variance и normalization — FP32.
-- Output — FP32.
-- Variance считается как mean от `(x - mean)^2`.
-- Используй streaming passes и warp/CTA reductions.
+- Input storage is FP8 E4M3FN.
+- Convert every input value to FP32 and multiply by `INPUT_SCALE` before use.
+- Mean, centered variance, normalization, and output are FP32.
+- Variance is the mean of `(x - mean) ** 2`.
+- A correctness-first streaming implementation is acceptable; speed is not
+  scored yet.
 
 ## Candidate ABI
 
-- Редактируй только выданный `submission.py`.
-- Сохрани как минимум один `@cute.kernel`, один `@cute.jit`, `cute.rsqrt` и
-  butterfly warp shuffle.
-- Не определяй и не вызывай `main()`.
-- Не создавай inputs, PyTorch reference или PASS-строку.
-- Harness владеет `main()`, компиляцией, входами и numerical validation.
+- Edit only the prepared `submission.py`.
+- Keep at least one `@cute.kernel`, one `@cute.jit`, `cute.rsqrt`, and a real
+  butterfly warp reduction using `cute.arch.shuffle_sync_bfly`.
+- `layer_norm(input_tensor, output_tensor)` is the evaluator entry point.
+- Launch a CuTe kernel that writes every output element.
+- Do not define/call `main()`, create inputs, compute a PyTorch reference, or
+  print a PASS marker. The harness appends those evaluator-owned parts.
 
 ## Acceptance
 
-- Full max absolute error относительно PyTorch LayerNorm: `<= 0.01`.
-- Все output values должны быть finite.
-- Скорость пока не оценивается.
+- Full max absolute error versus PyTorch LayerNorm: `<= 0.01`.
+- Every output value must be finite.
 
 ## Iteration loop
 
-```powershell
+```text
 python -m cute_harness check level1_40_layer_norm_fp8 submission.py
 python -m cute_harness run level1_40_layer_norm_fp8 submission.py
 ```

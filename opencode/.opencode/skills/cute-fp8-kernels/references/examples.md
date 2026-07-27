@@ -33,15 +33,33 @@ Host/JIT setup:
 6. create A/B TMA atoms and total transaction bytes
 7. allocate pipeline/shared storage and launch (baseline uses 128 threads)
 
-Version-pinned helper families:
+Compiler-verified CUTLASS 4.6.1 seed:
 
 ```python
-sm100_utils.make_trivial_tiled_mma(...)
-sm100_utils.make_smem_layout_a(...)
-sm100_utils.make_smem_layout_b(...)
-cute.nvgpu.make_tiled_tma_atom_A(...)
-cute.nvgpu.make_tiled_tma_atom_B(...)
+a_major = utils.LayoutEnum.from_tensor(a).mma_major_mode()
+b_major = utils.LayoutEnum.from_tensor(b).mma_major_mode()
+mma_tiler_mnk = (128, 128, 64)
+tiled_mma = sm100_utils.make_trivial_tiled_mma(
+    a.element_type,
+    a_major,
+    b_major,
+    cutlass.Float32,
+    tcgen05.CtaGroup.ONE,
+    (128, 128),
+)
+smem_layout_a = sm100_utils.make_smem_layout_a(
+    tiled_mma, mma_tiler_mnk, a.element_type, 2
+)
+smem_layout_b = sm100_utils.make_smem_layout_b(
+    tiled_mma, mma_tiler_mnk, b.element_type, 2
+)
 ```
+
+This exact block compiled on the shared B300 and produced MMA shape
+`(128,128,32)` for E4M3. Continue with the exact TMA, pipeline, `cute.gemm`,
+device-index, and launch signatures in
+[api-cutlass-4.6.1.md](api-cutlass-4.6.1.md). Do not replace arguments with
+remembered APIs from another release.
 
 Device flow:
 

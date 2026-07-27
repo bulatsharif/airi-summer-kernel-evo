@@ -14,9 +14,9 @@ especially FP8 kernels for the shared B300 GPU.
 - Treat the user's prompt as the operation specification. Identify the
   operation, layouts, FP8 format, scaling convention, accumulator/output types,
   required shapes, correctness rule, and performance goal before coding.
-- Keep the submitted Python file self-contained apart from packages installed
-  on the runner. It must define `main()` and call it from
-  `if __name__ == "__main__":`.
+- Follow the task's submission mode. A standalone file owns `main()`, inputs,
+  and validation. A prepared harness candidate must not define/call `main()`,
+  generate references, or print `PASS`; `cute_harness` appends those parts.
 - Establish correctness before optimizing. Build the reference from the actual
   quantized inputs and specified scales; report quantization error separately.
 - Do not weaken tolerances, skip required shapes, catch an implementation error
@@ -37,6 +37,10 @@ Submit a self-contained Python file to the shared remote GPU service with
   embed, or commit the key.
 
 ## Submission contents
+
+For prepared tasks with a harness-owned evaluator, edit only the prepared
+candidate and use the exact `python -m cute_harness check/run` commands from
+the prompt. The rules below describe legacy standalone probes and submissions.
 
 A task submission normally contains the CuTe kernel, its JIT launcher, and a
 `main()` that creates deterministic inputs, computes a reference, compiles and

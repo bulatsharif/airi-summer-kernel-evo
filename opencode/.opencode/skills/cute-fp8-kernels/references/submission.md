@@ -1,4 +1,22 @@
-# Single-file submission
+# Submission modes
+
+## Harness-owned evaluator
+
+When `TASK.md` says that the harness owns evaluation, the prepared
+`submission.py` is candidate code, not a standalone program:
+
+- keep the required `@cute.kernel` and `@cute.jit` entry points
+- do not define or call `main()`
+- do not allocate test inputs, compute a Torch reference, or print `PASS`
+- do not import evaluator helpers merely to satisfy hidden validation
+- run only the exact `python -m cute_harness check/run` commands supplied by
+  the task environment
+
+The harness snapshots the candidate and appends a self-contained evaluator at
+upload time. Replacing the whole candidate file is allowed; evaluator imports
+and constants do not live in the editable prefix.
+
+## Standalone single-file submission
 
 The submitted `.py` file is the reproducible unit: kernel, JIT launcher, input
 creation, oracle, checks, and bounded timing. The remote service cannot depend
@@ -84,7 +102,7 @@ Use the URL/header/form command in `AGENTS.md`; read the API key only from
 `CUTE_HARNESS_API_KEY`. Inspect process fields before profiler fields. Download
 a profile only to answer a concrete question.
 
-Before submission:
+Before a standalone submission:
 
 - file is self-contained and calls `main()`
 - implementation is CuTe DSL

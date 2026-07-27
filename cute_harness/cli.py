@@ -23,6 +23,7 @@ from .tasks import REPO_ROOT, TaskError, TaskSpec, discover_tasks, load_task
 DEFAULT_HARNESS_URL = "http://109.236.57.62:18080"
 API_KEY_ENV = "CUTE_HARNESS_API_KEY"
 URL_ENV = "CUTE_HARNESS_URL"
+PROBES_ROOT = REPO_ROOT / "probes"
 
 
 def _safe_print(text: str, *, stream: Any = sys.stdout) -> None:
@@ -69,6 +70,19 @@ def _ensure_new_directory(path: Path) -> None:
             f"refusing to overwrite existing output directory: {path}"
         )
     path.mkdir(parents=True)
+
+
+def _resolve_probe_path(value: str) -> Path:
+    path = Path(value).resolve()
+    if path.suffix != ".py" or not path.is_file():
+        raise RuntimeError(f"probe must be an existing Python file: {path}")
+    try:
+        path.relative_to(PROBES_ROOT.resolve())
+    except ValueError as error:
+        raise RuntimeError(
+            f"developer probes must stay under {PROBES_ROOT.resolve()}: {path}"
+        ) from error
+    return path
 
 
 def _resolve_submission(
@@ -293,6 +307,22 @@ def command_prepare(args: argparse.Namespace) -> int:
     )
     public_manifest = task.public_manifest()
     public_manifest["starter"] = "submission.py"
+    if args.with_api_context:
+        context_path = task.api_context_path
+        if context_path is None:
+            raise RuntimeError(
+                f"task {task.id} does not define a selected API context"
+            )
+        if context_path.is_dir():
+            shutil.copytree(
+                context_path,
+                output_dir / "docs",
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
+            public_manifest["api_context"] = "docs/INDEX.md"
+        else:
+            shutil.copy2(context_path, output_dir / "API.md")
+            public_manifest["api_context"] = "API.md"
     (output_dir / "task.json").write_text(
         json.dumps(public_manifest, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -362,6 +392,97 @@ def command_run(args: argparse.Namespace) -> int:
                 not args.no_download_profile,
                 args.label,
             )
+    return 0 if passed else 1
+
+
+def command_probe(args: argparse.Namespace) -> int:
+    probe = _resolve_probe_path(args.probe)
+    api_key = os.environ.get(API_KEY_ENV, "")
+    if not api_key:
+        raise RuntimeError(
+            f"{API_KEY_ENV} is not set; keep the API key in the environment"
+        )
+    harness_url = args.server or os.environ.get(URL_ENV, DEFAULT_HARNESS_URL)
+    output_dir = (
+        Path(args.output).resolve()
+        if args.output
+        else REPO_ROOT / "runs" / f"{_timestamp_slug()}_probe_{probe.stem}"
+    )
+    _ensure_new_directory(output_dir)
+    snapshot = output_dir / "probe.py"
+    shutil.copy2(probe, snapshot)
+
+    client = HarnessClient(harness_url, api_key, args.timeout)
+    started_at = datetime.now(timezone.utc).isoformat()
+    start = time.monotonic()
+    response = client.run_file(snapshot, args.profiler)
+    wall_seconds = time.monotonic() - start
+    stdout = response.get("stdout")
+    stderr = response.get("stderr")
+    (output_dir / "stdout.txt").write_text(
+        stdout if isinstance(stdout, str) else "",
+        encoding="utf-8",
+    )
+    (output_dir / "stderr.txt").write_text(
+        stderr if isinstance(stderr, str) else "",
+        encoding="utf-8",
+    )
+    passed = (
+        response.get("success") is True
+        and response.get("exit_code") == 0
+        and response.get("timed_out") is not True
+    )
+    record = {
+        "schema_version": 1,
+        "harness_version": __version__,
+        "kind": "developer_api_probe",
+        "probe_name": probe.name,
+        "probe_sha256": _sha256(snapshot),
+        "run_label": args.label,
+        "harness_url": harness_url,
+        "profiler": args.profiler,
+        "started_at": started_at,
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+        "wall_seconds": wall_seconds,
+        "passed": passed,
+        "response": response,
+    }
+
+    profile_id = response.get("profile_id")
+    if (
+        not args.no_download_profile
+        and isinstance(profile_id, str)
+        and profile_id
+    ):
+        try:
+            profile_bytes = client.download_profile(profile_id)
+            (output_dir / "profile.json").write_bytes(profile_bytes)
+            json.loads(profile_bytes.decode("utf-8"))
+            record["profile_downloaded"] = True
+        except (
+            OSError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            RemoteHarnessError,
+        ) as error:
+            record["profile_downloaded"] = False
+            record["profile_download_error"] = str(error)
+
+    (output_dir / "result.json").write_text(
+        json.dumps(record, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    if isinstance(stdout, str) and stdout:
+        print("--- remote stdout ---")
+        _safe_print(stdout.rstrip())
+    if isinstance(stderr, str) and stderr:
+        print("--- remote stderr ---")
+        _safe_print(stderr.rstrip(), stream=sys.stderr)
+    print(
+        f"probe={'PASS' if passed else 'FAIL'} name={probe.name} "
+        f"device_time_ms={response.get('device_time_ms')} "
+        f"profile_id={response.get('profile_id')} artifacts={output_dir}"
+    )
     return 0 if passed else 1
 
 
@@ -462,6 +583,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     prepare_parser.add_argument("task_id")
     prepare_parser.add_argument("--output", required=True)
+    prepare_parser.add_argument("--with-api-context", action="store_true")
     prepare_parser.set_defaults(handler=command_prepare)
 
     check_parser = subparsers.add_parser(
@@ -489,6 +611,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument("--no-download-profile", action="store_true")
     run_parser.set_defaults(handler=command_run)
+
+    probe_parser = subparsers.add_parser(
+        "probe",
+        help="submit a developer-only standalone API probe under probes/",
+    )
+    probe_parser.add_argument("probe")
+    probe_parser.add_argument("--server")
+    probe_parser.add_argument("--profiler", default="pytorch")
+    probe_parser.add_argument("--timeout", type=float, default=360.0)
+    probe_parser.add_argument("--output")
+    probe_parser.add_argument("--label")
+    probe_parser.add_argument("--no-download-profile", action="store_true")
+    probe_parser.set_defaults(handler=command_probe)
 
     run_all_parser = subparsers.add_parser(
         "run-all",

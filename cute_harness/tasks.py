@@ -61,9 +61,21 @@ class TaskSpec:
     def baseline_path(self) -> Path:
         return self.member_path("baseline")
 
+    @property
+    def api_context_path(self) -> Path | None:
+        value = self.data.get("api_context")
+        if value is None:
+            return None
+        if not isinstance(value, str) or not value:
+            raise TaskError(
+                f"{self.id}: field 'api_context' must be a path string"
+            )
+        return self.member_path("api_context")
+
     def public_manifest(self) -> dict[str, Any]:
         public = dict(self.data)
         public.pop("baseline", None)
+        public.pop("api_context", None)
         return public
 
 
@@ -140,6 +152,22 @@ def _validate_manifest(data: Any, manifest_path: Path) -> TaskSpec:
         path = spec.member_path(field)
         if not path.is_file():
             raise TaskError(f"{manifest_path}: missing {field} file: {path}")
+    if spec.api_context_path is not None:
+        context_path = spec.api_context_path
+        if not context_path.exists():
+            raise TaskError(
+                f"{manifest_path}: missing api_context path: {context_path}"
+            )
+        if context_path.is_dir() and not (context_path / "INDEX.md").is_file():
+            raise TaskError(
+                f"{manifest_path}: api_context directory must contain "
+                f"INDEX.md: {context_path}"
+            )
+        if not context_path.is_dir() and not context_path.is_file():
+            raise TaskError(
+                f"{manifest_path}: api_context must be a file or directory: "
+                f"{context_path}"
+            )
     return spec
 
 

@@ -5,10 +5,18 @@ description: Write, debug, validate, and optimize NVIDIA CuTe DSL Python kernels
 
 # CuTe DSL FP8 kernels
 
-Implement the requested kernel in the task's existing self-contained Python
-submission. Do not create a harness/spec/candidate tree unless requested.
-PyTorch may allocate inputs and compute the reference; the implementation must
-be CuTe DSL Python.
+Implement the requested kernel in the task's existing Python submission. The
+task decides which of two modes applies:
+
+- **Harness-owned evaluator:** edit only candidate code; do not define/call
+  `main()`, allocate inputs, compute a PyTorch reference, or print `PASS`.
+  Preserve the task's candidate entry points. The harness appends validation.
+- **Standalone submission:** keep the file self-contained with allocation,
+  oracle, checks, and `main()` as requested by that task.
+
+The explicit `TASK.md` contract always overrides generic handbook examples.
+Do not create another harness/spec/candidate tree unless requested. The GPU
+implementation must be CuTe DSL Python in both modes.
 
 ## Establish the contract
 
@@ -24,28 +32,35 @@ conservative default and report it.
 
 ## Load references progressively
 
-- Every FP8 task: [fp8.md](references/fp8.md).
-- New/changed kernel: [cute-dsl.md](references/cute-dsl.md),
-  [layouts.md](references/layouts.md),
-  [memory-pipelines.md](references/memory-pipelines.md), and
-  [examples.md](references/examples.md).
+Read the smallest task-specific route; do not preload the whole handbook:
+
+- Elementwise or reduction task: [reductions.md](references/reductions.md).
+- Dense or block-scaled GEMM: [examples.md](references/examples.md), then
+  [api-cutlass-4.6.1.md](references/api-cutlass-4.6.1.md).
+- FP8 scale/format ambiguity: [fp8.md](references/fp8.md).
+- Only when building a TMA/TMEM GEMM pipeline:
+  [layouts.md](references/layouts.md) and
+  [memory-pipelines.md](references/memory-pipelines.md).
+- General DSL tracing question: [cute-dsl.md](references/cute-dsl.md).
 - Correctness implementation: [correctness.md](references/correctness.md).
 - Remote compatibility/submission: [b300.md](references/b300.md) and
   [submission.md](references/submission.md).
 - Failed run: [debugging.md](references/debugging.md).
 - Correct kernel being tuned: [performance.md](references/performance.md).
 
-These references are sufficient for design. Inspect examples shipped with the
-installed CUTLASS package only to confirm release-specific APIs.
+Start editing after the task-specific reference. Load a second reference only
+for a concrete unresolved question or a compiler diagnostic. Runtime feedback
+is authoritative when an installed signature still differs.
 
 ## Workflow
 
-1. Preserve the required entry point and existing contract.
+1. Identify harness-owned versus standalone mode and preserve its entry point.
 2. Start from the closest local dense/MXFP8 recipe.
 3. Keep static configuration explicit; compile once per specialization.
 4. Enforce dtype/layout/alignment/tail restrictions in `can_implement`.
 5. Build the oracle from actual quantized inputs and exact scale semantics.
-6. Submit remotely and make any failure exit nonzero.
+6. In harness-owned mode use the exact `cute_harness check/run` commands from
+   the prompt. In standalone mode submit as directed by the task.
 7. Optimize only after every required correctness case passes.
 8. Warm up, measure repeated kernel-only execution, and verify native FP8 MMA.
 

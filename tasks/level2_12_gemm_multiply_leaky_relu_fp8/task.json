@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
-  "id": "level2_76_gemm_add_relu_fp8",
-  "title": "GEMM plus BiasAdd plus ReLU with CuTe FP8",
+  "id": "level2_12_gemm_multiply_leaky_relu_fp8",
+  "title": "GEMM plus Multiply plus LeakyReLU with CuTe FP8",
   "source": {
     "suite": "KernelBench",
     "level": 2,
-    "number": 76,
-    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level2/76_Gemm_Add_ReLU.py"
+    "number": 12,
+    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level2/12_Gemm_Multiply_LeakyReLU.py"
   },
   "prompt": "TASK.md",
   "starter": "starter.py",
   "api_context": "../../opencode/.opencode/skills/cute-fp8-kernels/references/blackwell-fp8-docs",
-  "baseline": "../../cute_kernels/level2_76_gemm_add_relu_fp8/submission.py",
+  "baseline": "../../probes/level2_12_gemm_multiply_leaky_relu_fp8_baseline.py",
   "precision": {
     "gemm_inputs": "float8_e4m3fn",
     "accumulator": "float32",
@@ -19,22 +19,24 @@
     "output": "float32"
   },
   "problem": {
-    "operation": "Y = relu(X @ W.T + bias)",
+    "operation": "Y = leaky_relu((X @ W.T + bias) * multiplier, negative_slope)",
     "batch_size": 1024,
     "in_features": 8192,
     "out_features": 8192,
-    "seed": 20260726
+    "multiplier": 2.0,
+    "negative_slope": 0.1,
+    "seed": 20260727
   },
   "validation": {
     "mode": "local_owned_evaluator_v1",
-    "success_pattern": "(?m)^task=level2_76_gemm_add_relu .* PASS$",
+    "success_pattern": "(?m)^task=level2_12_gemm_multiply_leaky_relu .* PASS$",
     "full_max_absolute_error_vs_torch_fp8": 0.01,
-    "sample_max_absolute_error_vs_fp32": 0.1
+    "sample_max_absolute_error_vs_fp32": 0.2
   },
   "policy": {
     "minimum_cute_kernels": 2,
     "minimum_cute_jit_functions": 1,
-    "entrypoint_jit": "gemm_add_relu",
+    "entrypoint_jit": "gemm_multiply_leaky_relu",
     "required_calls": [
       "cute.nvgpu.make_tiled_tma_atom_A",
       "cute.nvgpu.make_tiled_tma_atom_B",
