@@ -76,8 +76,6 @@ python -m cute_harness run-all
 
 URL можно переопределить через `CUTE_HARNESS_URL` или `--server`.
 
-OpenCode/Qwen setup: [docs/OPENCODE.md](docs/OPENCODE.md).
-
 ## Что сохраняется после run
 
 Каждый запуск создаёт новую директорию, не перезаписывая старые артефакты:
@@ -93,12 +91,6 @@ profile.json      скачанный PyTorch trace
 
 API key в артефакты не записывается.
 
-Реальный smoke-run нового CLI:
-[result.json](results/harness_smoke_square_v0_1/result.json) и
-[profile.json](results/harness_smoke_square_v0_1/profile.json). Он завершился
-`PASS`, `device_time_ms=1.277771`,
-`profile_id=086f8a18-ca55-41f2-935c-3a10b2518740`.
-
 ## Ограничение harness-only v1
 
 Evaluator отделён от candidate workspace и автоматически добавляется локальным
@@ -106,23 +98,6 @@ harness перед upload. Policy запрещает candidate-коду `main()`
 compute и печать PASS. Это существенно честнее открытого v0, но ещё не
 server-side security boundary: evaluator находится на машине оркестратора, а
 remote endpoint по-прежнему исполняет один собранный Python-файл.
-
-## Qwen agent smoke
-
-Проверен полный внешний agent loop через локально развёрнутый
-`qwen3.6-35b-a3b` Q8_0:
-
-```text
-AGENTS.md + local CuTe FP8 guide + starter
-  -> Qwen generates submission.py
-  -> policy check
-  -> B300 harness
-  -> mismatches=0, PASS
-```
-
-Модель решила FP8 ReLU с первой попытки, сгенерировав настоящий CuTe kernel.
-Все артефакты и server audit:
-[results/qwen36_fp8_relu_smoke](results/qwen36_fp8_relu_smoke/README.md).
 
 Подробно: [цель и pipeline](docs/PROJECT_AND_PIPELINE.md) и
 [формат задач](docs/TASK_FORMAT.md).
