@@ -118,7 +118,8 @@ b_smem_layout = sm100_utils.make_smem_layout_b(
 )
 ```
 
-Create one-stage TMA views and atoms in the JIT entrypoint:
+Create one-stage TMA descriptor objects in the JIT entrypoint. The helpers
+return one object each; do not tuple-unpack them:
 
 ```python
 a_smem_one_stage = cute.select(a_smem_layout, mode=[0, 1, 2])
@@ -127,14 +128,14 @@ tma_op = cute.nvgpu.cpasync.CopyBulkTensorTileG2SOp(
     tcgen05.CtaGroup.ONE
 )
 
-tma_atom_a, tma_tensor_a = cute.nvgpu.make_tiled_tma_atom_A(
+tma_a = cute.nvgpu.make_tiled_tma_atom_A(
     tma_op,
     matrix_a,
     a_smem_one_stage,
     MMA_TILER_MNK,
     tiled_mma,
 )
-tma_atom_b, tma_tensor_b = cute.nvgpu.make_tiled_tma_atom_B(
+tma_b = cute.nvgpu.make_tiled_tma_atom_B(
     tma_op,
     matrix_b_nk,
     b_smem_one_stage,
@@ -143,8 +144,8 @@ tma_atom_b, tma_tensor_b = cute.nvgpu.make_tiled_tma_atom_B(
 )
 ```
 
-Pass the returned TMA tensor views—not the original tensors—to a kernel whose
-signature accepts the constructed objects:
+Pass `.atom` and `.tma_tensor` from each returned descriptor—not the original
+tensors—to a kernel whose signature accepts the constructed objects:
 
 ```python
 @cute.kernel
@@ -166,10 +167,10 @@ Bind those arguments before `.launch()`:
 ```python
 gemm_kernel(
     tiled_mma,
-    tma_atom_a,
-    tma_tensor_a,
-    tma_atom_b,
-    tma_tensor_b,
+    tma_a.atom,
+    tma_a.tma_tensor,
+    tma_b.atom,
+    tma_b.tma_tensor,
     output,
     a_smem_layout,
     b_smem_layout,

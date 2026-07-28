@@ -178,6 +178,10 @@ Tool contract:
 
 - Use the read tool for TASK.md, task.json, submission.py, and the installed
   skill/reference files.
+- Resolve every path in task.json.references relative to the current workspace,
+  exactly as written. Resolve links from SKILL.md relative to the directory
+  containing that SKILL.md. Never reinterpret a workspace task reference as a
+  path under the skill directory.
 - Use the write/edit tool only for submission.py.
 - Shell access is intentionally limited to the two plain harness command forms
   below. Do not add pipes, redirects, command chaining, wrappers, or shell
@@ -190,11 +194,18 @@ Tool contract:
   "found 0 @cute.kernel functions" literally; do not change imports or explore
   the environment in response.
 - In candidate mode, read only the task reference and the skill's two
-  candidate-mode chapters before the first implementation. Read broader
-  handbook chapters only when a concrete compiler diagnostic requires one.
+  explicitly selected candidate-mode files before the first implementation.
+  Do not enumerate or read the rest of the installed skill. Read a broader
+  handbook chapter only when a concrete compiler diagnostic requires it.
+- For dense GEMM, copy and adapt the compile-verified candidate template
+  selected by the task. Do not reconstruct its TMA/pipeline/TMEM flow from
+  memory or mix it with another API family.
 - Do not repeatedly restate the task contract. Preserve any pipeline that
   already reaches execution, make one minimal diagnostic-driven edit at a
   time, and rerun promptly.
+- Never rerun an identical candidate after a worker timeout or CUDA launch
+  failure. If one diagnostic repeats, restore the compile-verified template
+  instead of inventing another API. Stop immediately after the first PASS.
 
 Allowed feedback commands:
 

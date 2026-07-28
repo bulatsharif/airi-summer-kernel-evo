@@ -17,3 +17,37 @@ Keep compilation bounded: use dynamic `cutlass.range` loops for the
 with `cutlass.range_constexpr`. Do not use `continue` inside CuTe loops. Express
 divisibility and bounds as nested `if` predicates, accumulate only when all
 predicates hold, and issue one final output store per thread.
+
+## Exact two-dimensional storage indexing
+
+The CuTe tensors are already two-dimensional views. Never fold the batch or
+weight row into the column and then access row zero:
+
+```python
+input_flat = (
+    ic * IN_D * IN_H * IN_W
+    + id_value * IN_H * IN_W
+    + ih_value * IN_W
+    + iw_value
+)
+kernel_flat = kd * KH * KW + kh * KW + kw
+weight_column = oc_in_group * KD * KH * KW + kernel_flat
+
+input_value = input_tensor[batch, input_flat].to(cutlass.Float32)
+weight_value = weight_tensor[ic, weight_column].to(cutlass.Float32)
+output_tensor[batch, output_flat] = accumulator * INPUT_SCALE * WEIGHT_SCALE
+```
+
+For every valid `(kd, kh, kw)`, sum all four channels:
+
+```python
+for ic_in_group in cutlass.range(IN_CHANNELS_PER_GROUP):
+    ic = group * IN_CHANNELS_PER_GROUP + ic_in_group
+    # load input_tensor[batch, input_flat]
+    # load weight_tensor[ic, weight_column]
+```
+
+Do not use only `group * IN_CHANNELS_PER_GROUP`; that drops three quarters of
+the input channels. Do not multiply `oc_in_group` by
+`WEIGHT_LOGICAL_ROW_SIZE`; each output-channel slice has only
+`KD * KH * KW` entries.

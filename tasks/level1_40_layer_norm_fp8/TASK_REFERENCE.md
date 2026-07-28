@@ -11,10 +11,11 @@ Treat the input as 16 independent rows, each containing:
 The supplied storage is FP8 E4M3FN and the output is FP32. Convert each load to
 FP32 and apply `INPUT_SCALE` before accumulation.
 
-## Stable low-memory design
+Before coding, read the skill's
+`.opencode/skills/cute-fp8-kernels/references/reductions.md`. Use its verified
+one-warp-per-row pattern exactly for the correctness-first version.
 
-A practical implementation uses one 256-thread CTA per row and streams the row
-three times:
+Launch one 32-thread warp per row and stream the row three times:
 
 1. Accumulate the FP32 sum and reduce it to the mean.
 2. Accumulate centered squared deviations and reduce to the variance.
@@ -22,22 +23,27 @@ three times:
 
 Do not materialize the full row in registers.
 
-## CTA reduction
+## Exact lane ownership
 
-For each reduction:
+Each lane must own distinct columns:
 
-1. Reduce within each 32-thread warp with
-   `cute.arch.shuffle_sync_bfly` offsets `16, 8, 4, 2, 1`.
-2. Lane zero writes one partial to a small FP32 SMEM scratch tensor.
-3. Synchronize the CTA.
-4. Warp zero reduces the warp partials.
-5. Publish the CTA result in scratch and synchronize before all threads read.
+```python
+lane, _, _ = cute.arch.thread_idx()
+for iteration in cutlass.range(ROW_SIZE // 32):
+    column = iteration * 32 + lane
+```
 
-Required primitives include `cute.arch.shuffle_sync_bfly`, `cute.rsqrt`,
-`cute.arch.sync_threads`, `utils.SmemAllocator`, `cutlass.range` and a normal
-kernel launch.
+Do not assign a full `ROW_SIZE // 32` interval to every lane or warp and then
+loop over that interval without adding the lane. That repeats every value 32
+times. With a single warp there is no SMEM second-stage reduction: reduce the
+FP32 scalar directly with `cute.arch.shuffle_sync_bfly` offsets
+`16, 8, 4, 2, 1`.
+
+Every lane receives the reduced mean and variance from the butterfly result,
+so every lane can perform its third-pass stores. Use `cutlass.range`, not
+`range_constexpr`, for the 131072 streaming iterations.
 
 Keep the launchable `layer_norm_kernel` decorated with exactly `@cute.kernel`.
-Reduction helpers may be `@cute.jit`, but changing the device kernel itself to
-`@cute.jit` makes the local policy check report zero kernels. That diagnostic
-is literal and is not caused by imports.
+The reduction helper may be `@cute.jit`, but keep `layer_norm_kernel` decorated
+with exactly `@cute.kernel`. Changing it to `@cute.jit` makes the local policy
+check report zero kernels.

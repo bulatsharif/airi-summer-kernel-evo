@@ -81,6 +81,15 @@ class TaskManifestTests(unittest.TestCase):
         patterns = (
             skill / "references" / "candidate-kernel-patterns.md"
         ).read_text(encoding="utf-8")
+        template = (
+            skill / "references" / "candidate-dense-gemm-template.py"
+        ).read_text(encoding="utf-8")
+        elementwise_template = (
+            skill / "references" / "candidate-elementwise-template.py"
+        ).read_text(encoding="utf-8")
+        error_atlas = (
+            skill / "references" / "candidate-error-atlas.md"
+        ).read_text(encoding="utf-8")
         skill_body = (skill / "SKILL.md").read_text(encoding="utf-8")
 
         for snippet in (
@@ -99,10 +108,38 @@ class TaskManifestTests(unittest.TestCase):
             skill_body,
         )
         self.assertIn(
-            "[candidate-kernel-patterns.md]"
-            "(references/candidate-kernel-patterns.md)",
+            "[candidate-dense-gemm-template.py]"
+            "(references/candidate-dense-gemm-template.py)",
             skill_body,
         )
+        for snippet in (
+            "tma_a.atom",
+            "tma_a.tma_tensor",
+            "empty_ab = ab_producer.acquire_and_advance()",
+            "full_ab = ab_consumer.wait_and_advance()",
+            "empty_accumulator = acc_producer.acquire_and_advance()",
+            "full_accumulator = acc_consumer.wait_and_advance()",
+            "register_accumulator.store(",
+            "cute.autovec_copy(",
+            "Never add an `@cute.kernel` wrapper",
+        ):
+            self.assertIn(snippet, template)
+        for snippet in (
+            "column = column_block * THREADS_PER_CTA + thread_idx",
+            "output[row, column]",
+            "bias[column]",
+            "grid=(M, 1, 1)",
+            "block=(THREADS_PER_CTA, 1, 1)",
+            "result = summed * (summed > 0.0)",
+        ):
+            self.assertIn(snippet, elementwise_template)
+        for snippet in (
+            "producer_get_barrier",
+            "TmaOperandMajorMode",
+            "Every lane sums the same values",
+            "Do not retry an identical candidate",
+        ):
+            self.assertIn(snippet, error_atlas)
         for snippet in (
             "empty_ab = ab_producer.acquire_and_advance()",
             "full_ab = ab_consumer.wait_and_advance()",

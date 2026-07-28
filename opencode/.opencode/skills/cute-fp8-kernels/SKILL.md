@@ -14,11 +14,17 @@ Python.
 If the workspace contains `task.json` with
 `validation.mode = local_owned_evaluator_v1`, use candidate-only mode:
 
-- for dense FP8 GEMM, read
-  [candidate-gemm-api.md](references/candidate-gemm-api.md) before coding;
-- for the exact participant/token lifecycle, read
-  [candidate-kernel-patterns.md](references/candidate-kernel-patterns.md)
-  before writing a pipeline loop;
+- for dense FP8 GEMM, start from the compile-verified
+  [candidate-dense-gemm-template.py](references/candidate-dense-gemm-template.py);
+- for a separate bias/activation pass over `[M,N]`, adapt
+  [candidate-elementwise-template.py](references/candidate-elementwise-template.py)
+  without changing its indexing or launch;
+- preserve that template's TMA, pipeline, TMEM, and output-copy flow until the
+  dense GEMM reaches remote execution;
+- use [candidate-gemm-api.md](references/candidate-gemm-api.md) only to explain
+  a concrete template line, not to reconstruct the whole kernel;
+- after a failure, route its first diagnostic through
+  [candidate-error-atlas.md](references/candidate-error-atlas.md);
 - edit only `submission.py`;
 - preserve the starter's JIT entrypoint;
 - do not add `main()`, inputs, an oracle, timing, or PASS reporting;
@@ -31,12 +37,13 @@ If the workspace contains `task.json` with
   its first concrete diagnostic before delegating exploration;
 - treat the harness result as authoritative.
 
-Before the first edit in candidate-only mode, read only the task reference plus
-the two candidate chapters named above. Do not proactively read the general
-examples, layouts, memory-pipeline, correctness, performance, or standalone
-chapters. They are fallback material for a concrete diagnostic, not required
-startup context. After those required reads, implement immediately and run the
-local check; do not spend another turn restating the task contract.
+Before the first edit in candidate-only mode, read only the task reference and
+the single template or scalar/reduction chapter selected by it. Do not
+proactively read the API atlas, general examples, layouts, memory-pipeline,
+correctness, performance, or standalone chapters. They are fallback material
+for a concrete diagnostic, not required startup context. After those required
+reads, implement immediately and run the local check; do not spend another turn
+restating the task contract.
 
 Otherwise use standalone mode: keep the complete self-contained submission,
 including `main()`, input creation, validation, and bounded timing. Do not
@@ -56,10 +63,17 @@ conservative default and report it.
 
 ## Load references progressively
 
-- Every FP8 task: [fp8.md](references/fp8.md).
+- Standalone FP8 format/scale work: [fp8.md](references/fp8.md). Candidate-only
+  tasks get their exact scale contract from `TASK.md` and the selected task
+  reference; do not load this general chapter before the first implementation.
 - Candidate-only dense FP8 GEMM:
-  [candidate-gemm-api.md](references/candidate-gemm-api.md) and
-  [candidate-kernel-patterns.md](references/candidate-kernel-patterns.md).
+  [candidate-dense-gemm-template.py](references/candidate-dense-gemm-template.py).
+- Candidate-only two-dimensional epilogue:
+  [candidate-elementwise-template.py](references/candidate-elementwise-template.py).
+- Candidate-only dense FP8 GEMM failure:
+  [candidate-error-atlas.md](references/candidate-error-atlas.md), then the
+  narrow relevant section of
+  [candidate-gemm-api.md](references/candidate-gemm-api.md).
 - New/changed standalone kernel: [cute-dsl.md](references/cute-dsl.md),
   [layouts.md](references/layouts.md),
   [memory-pipelines.md](references/memory-pipelines.md), and
@@ -105,6 +119,11 @@ Use short diagnostic iterations. Change only the first rejected symbol or
 layout, then rerun the same evaluator. Never reintroduce a spelling already
 rejected by the worker, rewrite the whole pipeline after a late epilogue
 failure, or spend repeated turns re-explaining shapes and scaling.
+
+Never retry an identical candidate after a worker timeout or CUDA launch
+failure. If the same diagnostic occurs twice, restore the compile-verified
+template and reapply only the task constants and separate epilogue. Stop
+immediately after the first harness `PASS`.
 
 Never replace the implementation with PyTorch/Triton/CUDA C++, weaken tests,
 hide an error, or run an uncontrolled tuning loop.

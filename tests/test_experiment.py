@@ -66,6 +66,13 @@ class ExperimentRunnerTests(unittest.TestCase):
         self.assertIn("Do not add pipes, redirects, command chaining", prompt)
         self.assertIn("Do not use python3 -c", prompt)
         self.assertIn("remote harness compiler error is the API oracle", prompt)
+        self.assertIn("compile-verified candidate template", prompt)
+        self.assertIn("Never rerun an identical candidate", prompt)
+        self.assertIn(
+            "Resolve every path in task.json.references relative to the "
+            "current workspace",
+            prompt,
+        )
 
     def test_inline_config_reopens_only_the_current_workspace(self):
         workspace = REPO_ROOT / "work" / "current-attempt"

@@ -2,8 +2,10 @@
 
 Load the `cute-fp8-kernels` skill listed in `task.json.agent_skills` first.
 Before coding, read the skill's
-`.opencode/skills/cute-fp8-kernels/references/candidate-gemm-api.md` chapter.
-It contains the exact candidate-mode signatures installed on the worker.
+`.opencode/skills/cute-fp8-kernels/references/candidate-dense-gemm-template.py`.
+It is a complete compile-verified 4.6.1 framework example. Preserve its
+TMA/pipeline/TMEM core and adapt only this task's dimensions, scale, public
+kernel name, and JIT entrypoint. Do not reconstruct the core from prose.
 
 ## Data contract
 
@@ -52,3 +54,7 @@ accumulator result must be multiplied by:
 ```
 
 Apply that scale once in the output epilogue. Do not scale each K contribution.
+
+If a remote diagnostic occurs, read only
+`.opencode/skills/cute-fp8-kernels/references/candidate-error-atlas.md` before
+making one targeted correction.

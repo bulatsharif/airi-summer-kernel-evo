@@ -56,7 +56,7 @@ python3 -m experiment doctor \
 ```
 
 Ожидаемый результат: три ключа имеют статус `set`, `opencode` найден,
-`model_endpoint=reachable`, `tasks=3`, а requested model не помечена как
+`model_endpoint=reachable`, `tasks=9`, а requested model не помечена как
 `not advertised`.
 
 ## 3. Запустить эксперимент
@@ -113,11 +113,18 @@ calls и ответы evaluator. Тот же вывод сохраняется �
 baseline невозможно посчитать корректный speedup.
 
 Каждый workspace получает существующий OpenCode skill `cute-fp8-kernels` с
-подробным CuTe handbook и короткие task-specific references. Skill загружается
-прогрессивно, поэтому простая задача не платит input tokens за все главы сразу.
+подробным CuTe handbook, compile-verified templates и короткие task-specific
+references. Сначала агент читает только выбранный task reference и один
+релевантный template; более общий API handbook и
+`candidate-error-atlas.md` используются после конкретной диагностики. Поэтому
+простая задача не платит input tokens за весь CUTLASS-контекст сразу и не
+смешивает несовместимые API-рецепты.
 Subagents разрешены и наследуют тот же skill, references и файловую изоляцию;
 предыдущие `runs/**` и `work/**` им недоступны. Один model response ограничен
 8192 токенами, а provider request — 180 секундами.
+
+Разбор типичных ошибок Qwen, устройство retrieval и результаты эксперимента:
+[docs/QWEN35B_PASS_RATE.md](docs/QWEN35B_PASS_RATE.md).
 
 ## Результат
 

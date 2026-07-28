@@ -26,13 +26,39 @@ output_tensor: [BATCH, OUT_CHANNELS * OUT_D * OUT_H * OUT_W]
 ```
 
 Derive the transposed-convolution indexing from the public parameters above.
-The task intentionally provides no convolution-specific implementation
-example.
+Use output-centric inversion: one thread owns one output coordinate and sums
+only source coordinates whose inverse stride numerators are divisible. Use
+`cutlass.range`, nested `if` predicates, and `.to(cutlass.Float32)`. Do not use
+`continue`, `while`, `cute.convert`, `cute.cast`, `float(...)`,
+`thread_rank()`, or `num_threads()`.
 
 `WEIGHT_LOGICAL_ROW_SIZE = 6 * 3 * 5 * 7 = 630`. The physical FP8 tensor uses
 `WEIGHT_STORAGE_ROW_SIZE = 640` for converter alignment. Only columns `0:630`
 hold the logical `[out_channel_in_group, kd, kh, kw]` weight; columns `630:640`
 are zero padding and must be ignored.
+
+The tensors remain two-dimensional inside the kernel:
+
+```text
+input_tensor[batch, input_flat]
+weight_tensor[ic, weight_column]
+output_tensor[batch, output_flat]
+
+input_flat =
+    ic * IN_D * IN_H * IN_W
+    + id * IN_H * IN_W
+    + ih * IN_W
+    + iw
+
+weight_column =
+    oc_in_group * KD * KH * KW
+    + kd * KH * KW
+    + kh * KW
+    + kw
+```
+
+For every valid kernel coordinate, reduce over all four
+`ic_in_group` values; using only the first channel of the group is incorrect.
 
 ## Mathematical contract
 

@@ -30,6 +30,9 @@ Solve the task described in TASK.md and task.json.
 
 - Load every skill listed in `task.json.agent_skills`, then read every file
   listed in `task.json.references` before planning or delegating exploration.
+- Resolve `task.json.references` relative to this workspace exactly as written.
+  Resolve links inside a skill relative to that skill's `SKILL.md`; do not
+  search for or reinterpret either path family.
 - Edit only submission.py.
 - Do not define or call main(); the evaluator owns main and correctness checks.
 - Do not inspect repository baselines, task evaluator source, or previous runs.
