@@ -31,6 +31,13 @@ If the workspace contains `task.json` with
   its first concrete diagnostic before delegating exploration;
 - treat the harness result as authoritative.
 
+Before the first edit in candidate-only mode, read only the task reference plus
+the two candidate chapters named above. Do not proactively read the general
+examples, layouts, memory-pipeline, correctness, performance, or standalone
+chapters. They are fallback material for a concrete diagnostic, not required
+startup context. After those required reads, implement immediately and run the
+local check; do not spend another turn restating the task contract.
+
 Otherwise use standalone mode: keep the complete self-contained submission,
 including `main()`, input creation, validation, and bounded timing. Do not
 create a harness/spec/candidate tree unless requested.
@@ -53,7 +60,7 @@ conservative default and report it.
 - Candidate-only dense FP8 GEMM:
   [candidate-gemm-api.md](references/candidate-gemm-api.md) and
   [candidate-kernel-patterns.md](references/candidate-kernel-patterns.md).
-- New/changed kernel: [cute-dsl.md](references/cute-dsl.md),
+- New/changed standalone kernel: [cute-dsl.md](references/cute-dsl.md),
   [layouts.md](references/layouts.md),
   [memory-pipelines.md](references/memory-pipelines.md), and
   [examples.md](references/examples.md).
@@ -86,6 +93,18 @@ confirm release-specific APIs.
 8. In standalone mode, own warmup and repeated kernel-only timing. In
    candidate-only mode, rely on the harness measurement. Verify native FP8 MMA
    in both modes.
+
+The local candidate check is an AST/policy check, not a CuTe import or compile
+test. Interpret its diagnostics literally. For example, “found 0
+`@cute.kernel` functions” means the launchable device function lost its exact
+`@cute.kernel` decorator; changing imports cannot fix it. Keep helper functions
+as `@cute.jit`, but never change the starter's launchable kernel to
+`@cute.jit`.
+
+Use short diagnostic iterations. Change only the first rejected symbol or
+layout, then rerun the same evaluator. Never reintroduce a spelling already
+rejected by the worker, rewrite the whole pipeline after a late epilogue
+failure, or spend repeated turns re-explaining shapes and scaling.
 
 Never replace the implementation with PyTorch/Triton/CUDA C++, weaken tests,
 hide an error, or run an uncontrolled tuning loop.

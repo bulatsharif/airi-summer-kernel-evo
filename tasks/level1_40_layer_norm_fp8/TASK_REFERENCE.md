@@ -36,3 +36,8 @@ For each reduction:
 Required primitives include `cute.arch.shuffle_sync_bfly`, `cute.rsqrt`,
 `cute.arch.sync_threads`, `utils.SmemAllocator`, `cutlass.range` and a normal
 kernel launch.
+
+Keep the launchable `layer_norm_kernel` decorated with exactly `@cute.kernel`.
+Reduction helpers may be `@cute.jit`, but changing the device kernel itself to
+`@cute.jit` makes the local policy check report zero kernels. That diagnostic
+is literal and is not caused by imports.

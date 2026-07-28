@@ -11,3 +11,9 @@ The physical weight row has 640 columns, but only the first 630 are logical.
 
 The task intentionally provides no convolution implementation. The reference
 only disambiguates the public ABI and channel roles.
+
+Keep compilation bounded: use dynamic `cutlass.range` loops for the
+`4 * 3 * 5 * 7` reduction rather than fully unrolling the entire convolution
+with `cutlass.range_constexpr`. Do not use `continue` inside CuTe loops. Express
+divisibility and bounds as nested `if` predicates, accumulate only when all
+predicates hold, and issue one final output store per thread.

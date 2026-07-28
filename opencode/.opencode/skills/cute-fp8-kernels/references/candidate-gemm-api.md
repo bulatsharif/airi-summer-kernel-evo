@@ -52,12 +52,30 @@ cute.constexpr
 cute.Float32
 cute.StructuredMmaDType
 cute.ceildiv
+cute.struct.SharedStorage
+cute.arch.cluster_barrier
+cute.arch.cluster_arrive
+cute.arch.cluster_arrive_relaxed
+cute.arch.cluster_wait
+tcgen05.make_tiled_tma_atom_A
+tcgen05.make_tiled_tma_atom_B
+cpasync.make_tiled_tma_atom_A
+cpasync.make_tiled_tma_atom_B
+cpasync.TmaOperandMajorMode
+tiled_mma.get_slice_in_stage
+mma_slice.partition_D
 ```
 
 Use plain trace-time Python values, `cutlass.Constexpr` where a type annotation
 is required, `cutlass.range_constexpr` for fixed unrolled loops, and
 `cute.ceil_div` for launch grids. A tensor shape is a tuple-like value; do not
 call it as `tensor.shape(0)`.
+
+For `tcgen05.CtaGroup.ONE`, do not invent a cluster-barrier protocol. Use the
+pipeline participants below plus `pipeline.sync` for the final CTA-wide
+synchronization. TMA atoms are constructed in the JIT entrypoint with
+`cute.nvgpu.make_tiled_tma_atom_A/B`; never construct them inside the kernel or
+from the `cpasync` module.
 
 ## JIT-side tiled MMA
 
@@ -390,34 +408,69 @@ tmem_ptr = tmem.retrieve_ptr(ACC_DTYPE)
 tmem_accumulator = cute.make_tensor(tmem_ptr, tmem_accumulator.layout)
 ```
 
-After the MMA pipeline completes, load TMEM through a matching copy atom:
+After the MMA pipeline completes, load TMEM through a matching copy atom. The
+following two-subtile pattern is known to match the `(128, 256, 128)` candidate
+tile on this worker:
 
 ```python
+subtile_count = 2
+epilogue_tiler = (
+    (
+        cute.size(tmem_accumulator, mode=[0, 0]),
+        cute.size(tmem_accumulator, mode=[0, 1]) // subtile_count,
+    ),
+)
+tmem_acc_epilogue = cute.zipped_divide(
+    tmem_accumulator, epilogue_tiler
+)
+global_c_epilogue = cute.zipped_divide(
+    mma_global_c, epilogue_tiler
+)
+
 tmem_atom = cute.make_copy_atom(
     tcgen05.Ld32x32bOp(tcgen05.Repetition.x64),
     ACC_DTYPE,
 )
-tmem_copy = tcgen05.make_tmem_copy(tmem_atom, accumulator_subtile)
+tmem_copy = tcgen05.make_tmem_copy(
+    tmem_atom, tmem_acc_epilogue[None, 0]
+)
 tmem_thread_copy = tmem_copy.get_slice(thread_idx)
+tmem_source = tmem_thread_copy.partition_S(tmem_acc_epilogue)
+global_destination = tmem_thread_copy.partition_D(global_c_epilogue)
+register_accumulator = cute.make_rmem_tensor(
+    global_destination[None, None, 0].shape,
+    ACC_DTYPE,
+)
 ```
 
-Use `partition_S` for the TMEM accumulator view and `partition_D` for the
-corresponding output view. Allocate register fragments with
-`cute.make_rmem_tensor`, then:
+`partition_S` and `partition_D` belong to the thread slice returned by
+`make_tmem_copy`; they do not belong to `ThrMma`, `TiledMma`, or the tensor
+returned by `partition_C`. After the accumulator consumer becomes full:
 
 ```python
-cute.copy(tmem_copy, thread_accumulator_subtile, register_accumulator)
-register_output.store(register_accumulator.load() * OUTPUT_SCALE)
-cute.autovec_copy(register_output, thread_output_subtile)
+for tile_idx in cutlass.range(cute.size(tmem_source, mode=[2])):
+    cute.copy(
+        tmem_copy,
+        tmem_source[None, None, tile_idx],
+        register_accumulator,
+    )
+    register_accumulator.store(
+        register_accumulator.load() * OUTPUT_SCALE
+    )
+    cute.autovec_copy(
+        register_accumulator,
+        global_destination[None, None, tile_idx],
+    )
 ```
 
 Wait for the accumulator consumer before reading TMEM. Release its pipeline
 stage, synchronize participating threads, and call `tmem.free(tmem_ptr)` only
 after all output stores have been issued.
 
-The exact output partition/subtile layout depends on the selected MMA tile;
-derive it from `tmem_accumulator` and `mma_global_c` rather than inventing
-scalar `(i, j)` stores.
+Keep `mma_global_a`, `mma_global_b`, and `mma_global_c` construction before any
+`tma_partition` call. Do not replace the destination partition above with
+`global_destination_full[None, None, 0]`, scalar `(i, j)` stores, or an
+invented `get_slice_in_stage`/`partition_D` method.
 
 ## Debugging order
 

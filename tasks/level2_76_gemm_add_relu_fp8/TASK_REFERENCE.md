@@ -32,3 +32,9 @@ Once correct, fusion is an optional optimization.
 The two operands have different input scales. Restore the product of the A and
 B scales exactly once when copying the accumulator to output. Bias is already
 FP32 and is added after GEMM scaling.
+
+Construct `cute.nvgpu.make_tiled_tma_atom_A/B` in the JIT launcher exactly as
+shown by the common reference and pass the returned atoms and tensor views into
+the kernel. The helpers are not members of `cpasync`, need no
+`TmaOperandMajorMode`, and must not be moved into device code. Construct
+`mma_global_a/b/c` before calling `tma_partition`.

@@ -186,6 +186,15 @@ Tool contract:
   the remote worker. The remote harness compiler error is the API oracle.
 - After an error, fix the first concrete diagnostic and rerun the same harness
   command. Do not delegate environment or API exploration before doing that.
+- The local check is only an AST/policy check. Interpret messages such as
+  "found 0 @cute.kernel functions" literally; do not change imports or explore
+  the environment in response.
+- In candidate mode, read only the task reference and the skill's two
+  candidate-mode chapters before the first implementation. Read broader
+  handbook chapters only when a concrete compiler diagnostic requires one.
+- Do not repeatedly restate the task contract. Preserve any pipeline that
+  already reaches execution, make one minimal diagnostic-driven edit at a
+  time, and rerun promptly.
 
 Allowed feedback commands:
 
