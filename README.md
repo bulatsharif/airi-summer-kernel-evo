@@ -129,6 +129,10 @@ Subagents разрешены и наследуют тот же skill, references
 Компактный полный прогон всех 12 задач и план следующего масштабного eval:
 [docs/ALL_TASKS_COVERAGE_20260728.md](docs/ALL_TASKS_COVERAGE_20260728.md).
 
+Research reference for context routing and iterative kernel search:
+[JAXBench paper](docs/papers/jaxbench-2607.20466.pdf) and its
+[source/attribution record](docs/papers/README.md).
+
 ## Результат
 
 В конце печатается таблица:
