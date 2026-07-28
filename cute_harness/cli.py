@@ -24,6 +24,12 @@ from .assembly import (
     install_task_references,
 )
 from .client import HarnessClient, RemoteHarnessError
+from .compare import (
+    comparison_row,
+    parse_submission_specs,
+    render_comparison_table,
+    write_comparison_reports,
+)
 from .policy import CheckReport, check_submission
 from .tasks import REPO_ROOT, TaskError, TaskSpec, discover_tasks, load_task
 
@@ -505,6 +511,171 @@ def command_run_all(args: argparse.Namespace) -> int:
     return 0 if all_passed else 1
 
 
+def _record_kernel_time(record: dict[str, Any]) -> float | None:
+    benchmark = record.get("benchmark")
+    if not isinstance(benchmark, dict):
+        return None
+    value = benchmark.get("kernel_time_ms")
+    return float(value) if isinstance(value, (int, float)) else None
+
+
+def command_compare(args: argparse.Namespace) -> int:
+    specs = parse_submission_specs(args.submissions)
+    api_key = os.environ.get(API_KEY_ENV, "")
+    if not api_key:
+        raise RuntimeError(
+            f"{API_KEY_ENV} is not set; keep the API key in the environment"
+        )
+    harness_url = args.server or os.environ.get(URL_ENV, DEFAULT_HARNESS_URL)
+    output_dir = (
+        Path(args.output).resolve()
+        if args.output
+        else REPO_ROOT / "runs" / f"{_timestamp_slug()}_comparison"
+    )
+    _ensure_new_directory(output_dir)
+
+    tasks: dict[str, TaskSpec] = {}
+    for spec in specs:
+        tasks.setdefault(spec.task_id, load_task(spec.task_id))
+
+    baseline_results: dict[str, tuple[bool, dict[str, Any] | None, str | None]] = {}
+    for task_id, task in tasks.items():
+        print(f"\n=== {task_id}: baseline ===")
+        try:
+            evaluation = _evaluation_config(task, args)
+            with tempfile.TemporaryDirectory(
+                prefix="cute-harness-compare-baseline-"
+            ) as temp_dir:
+                candidate = Path(temp_dir) / "candidate.py"
+                candidate.write_text(
+                    baseline_candidate(task),
+                    encoding="utf-8",
+                )
+                assembled = Path(temp_dir) / "submission.py"
+                assembled.write_text(
+                    assemble_submission(task, candidate, evaluation),
+                    encoding="utf-8",
+                )
+                passed, record = _run_one(
+                    task,
+                    candidate,
+                    assembled,
+                    output_dir / "baselines" / task_id,
+                    harness_url,
+                    api_key,
+                    args.profiler,
+                    args.timeout,
+                    not args.no_download_profile,
+                    args.label,
+                    "baseline",
+                    evaluation,
+                )
+            baseline_results[task_id] = (passed, record, None)
+        except (OSError, RuntimeError, RemoteHarnessError) as error:
+            baseline_results[task_id] = (False, None, str(error))
+            print(f"error: baseline {task_id}: {error}", file=sys.stderr)
+
+    rows: list[dict[str, Any]] = []
+    all_passed = True
+    for spec in specs:
+        task = tasks[spec.task_id]
+        baseline_passed, baseline_record, baseline_error = baseline_results[
+            spec.task_id
+        ]
+        baseline_ms = (
+            _record_kernel_time(baseline_record)
+            if baseline_record is not None
+            else None
+        )
+        if not baseline_passed:
+            all_passed = False
+            rows.append(
+                comparison_row(
+                    spec,
+                    status="SKIPPED",
+                    baseline_ms=baseline_ms,
+                    candidate_ms=None,
+                    error=baseline_error or "baseline failed",
+                )
+            )
+            continue
+
+        print(f"\n=== {spec.task_id}: candidate {spec.name} ===")
+        try:
+            evaluation = _evaluation_config(task, args)
+            with tempfile.TemporaryDirectory(
+                prefix="cute-harness-compare-candidate-"
+            ) as temp_dir:
+                candidate = Path(temp_dir) / "candidate.py"
+                candidate.write_bytes(spec.path.read_bytes())
+                assembled = Path(temp_dir) / "submission.py"
+                assembled.write_text(
+                    assemble_submission(task, candidate, evaluation),
+                    encoding="utf-8",
+                )
+                passed, record = _run_one(
+                    task,
+                    candidate,
+                    assembled,
+                    output_dir
+                    / "candidates"
+                    / f"{spec.index:03d}_{spec.task_id}",
+                    harness_url,
+                    api_key,
+                    args.profiler,
+                    args.timeout,
+                    not args.no_download_profile,
+                    args.label,
+                    "agent",
+                    evaluation,
+                )
+            candidate_ms = _record_kernel_time(record)
+            status = "PASS" if passed else "FAIL"
+            error = None if passed else "candidate validation failed"
+        except (OSError, RuntimeError, RemoteHarnessError) as run_error:
+            passed = False
+            candidate_ms = None
+            status = "ERROR"
+            error = str(run_error)
+            print(
+                f"error: candidate {spec.name}: {run_error}",
+                file=sys.stderr,
+            )
+        all_passed = all_passed and passed
+        rows.append(
+            comparison_row(
+                spec,
+                status=status,
+                baseline_ms=baseline_ms,
+                candidate_ms=candidate_ms,
+                error=error,
+            )
+        )
+
+    metadata = {
+        "schema_version": 1,
+        "harness_version": __version__,
+        "harness_url": harness_url,
+        "profiler": args.profiler,
+        "seed": args.seed,
+        "warmup": args.warmup,
+        "repeats": args.repeats,
+        "all_passed": all_passed,
+    }
+    write_comparison_reports(
+        output_dir,
+        metadata=metadata,
+        rows=rows,
+    )
+    print()
+    print(render_comparison_table(rows))
+    print(
+        f"comparison={'PASS' if all_passed else 'FAIL'} "
+        f"artifacts={output_dir}"
+    )
+    return 0 if all_passed else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m cute_harness",
@@ -581,6 +752,29 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_all_parser.add_argument("--no-download-profile", action="store_true")
     run_all_parser.set_defaults(handler=command_run_all)
+
+    compare_parser = subparsers.add_parser(
+        "compare",
+        help="run separate baselines and compare multiple submissions",
+    )
+    compare_parser.add_argument(
+        "submissions",
+        nargs="+",
+        metavar="TASK_ID=PATH",
+    )
+    compare_parser.add_argument("--server")
+    compare_parser.add_argument("--profiler", default="pytorch")
+    compare_parser.add_argument("--timeout", type=float, default=360.0)
+    compare_parser.add_argument("--seed", type=int)
+    compare_parser.add_argument("--warmup", type=int, default=2)
+    compare_parser.add_argument("--repeats", type=int, default=5)
+    compare_parser.add_argument("--output")
+    compare_parser.add_argument(
+        "--label",
+        help="optional label stored in every baseline/candidate result",
+    )
+    compare_parser.add_argument("--no-download-profile", action="store_true")
+    compare_parser.set_defaults(handler=command_compare)
     return parser
 
 
@@ -589,6 +783,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return int(args.handler(args))
-    except (OSError, RuntimeError, TaskError, RemoteHarnessError) as error:
+    except (
+        OSError,
+        RuntimeError,
+        TaskError,
+        RemoteHarnessError,
+        ValueError,
+    ) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2

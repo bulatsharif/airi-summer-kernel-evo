@@ -447,6 +447,70 @@ class CliTests(unittest.TestCase):
         self.assertIn("_CUTE_HARNESS_SEED = 0", assembled)
         self.assertIn("kernel_time_ms=", assembled)
 
+    def test_compare_reuses_one_baseline_and_calculates_speedups(self):
+        task_id = "level1_01_square_matrix_multiplication_fp8"
+        task = discover_tasks()[task_id]
+        candidate_times = iter((1.0, 0.5))
+
+        def fake_run_one(*args):
+            candidate_kind = args[10]
+            kernel_time_ms = (
+                2.0
+                if candidate_kind == "baseline"
+                else next(candidate_times)
+            )
+            return True, {
+                "acceptance": {"passed": True},
+                "benchmark": {"kernel_time_ms": kernel_time_ms},
+                "response": {},
+            }
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            first = root / "first.py"
+            second = root / "second.py"
+            source = candidate_starter(task)
+            first.write_text(source, encoding="utf-8")
+            second.write_text(source, encoding="utf-8")
+            output = root / "comparison"
+
+            with patch.dict(
+                os.environ,
+                {"CUTE_HARNESS_API_KEY": "test-only-placeholder"},
+            ), patch(
+                "cute_harness.cli._run_one",
+                side_effect=fake_run_one,
+            ) as run_one:
+                code = main(
+                    [
+                        "compare",
+                        f"{task_id}={first}",
+                        f"{task_id}={second}",
+                        "--seed",
+                        "0",
+                        "--output",
+                        str(output),
+                    ]
+                )
+
+            report = json.loads(
+                (output / "comparison.json").read_text(encoding="utf-8")
+            )
+            table = (output / "comparison.txt").read_text(encoding="utf-8")
+
+        self.assertEqual(code, 0)
+        self.assertEqual(run_one.call_count, 3)
+        self.assertEqual(len(report["rows"]), 2)
+        self.assertEqual(report["rows"][0]["speedup"], 2.0)
+        self.assertEqual(report["rows"][1]["speedup"], 4.0)
+        self.assertEqual(report["rows"][0]["baseline_ms"], 2.0)
+        self.assertIn("2.000x", table)
+        self.assertIn("4.000x", table)
+
+    def test_compare_rejects_malformed_submission_spec(self):
+        code = main(["compare", "missing-equals-sign"])
+        self.assertEqual(code, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

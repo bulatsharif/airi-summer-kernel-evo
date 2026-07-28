@@ -194,6 +194,59 @@ python3 -m cute_harness run \
 python3 -m unittest -v
 ```
 
+## Сравнить несколько submission с baseline
+
+Команда `compare` принимает одну или несколько пар `TASK_ID=PATH`. Для каждой
+уникальной задачи baseline измеряется отдельным запуском, после чего каждый
+candidate проверяется тем же evaluator с теми же `seed`, `warmup` и `repeats`.
+Ускорение считается только для корректных результатов:
+
+```text
+speedup = baseline kernel_time_ms / candidate kernel_time_ms
+```
+
+Пример для нескольких задач:
+
+```bash
+python3 -m cute_harness compare \
+  level1_01_square_matrix_multiplication_fp8=work/gemm/submission.py \
+  level1_40_layer_norm_fp8=work/layernorm/submission.py \
+  --seed 0 \
+  --warmup 2 \
+  --repeats 5 \
+  --timeout 600 \
+  --output runs/comparisons/my-run
+```
+
+Можно передать несколько реализаций одной задачи. В этом случае baseline
+запускается один раз и переиспользуется для всех указанных файлов:
+
+```bash
+python3 -m cute_harness compare \
+  level2_14_gemm_divide_sum_scaling_fp8=variants/v1/submission.py \
+  level2_14_gemm_divide_sum_scaling_fp8=variants/v2/submission.py \
+  level2_14_gemm_divide_sum_scaling_fp8=variants/v3/submission.py \
+  --seed 0 \
+  --warmup 2 \
+  --repeats 5
+```
+
+По умолчанию артефакты создаются в `runs/<timestamp>_comparison/`:
+
+```text
+baselines/<task-id>/                 отдельный baseline run
+candidates/<number>_<task-id>/      candidate run
+comparison.json                      параметры и полные строки результата
+comparison.csv                       машиночитаемая таблица
+comparison.txt                       терминальная таблица
+```
+
+В таблице `Candidate ms` и `Speedup` выводятся только для прошедшего
+correctness candidate. Если baseline задачи не прошёл, связанные candidates
+получают статус `SKIPPED`. Команда возвращает код `0`, только когда все
+baselines и candidates прошли; validation и measurement contract совпадают с
+обычным `cute_harness run`.
+
 ## Структура
 
 ```text
