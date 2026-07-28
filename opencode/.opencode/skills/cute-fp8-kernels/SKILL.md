@@ -19,6 +19,20 @@ If the workspace contains `task.json` with
 - for a separate bias/activation pass over `[M,N]`, adapt
   [candidate-elementwise-template.py](references/candidate-elementwise-template.py)
   without changing its indexing or launch;
+- for scalar math, activations, softmax, or LogSumExp, use the complete
+  B300-verified [candidate-math-api.md](references/candidate-math-api.md);
+- mechanically copy the selected public code template before adapting it;
+  these are the allowed candidate-mode forms:
+
+  ```text
+  cp ".opencode/skills/cute-fp8-kernels/references/candidate-dense-gemm-template.py" submission.py
+  cp ".opencode/skills/cute-fp8-kernels/references/candidate-elementwise-template.py" submission.py
+  ```
+
+  Read the starter and task ABI first because copying replaces
+  `submission.py`. The selected `cp` must be the first mutating tool call after
+  those reads: do not use task/todowrite or write/edit to reproduce the
+  template. After copying, the entire candidate remains editable;
 - preserve that template's TMA, pipeline, TMEM, and output-copy flow until the
   dense GEMM reaches remote execution;
 - use [candidate-gemm-api.md](references/candidate-gemm-api.md) only to explain
@@ -37,8 +51,9 @@ If the workspace contains `task.json` with
   its first concrete diagnostic before delegating exploration;
 - treat the harness result as authoritative.
 
-Before the first edit in candidate-only mode, read only the task reference and
-the single template or scalar/reduction chapter selected by it. Do not
+Before the first edit in candidate-only mode, read only the task reference,
+the single template selected by it, and `candidate-math-api.md` when the task
+uses scalar math. Do not
 proactively read the API atlas, general examples, layouts, memory-pipeline,
 correctness, performance, or standalone chapters. They are fallback material
 for a concrete diagnostic, not required startup context. After those required
@@ -70,6 +85,8 @@ conservative default and report it.
   [candidate-dense-gemm-template.py](references/candidate-dense-gemm-template.py).
 - Candidate-only two-dimensional epilogue:
   [candidate-elementwise-template.py](references/candidate-elementwise-template.py).
+- Candidate-only scalar math and activation composition:
+  [candidate-math-api.md](references/candidate-math-api.md).
 - Candidate-only dense FP8 GEMM failure:
   [candidate-error-atlas.md](references/candidate-error-atlas.md), then the
   narrow relevant section of

@@ -697,51 +697,55 @@ if [[ "$RENDER_STATUS" -ne 0 ]]; then
   printf 'Warning: rendering the progress stream failed with status %s.\n' "$RENDER_STATUS" >&2
 fi
 
-SESSION_ID=$(
-  jq -r 'select(.sessionID != null) | .sessionID' "$PROGRESS_FILE" 2>/dev/null |
-    head -n 1
-)
-
-if [[ -z "$SESSION_ID" ]]; then
-  printf 'Token usage: unavailable because no OpenCode session ID was emitted.\n'
-elif [[ ! "$SESSION_ID" =~ ^[A-Za-z0-9_-]+$ ]]; then
-  printf 'Token usage: unavailable because the emitted session ID was invalid.\n'
+if [[ "${OPENCODE_HEADLESS_SKIP_USAGE:-0}" = "1" ]]; then
+  printf 'Token usage: deferred to the experiment runner.\n'
 else
-  USAGE_JSON=$(
-    opencode db --format json "
-      WITH RECURSIVE run_sessions(id) AS (
-        SELECT '$SESSION_ID'
-
-        UNION ALL
-
-        SELECT s.id
-        FROM session AS s
-        JOIN run_sessions AS r ON s.parent_id = r.id
-      )
-      SELECT
-        COUNT(*) AS sessions,
-        printf('%,d', COALESCE(SUM(tokens_input), 0)) AS input_uncached,
-        printf('%,d', COALESCE(SUM(tokens_cache_read), 0)) AS input_cached,
-        printf('%,d', COALESCE(SUM(tokens_output), 0)) AS outputs,
-        printf('%,d', COALESCE(SUM(tokens_reasoning), 0)) AS reasoning
-      FROM session
-      WHERE id IN (SELECT id FROM run_sessions)
-    " 2>/dev/null
+  SESSION_ID=$(
+    jq -r 'select(.sessionID != null) | .sessionID' "$PROGRESS_FILE" 2>/dev/null |
+      head -n 1
   )
-  USAGE_STATUS=$?
 
-  if [[ "$USAGE_STATUS" -ne 0 || -z "$USAGE_JSON" ]]; then
-    printf 'Token usage: unavailable because the OpenCode database query failed.\n'
+  if [[ -z "$SESSION_ID" ]]; then
+    printf 'Token usage: unavailable because no OpenCode session ID was emitted.\n'
+  elif [[ ! "$SESSION_ID" =~ ^[A-Za-z0-9_-]+$ ]]; then
+    printf 'Token usage: unavailable because the emitted session ID was invalid.\n'
   else
-    printf '\nToken usage (main session and subagents):\n'
-    printf '%s\n' "$USAGE_JSON" |
-      jq -r '
-        .[0] |
-        "Token input uncached: \(.input_uncached)
+    USAGE_JSON=$(
+      opencode db --format json "
+        WITH RECURSIVE run_sessions(id) AS (
+          SELECT '$SESSION_ID'
+
+          UNION ALL
+
+          SELECT s.id
+          FROM session AS s
+          JOIN run_sessions AS r ON s.parent_id = r.id
+        )
+        SELECT
+          COUNT(*) AS sessions,
+          printf('%,d', COALESCE(SUM(tokens_input), 0)) AS input_uncached,
+          printf('%,d', COALESCE(SUM(tokens_cache_read), 0)) AS input_cached,
+          printf('%,d', COALESCE(SUM(tokens_output), 0)) AS outputs,
+          printf('%,d', COALESCE(SUM(tokens_reasoning), 0)) AS reasoning
+        FROM session
+        WHERE id IN (SELECT id FROM run_sessions)
+      " 2>/dev/null
+    )
+    USAGE_STATUS=$?
+
+    if [[ "$USAGE_STATUS" -ne 0 || -z "$USAGE_JSON" ]]; then
+      printf 'Token usage: unavailable because the OpenCode database query failed.\n'
+    else
+      printf '\nToken usage (main session and subagents):\n'
+      printf '%s\n' "$USAGE_JSON" |
+        jq -r '
+          .[0] |
+          "Token input uncached: \(.input_uncached)
 Token input cached:   \(.input_cached)
 Token outputs:        \(.outputs)
 Token reasoning:      \(.reasoning)"
-      '
+        '
+    fi
   fi
 fi
 

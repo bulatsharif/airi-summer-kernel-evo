@@ -56,7 +56,7 @@ python3 -m experiment doctor \
 ```
 
 Ожидаемый результат: три ключа имеют статус `set`, `opencode` найден,
-`model_endpoint=reachable`, `tasks=9`, а requested model не помечена как
+`model_endpoint=reachable`, `tasks=12`, а requested model не помечена как
 `not advertised`.
 
 ## 3. Запустить эксперимент
@@ -126,6 +126,9 @@ Subagents разрешены и наследуют тот же skill, references
 Разбор типичных ошибок Qwen, устройство retrieval и результаты эксперимента:
 [docs/QWEN35B_PASS_RATE.md](docs/QWEN35B_PASS_RATE.md).
 
+Компактный полный прогон всех 12 задач и план следующего масштабного eval:
+[docs/ALL_TASKS_COVERAGE_20260728.md](docs/ALL_TASKS_COVERAGE_20260728.md).
+
 ## Результат
 
 В конце печатается таблица:
@@ -169,9 +172,12 @@ API keys в artifacts не сохраняются.
 | `level2_09_matmul_subtract_multiply_relu_fp8` | GEMM + Subtract + Multiply + ReLU | FP8/FP32 epilogue |
 | `level2_12_gemm_multiply_leaky_relu_fp8` | GEMM + Multiply + LeakyReLU | FP8/FP32 epilogue |
 | `level2_14_gemm_divide_sum_scaling_fp8` | GEMM + Divide + row Sum + Scaling | FP8/FP32 reduction |
+| `level2_29_matmul_mish_mish_fp8` | GEMM + Mish + Mish | FP8/FP32 activation |
 | `level2_40_matmul_scaling_residual_add_fp8` | GEMM + Scaling + ResidualAdd | FP8/FP32 epilogue |
+| `level2_55_matmul_maxpool_sum_scale_fp8` | GEMM + MaxPool + Sum + Scaling | FP8/FP32 reduction |
 | `level2_63_gemm_relu_divide_fp8` | GEMM + ReLU + Divide | FP8/FP32 epilogue |
 | `level2_76_gemm_add_relu_fp8` | GEMM + Bias + ReLU | FP8/FP32 epilogue |
+| `level2_99_matmul_gelu_softmax_fp8` | GEMM + GELU + Softmax | FP8/FP32 activation/reduction |
 
 Q8_0 относится к квантизации Qwen в `llama.cpp`; FP8 task’и отдельно
 исполняются на B300.

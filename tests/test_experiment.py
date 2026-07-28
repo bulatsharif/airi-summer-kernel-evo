@@ -7,10 +7,13 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 from cute_harness.tasks import REPO_ROOT
 from experiment.agent import (
     AgentMetrics,
+    _event_session_metrics,
+    _query_session_metrics,
     build_agent_prompt,
     build_workspace_inline_config,
 )
@@ -28,6 +31,78 @@ def evaluation_record(kernel_time_ms, profile_id):
 
 
 class ExperimentRunnerTests(unittest.TestCase):
+    def test_event_metrics_aggregate_finished_steps(self):
+        events = (
+            {
+                "type": "step_finish",
+                "timestamp": 1000,
+                "sessionID": "session_test",
+                "part": {
+                    "tokens": {
+                        "input": 10,
+                        "output": 4,
+                        "reasoning": 1,
+                        "cache": {"read": 20, "write": 2},
+                    }
+                },
+            },
+            {
+                "type": "step_finish",
+                "timestamp": 2500,
+                "sessionID": "session_test",
+                "part": {
+                    "tokens": {
+                        "input": 3,
+                        "output": 2,
+                        "reasoning": 0,
+                        "cache": {"read": 7, "write": 0},
+                    }
+                },
+            },
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "events.jsonl"
+            path.write_text(
+                "".join(json.dumps(event) + "\n" for event in events),
+                encoding="utf-8",
+            )
+            metrics = _event_session_metrics(path)
+
+        self.assertEqual(metrics["sessions"], 1)
+        self.assertEqual(metrics["input_uncached"], 13)
+        self.assertEqual(metrics["input_cached"], 27)
+        self.assertEqual(metrics["cache_write"], 2)
+        self.assertEqual(metrics["output"], 6)
+        self.assertEqual(metrics["reasoning"], 1)
+        self.assertEqual(metrics["root_wall_ms"], 1500)
+
+    @patch("experiment.agent.shutil.which", return_value="C:/tools/opencode.cmd")
+    @patch("experiment.agent.subprocess.run")
+    def test_metrics_query_resolves_wrapper_and_has_timeout(
+        self,
+        run,
+        _which,
+    ):
+        run.return_value = type(
+            "Completed",
+            (),
+            {
+                "returncode": 0,
+                "stdout": (
+                    '[{"sessions":1,"input_uncached":2,'
+                    '"input_cached":3,"cache_write":0,'
+                    '"output":4,"reasoning":0}]'
+                ),
+                "stderr": "",
+            },
+        )()
+
+        row = _query_session_metrics("opencode", "session_test")
+
+        self.assertEqual(row["output"], 4)
+        self.assertEqual(run.call_args.args[0][0], "C:/tools/opencode.cmd")
+        self.assertEqual(run.call_args.kwargs["timeout"], 15.0)
+
     def test_agent_config_bounds_requests_without_disabling_subagents(self):
         config = json.loads(
             (REPO_ROOT / "opencode.json").read_text(encoding="utf-8")
@@ -49,6 +124,27 @@ class ExperimentRunnerTests(unittest.TestCase):
             config["permission"]["bash"]["python3 -m cute_harness *"],
             "allow",
         )
+        self.assertEqual(
+            config["permission"]["bash"][
+                "cp .opencode/skills/cute-fp8-kernels/references/"
+                "candidate-dense-gemm-template.py submission.py"
+            ],
+            "allow",
+        )
+        self.assertEqual(
+            config["permission"]["bash"][
+                "cp .opencode/skills/cute-fp8-kernels/references/"
+                "candidate-elementwise-template.py submission.py"
+            ],
+            "allow",
+        )
+        self.assertEqual(
+            config["permission"]["bash"][
+                'cp ".opencode/skills/cute-fp8-kernels/references/'
+                'candidate-dense-gemm-template.py" submission.py'
+            ],
+            "allow",
+        )
         self.assertLessEqual(model["limit"]["output"], 8192)
         self.assertLessEqual(provider["options"]["timeout"], 180000)
 
@@ -58,12 +154,21 @@ class ExperimentRunnerTests(unittest.TestCase):
             Path("/tmp/work/submission.py"),
             seed=0,
             gpu_timeout=600.0,
+            agent_timeout=600.0,
         )
 
         self.assertIn("python3 -m cute_harness check", prompt)
         self.assertIn("python3 -m cute_harness run", prompt)
+        self.assertIn(
+            'cp ".opencode/skills/cute-fp8-kernels/references/'
+            'candidate-dense-gemm-template.py" submission.py',
+            prompt,
+        )
+        self.assertIn("whole task has a 600-second wall-clock budget", prompt)
+        self.assertIn("`cp` must be the first mutating tool call", prompt)
         self.assertNotIn("\npython -m cute_harness", prompt)
-        self.assertIn("Do not add pipes, redirects, command chaining", prompt)
+        self.assertIn("Do not add pipes, redirects,", prompt)
+        self.assertIn("command chaining", prompt)
         self.assertIn("Do not use python3 -c", prompt)
         self.assertIn("remote harness compiler error is the API oracle", prompt)
         self.assertIn("compile-verified candidate template", prompt)
