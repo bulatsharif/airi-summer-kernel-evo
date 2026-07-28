@@ -11,6 +11,14 @@ task → isolated workspace → OpenCode agent → final candidate
 Агент редактирует только `submission.py`. Inputs, Torch reference, validation,
 timing и `PASS` принадлежат evaluator и добавляются перед отправкой на B300.
 
+## Reference: B300 HTTP verifier
+
+Серверная часть evaluator опубликована отдельно в
+[`http_verifier/`](http_verifier/). Это самостоятельный FastAPI-проект с
+аутентификацией, очередью на один GPU, запуском submission в дочернем процессе,
+PyTorch/Nsight profiling, тестами и Docker deployment. Секреты и generated
+profiles в репозиторий не включены.
+
 ## Что нужно
 
 - Python 3.10+;
