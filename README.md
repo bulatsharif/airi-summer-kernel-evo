@@ -131,7 +131,7 @@ Subagents разрешены и наследуют тот же skill, references
 В конце печатается таблица:
 
 ```text
-Model | Task | Status | Baseline ms | Agent ms | Speedup
+Model | Task | Attempt | Status | Baseline ms | Agent ms | Speedup
       | Input | Cache input | Output | Agent s
 ```
 
@@ -140,11 +140,20 @@ Model | Task | Status | Baseline ms | Agent ms | Speedup
 evaluator, warmup и repeats. Время kernel — median CUDA-event time; общий
 `device_time_ms` профилировщика сохраняется отдельно.
 
+Помимо строк по каждой agent attempt, harness записывает `summary.json`,
+`summary.csv` и `summary.txt`. В summary находятся число attempts, распределение
+PASS/FAIL/TIMEOUT, pass rate, а также `n`, mean, sample standard deviation и
+median для speedup, uncached/cached input, output tokens и agent wall time.
+Speedup агрегируется только по успешным attempts; остальные метрики — по всем
+attempts, для которых значение удалось получить. При `n < 2` standard deviation
+равно `null`, а не нулю.
+
 Artifacts находятся в `runs/experiments/<run-id>/`:
 
 ```text
 manifest.json                    параметры эксперимента и Git commit
 results.json / .csv / .txt       итоговая таблица
+summary.json / .csv / .txt       статистика между agent attempts
 <task>/baseline/                 baseline source, result и profile
 <task>/attempt-001/
   agent-events.jsonl             OpenCode event stream

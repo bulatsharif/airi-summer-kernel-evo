@@ -16,6 +16,7 @@ from experiment.agent import (
 )
 from experiment.evaluation import EvaluationResult
 from experiment.process import run_streaming
+from experiment.report import summarize_rows, write_reports
 from experiment.runner import ExperimentConfig, run_experiment
 
 
@@ -196,6 +197,20 @@ class ExperimentRunnerTests(unittest.TestCase):
             self.assertTrue((root / "run" / "results.csv").is_file())
             self.assertTrue((root / "run" / "results.json").is_file())
             self.assertTrue((root / "run" / "results.txt").is_file())
+            self.assertTrue((root / "run" / "summary.csv").is_file())
+            self.assertTrue((root / "run" / "summary.json").is_file())
+            self.assertTrue((root / "run" / "summary.txt").is_file())
+            results_header = (
+                root / "run" / "results.csv"
+            ).read_text(encoding="utf-8").splitlines()[0]
+            self.assertIn("attempt", results_header.split(","))
+            summary = json.loads(
+                (root / "run" / "summary.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(summary[0]["attempts"], 1)
+            self.assertEqual(summary[0]["pass_count"], 1)
+            self.assertEqual(summary[0]["pass_rate"], 1.0)
+            self.assertIsNone(summary[0]["speedup_std"])
 
         self.assertEqual(len(workspaces), 1)
 
@@ -238,6 +253,134 @@ class ExperimentRunnerTests(unittest.TestCase):
             self.assertEqual(rows[0]["status"], "BASELINE_FAIL")
             self.assertIsNone(rows[0]["attempt"])
             self.assertEqual(list((root / "work").iterdir()), [])
+
+
+class ExperimentReportTests(unittest.TestCase):
+    def test_summary_aggregates_attempts_and_uses_sample_std(self):
+        rows = [
+            {
+                "model": "provider/model",
+                "task": "task-id",
+                "attempt": 1,
+                "status": "PASS",
+                "speedup": 2.0,
+                "input_uncached": 100,
+                "input_cached": 200,
+                "output_tokens": 30,
+                "agent_wall_seconds": 10.0,
+            },
+            {
+                "model": "provider/model",
+                "task": "task-id",
+                "attempt": 2,
+                "status": "PASS",
+                "speedup": 4.0,
+                "input_uncached": 300,
+                "input_cached": 600,
+                "output_tokens": 90,
+                "agent_wall_seconds": 30.0,
+            },
+            {
+                "model": "provider/model",
+                "task": "task-id",
+                "attempt": 3,
+                "status": "FAIL",
+                "speedup": None,
+                "input_uncached": 200,
+                "input_cached": 400,
+                "output_tokens": 60,
+                "agent_wall_seconds": 20.0,
+            },
+            {
+                "model": "provider/model",
+                "task": "task-id",
+                "attempt": 4,
+                "status": "TIMEOUT",
+                "speedup": None,
+                "input_uncached": 400,
+                "input_cached": 800,
+                "output_tokens": 120,
+                "agent_wall_seconds": 40.0,
+            },
+        ]
+
+        summary = summarize_rows(rows)
+
+        self.assertEqual(len(summary), 1)
+        result = summary[0]
+        self.assertEqual(result["attempts"], 4)
+        self.assertEqual(result["pass_count"], 2)
+        self.assertEqual(result["fail_count"], 1)
+        self.assertEqual(result["timeout_count"], 1)
+        self.assertEqual(result["pass_rate"], 0.5)
+        self.assertEqual(result["speedup_n"], 2)
+        self.assertEqual(result["speedup_mean"], 3.0)
+        self.assertEqual(result["speedup_median"], 3.0)
+        self.assertAlmostEqual(result["speedup_std"], 2.0 ** 0.5)
+        self.assertEqual(result["input_uncached_n"], 4)
+        self.assertEqual(result["input_uncached_mean"], 250.0)
+        self.assertEqual(result["input_uncached_median"], 250.0)
+
+    def test_speedup_ignores_non_pass_attempts(self):
+        rows = [
+            {
+                "model": "provider/model",
+                "task": "task-id",
+                "attempt": 1,
+                "status": "PASS",
+                "speedup": 2.0,
+            },
+            {
+                "model": "provider/model",
+                "task": "task-id",
+                "attempt": 2,
+                "status": "FAIL",
+                "speedup": 100.0,
+            },
+        ]
+
+        result = summarize_rows(rows)[0]
+
+        self.assertEqual(result["speedup_n"], 1)
+        self.assertEqual(result["speedup_mean"], 2.0)
+        self.assertIsNone(result["speedup_std"])
+
+    def test_report_files_include_attempt_and_summary(self):
+        rows = [
+            {
+                "model": "provider/model",
+                "task": "task-id",
+                "attempt": 3,
+                "status": "PASS",
+                "baseline_ms": 2.0,
+                "agent_ms": 1.0,
+                "speedup": 2.0,
+                "input_uncached": 100,
+                "input_cached": 200,
+                "output_tokens": 30,
+                "agent_wall_seconds": 10.0,
+            },
+        ]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir)
+
+            write_reports(output_dir, rows)
+
+            results_lines = (
+                output_dir / "results.csv"
+            ).read_text(encoding="utf-8").splitlines()
+            self.assertIn("attempt", results_lines[0].split(","))
+            self.assertIn(",3,", results_lines[1])
+            self.assertIn(
+                "Attempt",
+                (output_dir / "results.txt").read_text(encoding="utf-8"),
+            )
+            summary = json.loads(
+                (output_dir / "summary.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(summary[0]["attempts"], 1)
+            self.assertTrue((output_dir / "summary.csv").is_file())
+            self.assertTrue((output_dir / "summary.txt").is_file())
 
 
 class StreamingProcessTests(unittest.TestCase):
