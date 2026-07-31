@@ -4,8 +4,11 @@ import json
 import os
 import signal
 import shutil
+import statistics
 import subprocess
 import tempfile
+import threading
+import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,10 +29,33 @@ class HarnessRunner:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.worker = Path(__file__).with_name("worker.py").resolve()
+        self._worker_process: subprocess.Popen[str] | None = None
+        self._worker_home: tempfile.TemporaryDirectory[str] | None = None
+        self._lock = threading.Lock()
         self.settings.artifact_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.settings.artifact_dir.chmod(0o700)
 
-    def run(self, code: str, profiler: Profiler | None) -> RunResponse:
+    def close(self) -> None:
+        with self._lock:
+            self._stop_warm_worker()
+
+    def run(
+        self,
+        code: str,
+        profiler: Profiler | None,
+        iterations: int = 1,
+        exclusive: bool = False,
+    ) -> RunResponse:
+        with self._lock:
+            return self._run_locked(code, profiler, iterations, exclusive)
+
+    def _run_locked(
+        self,
+        code: str,
+        profiler: Profiler | None,
+        iterations: int,
+        exclusive: bool,
+    ) -> RunResponse:
         with tempfile.TemporaryDirectory(prefix="cute-harness-") as temp_name:
             job_dir = Path(temp_name)
             source_path = job_dir / "submission.py"
@@ -44,11 +70,17 @@ class HarnessRunner:
                 str(source_path),
                 "--result",
                 str(result_path),
+                "--iterations",
+                str(iterations),
             ]
             if profiler is Profiler.pytorch:
                 command.extend(["--trace", str(trace_path)])
 
-            process = self._execute(command, job_dir)
+            if exclusive:
+                self._stop_warm_worker()
+                process = self._execute(command, job_dir)
+            else:
+                process = self._execute_warm(command, job_dir, result_path)
             metadata = self._load_metadata(result_path)
             success = (
                 not process.timed_out
@@ -66,16 +98,126 @@ class HarnessRunner:
             elif success and profiler is Profiler.nsys:
                 profile_id, profile_error = self._run_nsys(source_path, job_dir)
 
+            device_times = metadata.get("device_times_ms")
+            if not isinstance(device_times, list):
+                device_times = []
+            normalized_times = [
+                float(value)
+                for value in device_times
+                if isinstance(value, (int, float))
+            ]
+            legacy_time = metadata.get("device_time_ms")
+            if not normalized_times and isinstance(legacy_time, (int, float)):
+                normalized_times = [float(legacy_time)]
             return RunResponse(
                 success=success,
                 exit_code=process.exit_code,
                 stdout=process.stdout,
                 stderr=process.stderr,
-                device_time_ms=metadata.get("device_time_ms") if success else None,
+                device_time_ms=(
+                    float(statistics.median(normalized_times))
+                    if success and normalized_times
+                    else None
+                ),
+                device_times_ms=normalized_times if success else [],
                 profile_id=profile_id,
                 profile_error=profile_error,
                 timed_out=process.timed_out,
             )
+
+    def _execute_warm(
+        self,
+        command: list[str],
+        cwd: Path,
+        result_path: Path,
+    ) -> ProcessResult:
+        stdout_path = cwd / f"stdout-{uuid.uuid4().hex}.log"
+        stderr_path = cwd / f"stderr-{uuid.uuid4().hex}.log"
+        request = {
+            "source": command[command.index("--source") + 1],
+            "result": str(result_path),
+            "iterations": int(command[command.index("--iterations") + 1]),
+            "trace": (
+                command[command.index("--trace") + 1]
+                if "--trace" in command
+                else None
+            ),
+            "stdout": str(stdout_path),
+            "stderr": str(stderr_path),
+        }
+        process = self._ensure_warm_worker()
+        assert process.stdin is not None
+        try:
+            process.stdin.write(json.dumps(request) + "\n")
+            process.stdin.flush()
+        except (BrokenPipeError, OSError):
+            self._stop_warm_worker()
+            process = self._ensure_warm_worker()
+            assert process.stdin is not None
+            process.stdin.write(json.dumps(request) + "\n")
+            process.stdin.flush()
+
+        deadline = time.monotonic() + self.settings.timeout_seconds
+        timed_out = False
+        while not result_path.is_file():
+            if process.poll() is not None:
+                break
+            if time.monotonic() >= deadline:
+                timed_out = True
+                break
+            time.sleep(0.01)
+
+        metadata = self._load_metadata(result_path)
+        exit_code = metadata.get("exit_code")
+        if not isinstance(exit_code, int):
+            exit_code = process.poll()
+        if timed_out or process.poll() is not None or exit_code != 0:
+            self._stop_warm_worker()
+
+        stdout = self._read_log(stdout_path)
+        stderr = self._read_log(stderr_path)
+        if timed_out:
+            stderr += f"\nExecution timed out after {self.settings.timeout_seconds}s\n"
+        return ProcessResult(
+            exit_code=exit_code,
+            stdout=stdout,
+            stderr=stderr,
+            timed_out=timed_out,
+        )
+
+    def _ensure_warm_worker(self) -> subprocess.Popen[str]:
+        if self._worker_process is not None and self._worker_process.poll() is None:
+            return self._worker_process
+        self._stop_warm_worker()
+        self._worker_home = tempfile.TemporaryDirectory(prefix="cute-harness-worker-")
+        worker_home = Path(self._worker_home.name)
+        self._worker_process = subprocess.Popen(
+            [
+                self.settings.python_executable,
+                str(self.worker),
+                "--persistent",
+            ],
+            cwd=worker_home,
+            env=self._child_environment(worker_home),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            start_new_session=True,
+        )
+        return self._worker_process
+
+    def _stop_warm_worker(self) -> None:
+        process = self._worker_process
+        self._worker_process = None
+        if process is not None and process.poll() is None:
+            os.killpg(process.pid, signal.SIGKILL)
+            process.wait()
+        if process is not None and process.stdin is not None:
+            process.stdin.close()
+        if self._worker_home is not None:
+            self._worker_home.cleanup()
+            self._worker_home = None
 
     def artifact_path(self, profile_id: str) -> Path | None:
         if not profile_id or any(char not in "0123456789abcdef-" for char in profile_id):
@@ -181,6 +323,8 @@ class HarnessRunner:
         return environment
 
     def _read_log(self, path: Path) -> str:
+        if not path.is_file():
+            return ""
         size = path.stat().st_size
         with path.open("rb") as handle:
             kept = handle.read(self.settings.max_log_bytes)

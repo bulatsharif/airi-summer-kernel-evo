@@ -19,7 +19,7 @@ from fastapi import (
 from fastapi.responses import FileResponse
 
 from .config import Settings
-from .models import Profiler, RunRequest, RunResponse
+from .models import MAX_ITERATIONS, Profiler, RunRequest, RunResponse
 from .policy import UnsafeSourceError, validate_source
 from .runner import HarnessRunner
 
@@ -64,7 +64,13 @@ async def healthz() -> dict[str, str]:
     dependencies=[Depends(require_api_key)],
 )
 async def create_run(request: RunRequest) -> RunResponse:
-    return await _validated_run(request.code, request.filename, request.profiler)
+    return await _validated_run(
+        request.code,
+        request.filename,
+        request.profiler,
+        request.iterations,
+        request.exclusive,
+    )
 
 
 @app.post(
@@ -75,6 +81,8 @@ async def create_run(request: RunRequest) -> RunResponse:
 async def create_run_from_file(
     file: UploadFile = File(...),
     profiler: str | None = Form(default=None),
+    iterations: int = Form(default=1, ge=1, le=MAX_ITERATIONS),
+    exclusive: bool = Form(default=False),
 ) -> RunResponse:
     content = await file.read(get_settings().max_source_bytes + 1)
     try:
@@ -92,6 +100,8 @@ async def create_run_from_file(
         code,
         file.filename or "submission.py",
         selected_profiler,
+        iterations,
+        exclusive,
     )
 
 
@@ -99,6 +109,8 @@ async def _validated_run(
     code: str,
     filename: str,
     profiler: Profiler | None,
+    iterations: int,
+    exclusive: bool,
 ) -> RunResponse:
     encoded = code.encode("utf-8")
     if len(encoded) > get_settings().max_source_bytes:
@@ -115,6 +127,8 @@ async def _validated_run(
             get_runner().run,
             code,
             profiler,
+            iterations,
+            exclusive,
         )
 
 

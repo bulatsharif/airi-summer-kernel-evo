@@ -7,8 +7,10 @@ package is the evaluator client, while this project is the remote execution
 service.
 
 An authenticated HTTP service that executes one complete PyTorch/CuTe Python
-file, captures its stdout/stderr, measures aggregate CUDA device time with
+file, captures its stdout/stderr, measures CUDA device time with
 `torch.profiler`, and optionally stores a PyTorch or Nsight Systems report.
+Debug runs reuse a long-lived Python/CUDA worker by default, avoiding repeated
+interpreter, import, and compiler startup.
 
 ## API
 
@@ -31,6 +33,8 @@ curl -sS http://localhost:18080/v1/runs \
   -d '{
     "filename": "submission.py",
     "profiler": "pytorch",
+    "iterations": 3,
+    "exclusive": false,
     "code": "import torch\nif __name__ == \"__main__\":\n    x = torch.ones(1024, device=\"cuda\")\n    print(x.sum())"
   }'
 ```
@@ -41,14 +45,28 @@ Or upload the Python file directly:
 curl -sS http://localhost:18080/v1/runs/file \
   -H "X-API-Key: $CUTE_HARNESS_API_KEY" \
   -F "file=@examples/submission.py" \
-  -F "profiler=nsys"
+  -F "profiler=pytorch" \
+  -F "iterations=3" \
+  -F "exclusive=false"
 ```
 
+`iterations` is 1 by default and may be set from 1 through 100. Each request
+gets one unmeasured warmup, followed by the requested measured iterations.
+`device_times_ms` contains every measured CUDA/device time; the backward-
+compatible `device_time_ms` is their median.
+
+`exclusive=false` is the default fast-debug path. Requests are serialized and
+reuse one long-lived Python/CUDA worker, so imported modules, CUDA context, and
+compiler caches stay warm across submissions. Set `exclusive=true` for a
+benchmark: the shared worker is stopped first and the request runs in a fresh,
+isolated process. The next debug request starts a new warm worker.
+
 `profiler` may be omitted, `"pytorch"`, or `"nsys"`. Every successful primary
-run uses `torch.profiler`; `device_time_ms` is the sum of self CUDA/device times
-reported by its key averages. A requested PyTorch trace is captured during that
-run. Nsight Systems requires `nsys` on `PATH` and executes the source a second
-time because PyTorch profiler and Nsight cannot safely own CUPTI concurrently.
+run uses `torch.profiler`; each timing is the sum of self CUDA/device times
+reported by its key averages. A requested PyTorch trace captures the final
+measured iteration. Nsight Systems requires `nsys` on `PATH` and executes the
+source a second time because PyTorch profiler and Nsight cannot safely own
+CUPTI concurrently.
 
 Download a report:
 
@@ -59,7 +77,8 @@ curl -OJ http://localhost:18080/v1/profiles/PROFILE_ID \
 
 Configuration uses the `CUTE_HARNESS_*` environment variables defined in
 `cute_harness/config.py`. Runs are serialized to one GPU slot and default to a
-300-second timeout.
+300-second timeout. The timeout applies to the full warmup-plus-iterations
+request.
 
 When operating the service remotely, keep it behind an authenticated private
 network or SSH tunnel. Do not send source code or API credentials over a

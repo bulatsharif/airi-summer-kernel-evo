@@ -8,13 +8,16 @@ from cute_harness.models import RunResponse
 
 
 class FakeRunner:
-    def run(self, code, profiler):
+    def run(self, code, profiler, iterations, exclusive):
+        assert iterations == 3
+        assert exclusive is True
         return RunResponse(
             success=True,
             exit_code=0,
             stdout=code,
             stderr="",
             device_time_ms=2.5,
+            device_times_ms=[2.4, 2.5, 2.6],
         )
 
     def artifact_path(self, profile_id):
@@ -42,10 +45,15 @@ def test_api_key_is_required(monkeypatch, tmp_path: Path) -> None:
     response = client.post(
         "/v1/runs",
         headers={"X-API-Key": "secret"},
-        json={"code": "print(1)"},
+        json={
+            "code": "print(1)",
+            "iterations": 3,
+            "exclusive": True,
+        },
     )
     assert response.status_code == 200
     assert response.json()["device_time_ms"] == 2.5
+    assert response.json()["device_times_ms"] == [2.4, 2.5, 2.6]
 
 
 def test_file_upload_and_policy_rejection(monkeypatch, tmp_path: Path) -> None:
@@ -70,7 +78,11 @@ def test_file_upload_and_policy_rejection(monkeypatch, tmp_path: Path) -> None:
         "/v1/runs/file",
         headers=headers,
         files={"file": ("kernel.py", b"print('uploaded')", "text/x-python")},
-        data={"profiler": "pytorch"},
+        data={
+            "profiler": "pytorch",
+            "iterations": "3",
+            "exclusive": "true",
+        },
     )
     assert response.status_code == 200
     assert response.json()["stdout"] == "print('uploaded')"

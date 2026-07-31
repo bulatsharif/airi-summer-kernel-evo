@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-deploy_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 image="${CUTE_HARNESS_IMAGE:-cute-harness:latest}"
 container="${CUTE_HARNESS_CONTAINER:-cute-harness}"
 network="${CUTE_HARNESS_NETWORK:-cute-harness-network}"
 host_port="${CUTE_HARNESS_HOST_PORT:-18080}"
+env_file="${CUTE_HARNESS_ENV_FILE:-${script_dir}/service.env}"
 
 if ! docker network inspect "$network" >/dev/null 2>&1; then
   docker network create "$network" >/dev/null
@@ -46,7 +47,7 @@ docker run -d \
   --mount type=bind,source=/usr/lib/x86_64-linux-gnu,target=/host-driver,readonly \
   --mount source=cute-harness-profiles,target=/profiles \
   --mount source=cute-harness-cache,target=/cache \
-  --env-file "$deploy_dir/service.env" \
+  --env-file "$env_file" \
   --env CUDA_VISIBLE_DEVICES=0 \
   --env LD_LIBRARY_PATH=/host-driver \
   --env CUTE_HARNESS_ARTIFACT_DIR=/profiles \
