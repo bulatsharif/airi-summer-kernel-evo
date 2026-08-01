@@ -11,6 +11,7 @@ pipeline, TMEM, or epilogue code from memory.
 | Diagnostic | Cause | Correction |
 |---|---|---|
 | `cute has no attribute constexpr` | Triton-like spelling | Use a normal trace-time Python constant; use `cutlass.Constexpr` only for an annotation. |
+| `Expected a TensorSSA or Numeric(Float), but got ... ArithValue` while chaining scalar math | A CuTe math intrinsic returned an arithmetic SSA value that the next intrinsic will not accept directly | Follow `candidate-math-api.md` and materialize every nested intrinsic boundary with `cutlass.Float32(...)`. Do not invent a temporary tensor or layout for a scalar. |
 | `SharedStorage` missing from `cute.struct` or `cutlass.utils` | Invented base class | Declare storage with `@cute.struct` and `cute.struct.MemRange`. |
 | `make_tiled_tma_atom_A/B` missing from `cpasync` | Helper is in the parent namespace | Call `cute.nvgpu.make_tiled_tma_atom_A/B`. |
 | `TmaOperandMajorMode` missing | Obsolete API family | Derive major modes with `utils.LayoutEnum.from_tensor(...).mma_major_mode()`. |

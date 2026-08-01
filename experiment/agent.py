@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import time
 from typing import Any
@@ -81,6 +82,73 @@ def _session_id_from_events(events_path: Path) -> str | None:
     return None
 
 
+def _event_session_metrics(events_path: Path) -> dict[str, Any]:
+    """Aggregate token usage from the durable OpenCode JSONL stream."""
+    sessions: set[str] = set()
+    input_uncached = 0
+    input_cached = 0
+    cache_write = 0
+    output = 0
+    reasoning = 0
+    token_records = 0
+    root_session: str | None = None
+    root_timestamps: list[int] = []
+
+    if not events_path.is_file():
+        return {}
+    with events_path.open(encoding="utf-8", errors="replace") as stream:
+        for line in stream:
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(event, dict):
+                continue
+            session_id = event.get("sessionID")
+            if isinstance(session_id, str) and SESSION_ID_PATTERN.fullmatch(
+                session_id
+            ):
+                sessions.add(session_id)
+                root_session = root_session or session_id
+            timestamp = event.get("timestamp")
+            if (
+                session_id == root_session
+                and isinstance(timestamp, int)
+            ):
+                root_timestamps.append(timestamp)
+            if event.get("type") != "step_finish":
+                continue
+            part = event.get("part")
+            tokens = part.get("tokens") if isinstance(part, dict) else None
+            if not isinstance(tokens, dict):
+                continue
+            cache = tokens.get("cache")
+            cache = cache if isinstance(cache, dict) else {}
+            input_uncached += int(tokens.get("input") or 0)
+            input_cached += int(cache.get("read") or 0)
+            cache_write += int(cache.get("write") or 0)
+            output += int(tokens.get("output") or 0)
+            reasoning += int(tokens.get("reasoning") or 0)
+            token_records += 1
+
+    if not token_records:
+        return {}
+    root_wall_ms = (
+        max(root_timestamps) - min(root_timestamps)
+        if len(root_timestamps) >= 2
+        else None
+    )
+    return {
+        "sessions": len(sessions),
+        "input_uncached": input_uncached,
+        "input_cached": input_cached,
+        "cache_write": cache_write,
+        "output": output,
+        "reasoning": reasoning,
+        "root_wall_ms": root_wall_ms,
+    }
+
+
 def _query_session_metrics(
     opencode_command: str,
     session_id: str,
@@ -112,17 +180,30 @@ SELECT
 FROM session
 WHERE id IN (SELECT id FROM run_sessions)
 """
-    process = subprocess.run(
-        [opencode_command, "db", "--format", "json", query],
-        check=False,
-        capture_output=True,
-        text=True,
-        errors="replace",
-    )
-    if process.returncode != 0:
-        message = process.stderr.strip() or "OpenCode database query failed"
-        raise RuntimeError(message)
-    payload = json.loads(process.stdout)
+    resolved_command = shutil.which(opencode_command) or opencode_command
+    command = [resolved_command, "db", "--format", "json", query]
+    try:
+        process = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=15.0,
+        )
+        stdout = process.stdout
+        if process.returncode != 0:
+            message = process.stderr.strip() or "OpenCode database query failed"
+            raise RuntimeError(message)
+    except subprocess.TimeoutExpired as error:
+        stdout = error.stdout or ""
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", errors="replace")
+        if not stdout.strip():
+            raise RuntimeError(
+                "OpenCode database query timed out after 15 seconds"
+            ) from error
+    payload = json.loads(stdout)
     if not isinstance(payload, list) or not payload:
         raise RuntimeError("OpenCode database query returned no rows")
     row = payload[0]
@@ -161,6 +242,7 @@ def build_agent_prompt(
     candidate_path: Path,
     seed: int,
     gpu_timeout: float,
+    agent_timeout: float,
 ) -> str:
     return f"""Solve the CuTe task in the current workspace.
 
@@ -173,6 +255,10 @@ The final candidate must implement task {task_id} and must not define main();
 the evaluation harness owns input generation, reference computation, timing,
 and PASS reporting.
 Do not inspect previous runs, workspaces, known baselines, or evaluator source.
+The whole task has a {agent_timeout:.0f}-second wall-clock budget including
+reading, editing, and every remote call. Read only the required files, start
+the first edit promptly, and aim to make the first checker submission within
+the first third of that budget. Stop immediately after the first PASS.
 
 Tool contract:
 
@@ -183,9 +269,10 @@ Tool contract:
   containing that SKILL.md. Never reinterpret a workspace task reference as a
   path under the skill directory.
 - Use the write/edit tool only for submission.py.
-- Shell access is intentionally limited to the two plain harness command forms
-  below. Do not add pipes, redirects, command chaining, wrappers, or shell
-  utilities such as head, ls, find, grep, or which.
+- Shell access is intentionally limited to the plain harness feedback commands
+  and exact public-template copy forms below. Do not add pipes, redirects,
+  command chaining, wrappers, or other shell utilities such as head, ls, find,
+  grep, or which.
 - Do not use python3 -c to inspect local CUTLASS: CuTe is authoritative only on
   the remote worker. The remote harness compiler error is the API oracle.
 - After an error, fix the first concrete diagnostic and rerun the same harness
@@ -197,15 +284,24 @@ Tool contract:
   explicitly selected candidate-mode files before the first implementation.
   Do not enumerate or read the rest of the installed skill. Read a broader
   handbook chapter only when a concrete compiler diagnostic requires it.
-- For dense GEMM, copy and adapt the compile-verified candidate template
-  selected by the task. Do not reconstruct its TMA/pipeline/TMEM flow from
-  memory or mix it with another API family.
+- For dense GEMM, first read the starter ABI, then mechanically copy the
+  compile-verified candidate template with the exact `cp` command below. That
+  `cp` must be the first mutating tool call: do not call task/todowrite,
+  write/edit, or another shell command before it. Add the required public
+  entrypoint and task-specific kernels afterward. The copy is fully editable:
+  optimize or replace its GEMM when the task requires it, but do not
+  reconstruct the initial TMA/pipeline/TMEM flow from memory.
 - Do not repeatedly restate the task contract. Preserve any pipeline that
   already reaches execution, make one minimal diagnostic-driven edit at a
   time, and rerun promptly.
 - Never rerun an identical candidate after a worker timeout or CUDA launch
   failure. If one diagnostic repeats, restore the compile-verified template
   instead of inventing another API. Stop immediately after the first PASS.
+
+Allowed template-copy commands:
+
+cp ".opencode/skills/cute-fp8-kernels/references/candidate-dense-gemm-template.py" submission.py
+cp ".opencode/skills/cute-fp8-kernels/references/candidate-elementwise-template.py" submission.py
 
 Allowed feedback commands:
 
@@ -285,7 +381,13 @@ def run_agent(
 ) -> AgentMetrics:
     runner = repo_root / "opencode" / "opencode-headless.sh"
     candidate = workspace / "submission.py"
-    prompt = build_agent_prompt(task_id, candidate, seed, gpu_timeout)
+    prompt = build_agent_prompt(
+        task_id,
+        candidate,
+        seed,
+        gpu_timeout,
+        agent_timeout,
+    )
     command = [
         *_headless_runner_prefix(runner),
         "--foreground",
@@ -315,6 +417,10 @@ def run_agent(
         workspace,
         environment.get("OPENCODE_CONFIG_CONTENT"),
     )
+    # The Python runner queries structured metrics itself. The shell runner's
+    # duplicate `opencode db` query can keep npm-based wrappers alive after the
+    # agent has already emitted its terminal stop event.
+    environment["OPENCODE_HEADLESS_SKIP_USAGE"] = "1"
 
     started = time.monotonic()
     process = run_streaming(
@@ -328,14 +434,11 @@ def run_agent(
     wall_seconds = time.monotonic() - started
 
     session_id = _session_id_from_events(events_path)
-    row: dict[str, Any] = {}
+    row = _event_session_metrics(events_path)
     metrics_error = None
-    if session_id:
-        try:
-            row = _query_session_metrics(opencode_command, session_id)
-        except (json.JSONDecodeError, OSError, RuntimeError) as error:
-            metrics_error = str(error)
-    else:
+    if not row:
+        metrics_error = "OpenCode event stream emitted no token records"
+    if not session_id:
         metrics_error = "OpenCode emitted no session id"
 
     reported_model, provider, variant = _reported_model(row)

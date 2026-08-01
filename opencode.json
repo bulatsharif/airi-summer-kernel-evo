@@ -57,6 +57,10 @@
     "grep": "deny",
     "bash": {
       "*": "deny",
+      "cp .opencode/skills/cute-fp8-kernels/references/candidate-dense-gemm-template.py submission.py": "allow",
+      "cp .opencode/skills/cute-fp8-kernels/references/candidate-elementwise-template.py submission.py": "allow",
+      "cp \".opencode/skills/cute-fp8-kernels/references/candidate-dense-gemm-template.py\" submission.py": "allow",
+      "cp \".opencode/skills/cute-fp8-kernels/references/candidate-elementwise-template.py\" submission.py": "allow",
       "python3 -m cute_harness *": "allow",
       "python -m cute_harness *": "allow",
       "python.exe -m cute_harness *": "allow",

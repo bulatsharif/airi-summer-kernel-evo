@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "level2_29_matmul_mish_mish_fp8",
+  "title": "Matmul plus Mish plus Mish with CuTe FP8",
+  "source": {
+    "suite": "KernelBench",
+    "level": 2,
+    "number": 29,
+    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level2/29_Matmul_Mish_Mish.py"
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "references": ["TASK_REFERENCE.md"],
+  "agent_skills": ["../../opencode/.opencode/skills/cute-fp8-kernels"],
+  "baseline": "../../probes/coverage_level2_dense_ops_baseline.py",
+  "precision": {
+    "gemm_inputs": "float8_e4m3fn",
+    "accumulator": "float32",
+    "bias": "float32",
+    "output": "float32"
+  },
+  "problem": {
+    "operation": "Y = mish(mish(X @ W.T + bias))",
+    "batch_size": 1024,
+    "in_features": 8192,
+    "out_features": 8192,
+    "seed": 20260728
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=level2_29_matmul_mish_mish .* PASS$",
+    "full_max_absolute_error_vs_torch_fp8": 0.02,
+    "sample_max_absolute_error_vs_fp32": 0.2
+  },
+  "policy": {
+    "minimum_cute_kernels": 2,
+    "minimum_cute_jit_functions": 1,
+    "required_calls": ["cute.gemm", "cute.exp", "cute.log", "cute.tanh"]
+  }
+}

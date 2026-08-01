@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "level2_99_matmul_gelu_softmax_fp8",
+  "title": "Matmul plus GELU plus Softmax with CuTe FP8",
+  "source": {
+    "suite": "KernelBench",
+    "level": 2,
+    "number": 99,
+    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level2/99_Matmul_GELU_Softmax.py"
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "references": ["TASK_REFERENCE.md"],
+  "agent_skills": ["../../opencode/.opencode/skills/cute-fp8-kernels"],
+  "baseline": "../../probes/coverage_level2_dense_ops_baseline.py",
+  "precision": {
+    "gemm_inputs": "float8_e4m3fn",
+    "accumulator": "float32",
+    "bias": "float32",
+    "scratch": "float32",
+    "output": "float32"
+  },
+  "problem": {
+    "operation": "Y = softmax(gelu(X @ W.T + bias), dim=1)",
+    "batch_size": 1024,
+    "in_features": 8192,
+    "out_features": 8192,
+    "seed": 20260728
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=level2_99_matmul_gelu_softmax .* PASS$",
+    "full_max_absolute_error_vs_torch_fp8": 0.0005,
+    "row_sum_absolute_error": 0.0005
+  },
+  "policy": {
+    "minimum_cute_kernels": 2,
+    "minimum_cute_jit_functions": 1,
+    "required_calls": [
+      "cute.gemm",
+      "cute.erf",
+      "cute.exp",
+      "cute.arch.shuffle_sync_bfly"
+    ]
+  }
+}

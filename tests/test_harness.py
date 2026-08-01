@@ -22,7 +22,7 @@ from cute_harness.tasks import REPO_ROOT, discover_tasks
 
 
 class TaskManifestTests(unittest.TestCase):
-    def test_nine_tasks_are_discoverable(self):
+    def test_twelve_tasks_are_discoverable(self):
         tasks = discover_tasks()
         self.assertEqual(
             set(tasks),
@@ -33,9 +33,12 @@ class TaskManifestTests(unittest.TestCase):
                 "level2_09_matmul_subtract_multiply_relu_fp8",
                 "level2_12_gemm_multiply_leaky_relu_fp8",
                 "level2_14_gemm_divide_sum_scaling_fp8",
+                "level2_29_matmul_mish_mish_fp8",
                 "level2_40_matmul_scaling_residual_add_fp8",
+                "level2_55_matmul_maxpool_sum_scale_fp8",
                 "level2_63_gemm_relu_divide_fp8",
                 "level2_76_gemm_add_relu_fp8",
+                "level2_99_matmul_gelu_softmax_fp8",
             },
         )
 
@@ -90,6 +93,9 @@ class TaskManifestTests(unittest.TestCase):
         error_atlas = (
             skill / "references" / "candidate-error-atlas.md"
         ).read_text(encoding="utf-8")
+        math_api = (
+            skill / "references" / "candidate-math-api.md"
+        ).read_text(encoding="utf-8")
         skill_body = (skill / "SKILL.md").read_text(encoding="utf-8")
 
         for snippet in (
@@ -110,6 +116,15 @@ class TaskManifestTests(unittest.TestCase):
         self.assertIn(
             "[candidate-dense-gemm-template.py]"
             "(references/candidate-dense-gemm-template.py)",
+            skill_body,
+        )
+        self.assertIn(
+            "[candidate-math-api.md](references/candidate-math-api.md)",
+            skill_body,
+        )
+        self.assertIn(
+            'cp ".opencode/skills/cute-fp8-kernels/references/'
+            'candidate-dense-gemm-template.py" submission.py',
             skill_body,
         )
         for snippet in (
@@ -137,9 +152,23 @@ class TaskManifestTests(unittest.TestCase):
             "producer_get_barrier",
             "TmaOperandMajorMode",
             "Every lane sums the same values",
+            "ArithValue",
             "Do not retry an identical candidate",
         ):
             self.assertIn(snippet, error_atlas)
+        for snippet in (
+            "cute.exp2(cutlass.Float32(x))",
+            "cute.log2(cutlass.Float32(x))",
+            "cute.sqrt(cutlass.Float32(x))",
+            "cute.rsqrt(cutlass.Float32(x))",
+            "cute.sin(cutlass.Float32(x))",
+            "cute.cos(cutlass.Float32(x))",
+            "cute.floor(cutlass.Float32(x))",
+            "cute.tanh(cutlass.Float32(softplus))",
+            "cute.erf(cutlass.Float32(x * 0.7071067811865476))",
+            "Do not invent `cute.maximum`",
+        ):
+            self.assertIn(snippet, math_api)
         for snippet in (
             "empty_ab = ab_producer.acquire_and_advance()",
             "full_ab = ab_consumer.wait_and_advance()",
@@ -215,9 +244,12 @@ class TaskManifestTests(unittest.TestCase):
             "level2_09_matmul_subtract_multiply_relu_fp8": gemm_constants,
             "level2_12_gemm_multiply_leaky_relu_fp8": gemm_constants,
             "level2_14_gemm_divide_sum_scaling_fp8": gemm_constants,
+            "level2_29_matmul_mish_mish_fp8": gemm_constants,
             "level2_40_matmul_scaling_residual_add_fp8": gemm_constants,
+            "level2_55_matmul_maxpool_sum_scale_fp8": gemm_constants,
             "level2_63_gemm_relu_divide_fp8": gemm_constants,
             "level2_76_gemm_add_relu_fp8": gemm_constants,
+            "level2_99_matmul_gelu_softmax_fp8": gemm_constants,
         }
         for task in discover_tasks().values():
             with self.subTest(task=task.id):

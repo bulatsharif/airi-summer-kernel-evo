@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "level2_55_matmul_maxpool_sum_scale_fp8",
+  "title": "Matmul plus MaxPool plus Sum plus Scale with CuTe FP8",
+  "source": {
+    "suite": "KernelBench",
+    "level": 2,
+    "number": 55,
+    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level2/55_Matmul_MaxPool_Sum_Scale.py"
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "references": ["TASK_REFERENCE.md"],
+  "agent_skills": ["../../opencode/.opencode/skills/cute-fp8-kernels"],
+  "baseline": "../../probes/coverage_level2_dense_ops_baseline.py",
+  "precision": {
+    "gemm_inputs": "float8_e4m3fn",
+    "accumulator": "float32",
+    "bias": "float32",
+    "scratch": "float32",
+    "output": "float32"
+  },
+  "problem": {
+    "operation": "Y = 0.5 * sum(max_pool1d(X @ W.T + bias, 2), dim=1)",
+    "batch_size": 128,
+    "in_features": 32768,
+    "out_features": 32768,
+    "seed": 20260728
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=level2_55_matmul_maxpool_sum_scale .* PASS$",
+    "full_max_absolute_error_vs_torch_fp8": 1.0,
+    "full_max_relative_error_vs_torch_fp8": 0.0002
+  },
+  "policy": {
+    "minimum_cute_kernels": 2,
+    "minimum_cute_jit_functions": 1,
+    "required_calls": ["cute.gemm", "cute.arch.shuffle_sync_bfly"]
+  }
+}
