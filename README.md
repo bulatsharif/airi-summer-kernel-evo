@@ -126,6 +126,9 @@ Subagents разрешены и наследуют тот же skill, references
 Разбор типичных ошибок Qwen, устройство retrieval и результаты эксперимента:
 [docs/QWEN35B_PASS_RATE.md](docs/QWEN35B_PASS_RATE.md).
 
+Архив разработанной ветки KernelEvo, профилировщиков, конфигураций и полных
+экспериментальных запусков: [kernel_evo_archive/README.md](kernel_evo_archive/README.md).
+
 ## Результат
 
 В конце печатается таблица:

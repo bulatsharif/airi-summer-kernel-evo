@@ -1,0 +1,189 @@
+{
+  "task_id": "model_gpt2_small_transformer_block_fp8",
+  "candidate_sha256": "46457c4a3f98bc1680d163de2321b416522c4ef0d3b15dd598d7002bb79d422e",
+  "submission_sha256": "c1371b3901c30132ae69881a918006737aa04a63d0f84adc841f325c2278ca39",
+  "passed": true,
+  "success_pattern_matched": true,
+  "kernel_time_ms": 0.316448,
+  "wall_seconds": 8.823840499971993,
+  "response": {
+    "success": true,
+    "exit_code": 0,
+    "stdout": "task=model_gpt2_small_transformer_block_fp8 quantized_max_abs=0.000437 fp32_sample_max_abs=0.060871 kernel_time_ms=0.313600 PASS\ntask=model_gpt2_small_transformer_block_fp8 quantized_max_abs=0.000437 fp32_sample_max_abs=0.060871 kernel_time_ms=0.316448 PASS\n",
+    "stderr": "",
+    "device_time_ms": 17.288194000003852,
+    "device_times_ms": [
+      17.288194000003852
+    ],
+    "profile_id": "840053d7-af3b-4170-934d-9e43ea9bf11e",
+    "profile_error": null,
+    "timed_out": false
+  },
+  "profile_timeline": {
+    "event_count": 519,
+    "timeline_span_ms": 3643.365205,
+    "activity_time_ms": 16.863235,
+    "busy_time_ms": 16.863236,
+    "idle_time_ms": 3626.501969,
+    "idle_pct": 99.54,
+    "largest_gap_ms": 3364.467889,
+    "candidate_kernel_symbols": [
+      "attention_kernel",
+      "fc_gelu_kernel",
+      "ln1_kernel",
+      "ln2_kernel",
+      "out_gemm_kernel",
+      "proj_gemm_kernel",
+      "qkv_gemm_kernel"
+    ],
+    "observed_candidate_symbols": [
+      "attention_kernel",
+      "fc_gelu_kernel",
+      "ln1_kernel",
+      "ln2_kernel",
+      "out_gemm_kernel",
+      "proj_gemm_kernel",
+      "qkv_gemm_kernel"
+    ],
+    "unobserved_candidate_symbols": [],
+    "iteration": {
+      "iterations": 55,
+      "kernels_per_iteration": 7,
+      "span_us": 300.641,
+      "busy_us": 298.69,
+      "gap_us": 1.951,
+      "gap_pct": 0.65,
+      "largest_gap_us": 0.671,
+      "largest_gap_before": "K25",
+      "between_iterations_us": 44.48,
+      "rows": [
+        {
+          "activity": "K24",
+          "start_us": 0.0,
+          "end_us": 3.105,
+          "duration_us": 3.105,
+          "gap_before_us": null
+        },
+        {
+          "activity": "K25",
+          "start_us": 3.776,
+          "end_us": 47.297,
+          "duration_us": 43.521,
+          "gap_before_us": 0.671
+        },
+        {
+          "activity": "K26",
+          "start_us": 47.553,
+          "end_us": 103.905,
+          "duration_us": 56.352,
+          "gap_before_us": 0.256
+        },
+        {
+          "activity": "K27",
+          "start_us": 104.161,
+          "end_us": 131.105,
+          "duration_us": 26.944,
+          "gap_before_us": 0.256
+        },
+        {
+          "activity": "K28",
+          "start_us": 131.361,
+          "end_us": 134.721,
+          "duration_us": 3.36,
+          "gap_before_us": 0.256
+        },
+        {
+          "activity": "K29",
+          "start_us": 134.977,
+          "end_us": 198.337,
+          "duration_us": 63.36,
+          "gap_before_us": 0.256
+        },
+        {
+          "activity": "K30",
+          "start_us": 198.593,
+          "end_us": 300.641,
+          "duration_us": 102.048,
+          "gap_before_us": 0.256
+        }
+      ]
+    }
+  },
+  "profile_summary": {
+    "device": {
+      "name": "NVIDIA B300 SXM6 AC",
+      "num_sms": 148,
+      "shared_mem_per_block_optin": 232448
+    },
+    "gpu_time_ms": 16.863235,
+    "kernel_time_ms": 16.831138,
+    "kernel_calls": 503,
+    "memcpy_time_ms": 0.030177,
+    "memcpy_calls": 15,
+    "memset_time_ms": 0.00192,
+    "memset_calls": 1,
+    "distinct_kernels": 40,
+    "top_kernels": [
+      {
+        "name": "kernel_cutlass_proj_gemm_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemo7681_tensorptrf32gmemoi641_tensorptrf32gmemoi641_6",
+        "total_ms": 5.613772,
+        "calls": 55,
+        "pct_gpu_time": 33.29
+      },
+      {
+        "name": "kernel_cutlass_fc_gelu_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemo30721_tensorptrf8E4M3FNgmemalign16oi641_5",
+        "total_ms": 3.467272,
+        "calls": 55,
+        "pct_gpu_time": 20.56
+      },
+      {
+        "name": "kernel_cutlass_attention_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_2",
+        "total_ms": 3.087941,
+        "calls": 55,
+        "pct_gpu_time": 18.31
+      },
+      {
+        "name": "kernel_cutlass_qkv_gemm_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemo23041_tensorptrf8E4M3FNgmemalign16oi641_1",
+        "total_ms": 2.399915,
+        "calls": 55,
+        "pct_gpu_time": 14.23
+      },
+      {
+        "name": "kernel_cutlass_out_gemm_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemo7681_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemoi641_3",
+        "total_ms": 1.484352,
+        "calls": 55,
+        "pct_gpu_time": 8.8
+      },
+      {
+        "name": "kernel_cutlass_ln2_kernel_tensorptrf32gmemoi641_tensorptrf32gmemo7681_tensorptrf32gmemo7681_tensorptrf8E4M3FNgmemalign16oi641_4",
+        "total_ms": 0.181629,
+        "calls": 55,
+        "pct_gpu_time": 1.08
+      },
+      {
+        "name": "kernel_cutlass_ln1_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemo7681_tensorptrf32gmemo7681_tensorptrf8E4M3FNgmemalign16oi641_0",
+        "total_ms": 0.175812,
+        "calls": 55,
+        "pct_gpu_time": 1.04
+      },
+      {
+        "name": "void sgemm_largek_lds64<true, false, 6, 3, 4, 5, 2, 66>(float*, float const*, float const*, int, int, int, int, int, int, float const*, float const*, float, float, int, int, int*, int*)",
+        "total_ms": 0.061728,
+        "calls": 1,
+        "pct_gpu_time": 0.37
+      },
+      {
+        "name": "cutlass3x_sm100_simt_sgemm_f32_f32_f32_f32_f32_32x32x16_1x1x1_3_tnn_align1_bias_f32_relu",
+        "total_ms": 0.041152,
+        "calls": 4,
+        "pct_gpu_time": 0.24
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul> >(int, at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul>)",
+        "total_ms": 0.033503,
+        "calls": 17,
+        "pct_gpu_time": 0.2
+      }
+    ]
+  }
+}

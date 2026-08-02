@@ -1,0 +1,9 @@
+forbidden_instruction_families:
+  - wgmma
+  - tma
+resource_expectations:
+  local_load: 0
+  local_store: 0
+notes:
+  - This is the predicated residue example; retained H200 SASS scalarizes its BF16 global accesses.
+  - Pair it with bf16_vector_add_aligned before claiming a vectorized fast path.

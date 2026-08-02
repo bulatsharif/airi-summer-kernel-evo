@@ -1,0 +1,5 @@
+# @package _global_
+# Save the population without additional LLM analysis.
+ideas_tracker:
+  _target_: kernel_evo.core.code.evolution_hooks.ProgramSnapshotHook
+  output_dir: ${experiment_dir}

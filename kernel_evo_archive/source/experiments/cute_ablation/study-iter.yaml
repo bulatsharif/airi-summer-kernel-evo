@@ -1,0 +1,39 @@
+schema_version: 1
+order_seed: 20260731
+model: qwen-server/qwen3.6-35b-a3b
+task: level1_01_square_matrix_multiplication_fp8
+tiers: [bare, docs, examples, errors]
+agent:
+  replications: 3
+  # Attempts the agent gets to reach a working kernel. Each attempt is one
+  # OpenCode session that sees its own previous candidate and the B300
+  # diagnostic, never a reference implementation.
+  steps: 6
+  islands: 1
+  concurrency: 4
+  max_output_tokens: 8192
+  max_repairs_per_island: 0
+  # The agent starts from the public skeleton, never from a working kernel.
+  # The verified baseline is timed separately as the speedup denominator and
+  # is never shown to the model.
+  b300_seed: starter
+  session_timeout_seconds: 900
+evaluator:
+  seed: 0
+  warmup: 5
+  repeats: 50
+  timeout_seconds: 900
+# The three knobs below are off in the frozen protocol; see README.md. Vary one
+# at a time from the best tier rather than running the full cross.
+#
+# How the tier reaches the author: `files` materializes it and the agent opens
+# what it wants; `prompt` hands it the whole bundle before it acts.
+# documentation:
+#   delivery: prompt
+#
+# Feedback between turns: the previous candidate's B300 kernel breakdown as
+# PARENT_PROFILE.md, and one read-only LLM critique leading its feedback.
+# profiling:
+#   enabled: true
+# feedback:
+#   critic: true

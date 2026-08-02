@@ -1,0 +1,656 @@
+[
+  {
+    "root": "results/e1-l2-63",
+    "tiers": [
+      "bare",
+      "docs",
+      "errors",
+      "examples"
+    ],
+    "evaluations": 86,
+    "passed": 52,
+    "failed": 34,
+    "gate_rejected_no_device_run": 0,
+    "counts": {
+      "import/API": 12,
+      "compile": 10,
+      "layout/shape": 1,
+      "numeric mismatch": 5,
+      "timeout": 0,
+      "other": 6
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 2,
+        "compile": 4,
+        "layout/shape": 0,
+        "numeric mismatch": 2,
+        "timeout": 0,
+        "other": 1
+      },
+      "in-turn": {
+        "import/API": 10,
+        "compile": 6,
+        "layout/shape": 1,
+        "numeric mismatch": 3,
+        "timeout": 0,
+        "other": 5
+      }
+    },
+    "numeric_mismatch_with_zero_output": 4,
+    "failures": [
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "TypeError: TmemAllocator.__init__() missing 1 required positional argument: 'alloc_result_dst_smem_pt"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass' has no attribute 'float32'. Did you mean: 'Float32'?"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Cannot convert <cutlass.cute.arch.elect.IfOpRegion object at 0x71ad7bd6ae"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: '_Pointer' object has no attribute 'arrive_and_wait'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: '_Pointer' object has no attribute 'arrive_and_wait'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'range_constexpr'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for +: 'int' and 'tuple'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "AssertionError: Cannot allocate 16384 columns, only 128 remaining"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'range_constexpr'"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for +: 'int' and 'tuple'"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "AssertionError: Cannot allocate 16384 columns, only 128 remaining"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "layout/shape",
+        "zero_output": false,
+        "signal": "AssertionError: num_columns must be multiple of 32 and power of two, and between 0 and 512"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "  what():  Unexpected index"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for +: 'int' and 'tuple'"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "AssertionError: Cannot allocate 16384 columns, only 128 remaining"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": false,
+        "signal": "  what():  Unexpected index"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for *: '_Tensor' and 'Float32'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: range_constexpr should be preprocessed by preprocessor."
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'tuple' object cannot be interpreted as an integer"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "numeric mismatch",
+        "zero_output": false,
+        "signal": "validation failed: out_abs=1.863818"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'make_shape'"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: make_layout() takes 1 positional argument but 2 positional arguments (and 1 keyword-only a"
+      },
+      {
+        "tier": "examples",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLCudaRuntimeError: DSLCudaRuntimeError: CUDA_ERROR_INVALID_VALUE (error code: 1)"
+      }
+    ]
+  },
+  {
+    "root": "results/e2-l2-63",
+    "tiers": [
+      "errors"
+    ],
+    "evaluations": 27,
+    "passed": 19,
+    "failed": 8,
+    "gate_rejected_no_device_run": 0,
+    "counts": {
+      "import/API": 0,
+      "compile": 5,
+      "layout/shape": 0,
+      "numeric mismatch": 2,
+      "timeout": 0,
+      "other": 1
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 0,
+        "compile": 1,
+        "layout/shape": 0,
+        "numeric mismatch": 1,
+        "timeout": 0,
+        "other": 0
+      },
+      "in-turn": {
+        "import/API": 0,
+        "compile": 4,
+        "layout/shape": 0,
+        "numeric mismatch": 1,
+        "timeout": 0,
+        "other": 1
+      }
+    },
+    "numeric_mismatch_with_zero_output": 0,
+    "failures": [
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: \ud83d\udca5\ud83d\udca5\ud83d\udca5 Error during runtime code generation for function `gemm_relu_divide` "
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: \ud83d\udca5\ud83d\udca5\ud83d\udca5 Error during runtime code generation for function `gemm_relu_divide` "
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "numeric mismatch",
+        "zero_output": false,
+        "signal": "validation failed: out_abs=1.924981"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "numeric mismatch",
+        "zero_output": false,
+        "signal": "validation failed: out_abs=1.924981"
+      },
+      {
+        "tier": "errors",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "errors",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: full_abs=nan, sample_abs=nan, out_abs=nan"
+      },
+      {
+        "tier": "errors",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "OpError: OpError: expects the N-mode to satisfy 8 <= N <= 256 and N % 8 == 0, but got 512"
+      }
+    ]
+  },
+  {
+    "root": "results/e3-l2-63",
+    "tiers": [
+      "errors"
+    ],
+    "evaluations": 25,
+    "passed": 14,
+    "failed": 11,
+    "gate_rejected_no_device_run": 0,
+    "counts": {
+      "import/API": 10,
+      "compile": 1,
+      "layout/shape": 0,
+      "numeric mismatch": 0,
+      "timeout": 0,
+      "other": 0
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 1,
+        "compile": 0,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 0
+      },
+      "in-turn": {
+        "import/API": 9,
+        "compile": 1,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 0
+      }
+    },
+    "numeric_mismatch_with_zero_output": 0,
+    "failures": [
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "OpError: OpError: expects the N-mode to satisfy 8 <= N <= 256 and N % 8 == 0, but got 512"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for *: '_Tensor' and 'Float32'"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: make_layout() takes 1 positional argument but 2 positional arguments (and 1 keyword-only a"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported iterator type, got <class 'cutlass.cute.tensor._Tensor'>"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for *: '_Tensor' and 'float'"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for *: '_Tensor' and 'Float32'"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: make_layout() takes 1 positional argument but 2 positional arguments (and 1 keyword-only a"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported iterator type, got <class 'cutlass.cute.tensor._Tensor'>"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: '_Tensor' object has no attribute 'engine'"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'view'"
+      },
+      {
+        "tier": "errors",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported iterator type, got <class 'cutlass.cute.tensor._Tensor'>"
+      }
+    ]
+  },
+  {
+    "root": "results/e4-l2-63",
+    "tiers": [
+      "errors"
+    ],
+    "evaluations": 25,
+    "passed": 23,
+    "failed": 2,
+    "gate_rejected_no_device_run": 0,
+    "counts": {
+      "import/API": 0,
+      "compile": 2,
+      "layout/shape": 0,
+      "numeric mismatch": 0,
+      "timeout": 0,
+      "other": 0
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 0,
+        "compile": 1,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 0
+      },
+      "in-turn": {
+        "import/API": 0,
+        "compile": 1,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 0
+      }
+    },
+    "numeric_mismatch_with_zero_output": 0,
+    "failures": [
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      }
+    ]
+  }
+]

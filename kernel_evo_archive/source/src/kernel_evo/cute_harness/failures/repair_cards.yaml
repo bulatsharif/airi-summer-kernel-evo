@@ -1,0 +1,66 @@
+schema_version: 1
+dialect: cute_dsl_python
+cards:
+  - id: invented-symbol
+    symptom: AttributeError or DSL error naming a missing `cute.*` function
+    likely_causes: [API copied from another CUTLASS version, CuTe C++ spelling used in Python]
+    smallest_diagnostic: kernel-evo cute lookup <symbol>
+    invariant: Every symbol must exist in the installed nvidia-cutlass-dsl package.
+    minimal_repair: Replace it with the exact installed signature or start from the nearest version-matched example.
+    verify: Re-run the smallest compile probe.
+
+  - id: hopper-arch-without-a
+    symptom: WGMMA/TMA construction rejects the architecture or the kernel fails at launch
+    likely_causes: [CUTE_DSL_ARCH is sm_90 rather than sm_90a]
+    smallest_diagnostic: kernel-evo cute doctor
+    invariant: Hopper architecture-accelerated WGMMA atoms admit sm_90a.
+    minimal_repair: Set cute.arch/CUTE_DSL_ARCH to sm_90a and force a clean compile.
+    verify: Inspect CUBIN target and require WGMMA in SASS.
+
+  - id: fp8-cast-not-acceleration
+    symptom: FP8 candidate is slower and generated code contains no WGMMA
+    likely_causes: [Only scalar float8 conversions were added, conversion cost dominates]
+    smallest_diagnostic: Inspect CUBIN with `--expect wgmma`.
+    invariant: Genuine Hopper FP8 tensor-core compute uses MmaF8Op/WGMMA.
+    minimal_repair: Use a TMA/WGMMA FP8 mainloop or reject FP8 for this non-MMA operation.
+    verify: Correctness plus WGMMA codegen and end-to-end benchmark including conversion.
+
+  - id: tma-transaction-count
+    symptom: Pipeline wait hangs or consumer observes incomplete data
+    likely_causes: [tx_count excludes an operand, byte count uses the wrong stage layout]
+    smallest_diagnostic: Print static `cute.size_in_bytes` for one A and B stage.
+    invariant: The full barrier transaction count equals all bytes arriving for that stage.
+    minimal_repair: Compute tx_count from the sliced per-stage SMEM layouts.
+    verify: Memcheck followed by synccheck and ragged/tile-multiple tests.
+
+  - id: premature-stage-release
+    symptom: Intermittent GEMM corruption or racecheck hazard
+    likely_causes: [consumer_release occurs before wait_group protects all SMEM readers]
+    smallest_diagnostic: Reduce to two stages and one WGMMA group, then trace state transitions.
+    invariant: No producer overwrites a stage while an outstanding WGMMA can read it.
+    minimal_repair: Move wait_group before consumer_release and advance read/release states separately.
+    verify: Racecheck plus repeated correctness under multiple K tiles.
+
+  - id: vectorization-without-proof
+    symptom: Misaligned-address failure on ragged or sliced inputs
+    likely_causes: [128-bit copy selected from dtype alone, pointer offset breaks 16-byte alignment]
+    smallest_diagnostic: Check base pointer alignment and every supported leading stride/offset.
+    invariant: Vector width, contiguous extent, base alignment, and per-tile offset are all compatible.
+    minimal_repair: Add an aligned fast path and narrower/predicated residue path.
+    verify: Test tile-1/tile+1 dimensions and deliberately offset inputs if supported.
+
+  - id: wide-layout-scalar-codegen
+    symptom: TV layout owns eight BF16 values per thread but SASS still emits scalar LDG/STG
+    likely_causes: [CopyUniversalOp relies on best-effort width inference, per-element predicates prevent vector formation]
+    smallest_diagnostic: Compare the predicated and aligned BF16 add contracts with inspect-codegen.
+    invariant: Layout ownership does not prove instruction width; generated LDG/STG is the authority.
+    minimal_repair: Dispatch a full aligned tile path with num_bits_per_copy=128 and keep a separately predicated residue path.
+    verify: Require vector_global_load_128/vector_global_store_128 for the fast artifact and run both boundary branches.
+
+  - id: register-spill
+    symptom: Correct kernel regresses after a larger tile or more stages
+    likely_causes: [Too many accumulators per thread, excessive unrolling, large live epilogue fragments]
+    smallest_diagnostic: Inspect CUBIN resource usage and LDL/STL counts.
+    invariant: The chosen tile/staging policy must fit the intended occupancy without harmful spills.
+    minimal_repair: Use two warp groups, shrink N tile/stages, shorten live ranges, or reduce unrolling.
+    verify: No unexpected local-memory instructions and improved stable latency.

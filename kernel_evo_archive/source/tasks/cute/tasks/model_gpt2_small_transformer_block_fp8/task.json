@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "model_gpt2_small_transformer_block_fp8",
+  "title": "Complete GPT-2 Small transformer block with CuTe FP8",
+  "source": {
+    "suite": "real_model_layers",
+    "model": "GPT-2 Small (124M)",
+    "model_id": "openai-community/gpt2",
+    "layer": "transformer.h[0]"
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "references": [
+    "TASK_REFERENCE.md"
+  ],
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
+  ],
+  "baseline": "../../probes/model_gpt2_small_transformer_block_fp8_baseline.py",
+  "precision": {
+    "activations": "float8_e4m3fn at every linear boundary",
+    "weights": "float8_e4m3fn",
+    "scales": "fixed per-tensor float32",
+    "accumulator": "float32",
+    "normalization_softmax_residual": "float32",
+    "output": "float32"
+  },
+  "problem": {
+    "operation": "complete pre-norm GPT-2 decoder block: LN, causal MHA, residual, LN, GELU MLP, residual",
+    "batch_size": 1,
+    "sequence_length": 128,
+    "tokens": 128,
+    "hidden_size": 768,
+    "num_heads": 12,
+    "head_dim": 64,
+    "mlp_size": 3072,
+    "causal": true,
+    "dropout": false,
+    "seed": 20260801
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=model_gpt2_small_transformer_block_fp8 .* PASS$",
+    "full_max_absolute_error_vs_quantized_torch": 0.05,
+    "sample_max_absolute_error_vs_fp32": 0.5
+  },
+  "policy": {
+    "minimum_cute_kernels": 1,
+    "minimum_cute_jit_functions": 1,
+    "entrypoint_jit": "gpt2_transformer_block",
+    "required_calls": [
+      "cute.arch.thread_idx"
+    ]
+  }
+}

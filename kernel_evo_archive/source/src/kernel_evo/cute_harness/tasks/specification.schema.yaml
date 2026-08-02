@@ -1,0 +1,30 @@
+schema_version: 1
+dialect: cute_dsl_python
+required:
+  - operation
+  - inputs
+  - accumulation_dtype
+  - correctness
+  - performance
+fields:
+  operation:
+    kind: string
+    equation: string
+  inputs:
+    type: mapping
+    tensor_fields: [shape_domain, dtype, layout, strides, alignment_bytes, dynamic_modes]
+  output:
+    fields: [dtype, layout, aliasing]
+  accumulation_dtype:
+    enum: [fp32]
+  architecture:
+    required: sm_90a
+  compile_time:
+    fields: [tile_shape, cluster_shape, stages, dtype, leading_modes]
+  runtime:
+    fields: [dynamic_dimensions, stream, pointer_alignment]
+  correctness:
+    fields: [reference, atol, rtol, boundary_shapes, numerical_extremes]
+  performance:
+    fields: [representative_shapes, objective, include_conversion_cost]
+

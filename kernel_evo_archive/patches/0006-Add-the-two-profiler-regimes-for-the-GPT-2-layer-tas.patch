@@ -1,0 +1,155 @@
+From fecbac9e0e584bb1216477598987aed68d4299eb Mon Sep 17 00:00:00 2001
+From: bulatsaripov <b.sharipov@innopolis.university>
+Date: Sun, 2 Aug 2026 01:13:10 +0300
+Subject: [PATCH 6/8] Add the two profiler regimes for the GPT-2 layer task
+
+Both build on the configuration that just solved the GPT-2 block from the
+skeleton (errors tier, prompt delivery, 24576 output cap, 2400s session,
+reasoning bounded to low): 4/6 turns, best 0.5205 ms against a 3.5923 ms
+reference, 6.90x, seven real candidate kernels per passing turn.
+
+prof-gpt2.yaml is the standard regime -- the parent's B300 breakdown aggregated
+by kernel name. prof-gpt2-timeline.yaml adds timeline: true, which keeps every
+GPU activity and every idle gap instead of aggregating. A fused block launches
+seven kernels back to back, so launch gaps and serialization are visible in the
+timeline and invisible in the aggregate.
+
+The signal should be legible either way: the first passing kernel spent 94.6% of
+GPU time in one attention kernel that recomputed the QK dot product three times,
+once per output dimension in the third pass.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ .../cute_ablation/prof-gpt2-timeline.yaml     | 56 +++++++++++++++++++
+ experiments/cute_ablation/prof-gpt2.yaml      | 56 +++++++++++++++++++
+ 2 files changed, 112 insertions(+)
+ create mode 100644 experiments/cute_ablation/prof-gpt2-timeline.yaml
+ create mode 100644 experiments/cute_ablation/prof-gpt2.yaml
+
+diff --git a/experiments/cute_ablation/prof-gpt2-timeline.yaml b/experiments/cute_ablation/prof-gpt2-timeline.yaml
+new file mode 100644
+index 0000000..267ded6
+--- /dev/null
++++ b/experiments/cute_ablation/prof-gpt2-timeline.yaml
+@@ -0,0 +1,56 @@
++schema_version: 1
++order_seed: 20260801
++model: deepseek/deepseek-v4-flash
++task: model_gpt2_small_transformer_block_fp8
++# Best configuration measured in E1-E4 across five tasks: `errors` tier scored
++# 28/30 turns, tied best on correctness and cheapest in tokens. Knobs off --
++# E3 (critic) replicated as a negative on every task, E4 (profiler) was null,
++# and E2 (prompt delivery) was mixed and timeout-confounded.
++tiers: [errors]
++agent:
++  replications: 1
++  steps: 6
++  islands: 1
++  # One arm per process; isolation is per-arm git worktrees.
++  concurrency: 1
++  # Raised from 8192. DeepSeek's reasoning is not suppressible through any
++  # opencode config path (options.reasoning_effort ignored, provider-level
++  # hangs, model `reasoning: false` ignored), so it is bounded by a local
++  # proxy injecting reasoning_effort=low. Headroom still matters: unbounded
++  # reasoning consumed 8,192/8,192 and 32,767/32,768 with zero visible output.
++  max_output_tokens: 24576
++  max_repairs_per_island: 0
++  b300_seed: starter
++  # Layer tasks need room to write. At 900s the agent spent the whole
++  # session reading the 27-file bundle (52 reads, 40 steps) and never
++  # wrote a kernel; the barrier then graded the untouched skeleton.
++  session_timeout_seconds: 2400
++evaluator:
++  seed: 0
++  warmup: 5
++  repeats: 50
++  timeout_seconds: 900
++
++# Real-world layer task: full pre-norm GPT-2 decoder block (LN, causal MHA, residual, LN, GELU MLP,
++# residual). Reference 3.5923 ms.
++# Three independent replications are run as separate results roots so each gets
++# its own worktree; speedup was shown not to replicate at one replication, so
++# the ladder is reported over replications rather than from a single arm.
++
++# `prompt` rather than `files`: under files delivery the author opens the
++# bundle one call at a time and every tool result replays into later steps,
++# which consumed the entire session on these larger tasks. Delivering the
++# bundle once removes the read loop. E2 scored 6/6 on level1_02, level2_12
++# and level2_14, so this is not a weak tier -- it was only timeout-confounded
++# on level2_63.
++documentation:
++  delivery: prompt
++
++# E4-style profiler feedback, timeline regime: same breakdown plus the full
++# Chrome trace, which retains every GPU activity *and every idle gap* rather
++# than aggregating by kernel name. A fused layer launches 7 kernels back to
++# back, so launch gaps and serialization are visible here and invisible in the
++# aggregated view.
++profiling:
++  enabled: true
++  timeline: true
+diff --git a/experiments/cute_ablation/prof-gpt2.yaml b/experiments/cute_ablation/prof-gpt2.yaml
+new file mode 100644
+index 0000000..bc71eb5
+--- /dev/null
++++ b/experiments/cute_ablation/prof-gpt2.yaml
+@@ -0,0 +1,56 @@
++schema_version: 1
++order_seed: 20260801
++model: deepseek/deepseek-v4-flash
++task: model_gpt2_small_transformer_block_fp8
++# Best configuration measured in E1-E4 across five tasks: `errors` tier scored
++# 28/30 turns, tied best on correctness and cheapest in tokens. Knobs off --
++# E3 (critic) replicated as a negative on every task, E4 (profiler) was null,
++# and E2 (prompt delivery) was mixed and timeout-confounded.
++tiers: [errors]
++agent:
++  replications: 1
++  steps: 6
++  islands: 1
++  # One arm per process; isolation is per-arm git worktrees.
++  concurrency: 1
++  # Raised from 8192. DeepSeek's reasoning is not suppressible through any
++  # opencode config path (options.reasoning_effort ignored, provider-level
++  # hangs, model `reasoning: false` ignored), so it is bounded by a local
++  # proxy injecting reasoning_effort=low. Headroom still matters: unbounded
++  # reasoning consumed 8,192/8,192 and 32,767/32,768 with zero visible output.
++  max_output_tokens: 24576
++  max_repairs_per_island: 0
++  b300_seed: starter
++  # Layer tasks need room to write. At 900s the agent spent the whole
++  # session reading the 27-file bundle (52 reads, 40 steps) and never
++  # wrote a kernel; the barrier then graded the untouched skeleton.
++  session_timeout_seconds: 2400
++evaluator:
++  seed: 0
++  warmup: 5
++  repeats: 50
++  timeout_seconds: 900
++
++# Real-world layer task: full pre-norm GPT-2 decoder block (LN, causal MHA, residual, LN, GELU MLP,
++# residual). Reference 3.5923 ms.
++# Three independent replications are run as separate results roots so each gets
++# its own worktree; speedup was shown not to replicate at one replication, so
++# the ladder is reported over replications rather than from a single arm.
++
++# `prompt` rather than `files`: under files delivery the author opens the
++# bundle one call at a time and every tool result replays into later steps,
++# which consumed the entire session on these larger tasks. Delivering the
++# bundle once removes the read loop. E2 scored 6/6 on level1_02, level2_12
++# and level2_14, so this is not a weak tier -- it was only timeout-confounded
++# on level2_63.
++documentation:
++  delivery: prompt
++
++# E4-style profiler feedback, standard regime: the previous candidate's B300
++# kernel breakdown is written as PARENT_PROFILE.md. Aggregated by kernel name --
++# it answers "which kernel is hot" and nothing about gaps between them.
++#
++# On the GPT-2 block this signal is unusually legible: the first passing kernel
++# spent 94.6% of GPU time in attention_kernel.
++profiling:
++  enabled: true
+-- 
+2.39.5 (Apple Git-154)
+

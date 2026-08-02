@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "level2_63_gemm_relu_divide_fp8",
+  "title": "GEMM plus ReLU plus Divide with CuTe FP8",
+  "source": {
+    "suite": "KernelBench",
+    "level": 2,
+    "number": 63,
+    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level2/63_Gemm_ReLU_Divide.py"
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
+  ],
+  "baseline": "../../probes/level2_12_gemm_multiply_leaky_relu_fp8_baseline.py",
+  "precision": {
+    "gemm_inputs": "float8_e4m3fn",
+    "accumulator": "float32",
+    "bias": "float32",
+    "output": "float32"
+  },
+  "problem": {
+    "operation": "Y = relu(X @ W.T + bias) / 2.0",
+    "batch_size": 1024,
+    "in_features": 8192,
+    "out_features": 8192,
+    "seed": 20260727
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=level2_63_gemm_relu_divide .* PASS$",
+    "full_max_absolute_error_vs_torch_fp8": 0.01,
+    "sample_max_absolute_error_vs_fp32": 0.1
+  },
+  "policy": {
+    "minimum_cute_kernels": 2,
+    "minimum_cute_jit_functions": 1,
+    "entrypoint_jit": "gemm_relu_divide",
+    "required_calls": [
+      "cute.gemm"
+    ]
+  }
+}

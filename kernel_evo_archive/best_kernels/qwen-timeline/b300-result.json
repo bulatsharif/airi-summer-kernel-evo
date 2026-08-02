@@ -1,0 +1,213 @@
+{
+  "task_id": "model_qwen35_4b_full_attention_block_fp8",
+  "candidate_sha256": "03f7f60378082bab2e78a69056f57618f2d97d134aeb502dd353af58c00bcb37",
+  "submission_sha256": "783462a942f39b0e830ff1b048f164ae850f6186e9ab5ce42f60202d24ae76a2",
+  "passed": true,
+  "success_pattern_matched": true,
+  "kernel_time_ms": 7.356352,
+  "wall_seconds": 37.426880125072785,
+  "response": {
+    "success": true,
+    "exit_code": 0,
+    "stdout": "task=model_qwen35_4b_full_attention_block_fp8 max_abs=0.006594 kernel_time_ms=7.356352 PASS\n",
+    "stderr": "/usr/local/lib/python3.12/dist-packages/torch/profiler/profiler.py:224: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.\n  _warn_once(\n",
+    "device_time_ms": 405.43039200004654,
+    "profile_id": "c0b8e160-9473-4541-aa5a-f49dae3e1301",
+    "profile_error": null,
+    "timed_out": false
+  },
+  "profile_timeline": {
+    "event_count": 754,
+    "timeline_span_ms": 32471.417828,
+    "activity_time_ms": 404.402559,
+    "busy_time_ms": 404.402564,
+    "idle_time_ms": 32067.015264,
+    "idle_pct": 98.75,
+    "largest_gap_ms": 5047.70104,
+    "candidate_kernel_symbols": [
+      "attention_kernel",
+      "down_proj_kernel",
+      "mlp_proj_kernel",
+      "norm1_kernel",
+      "norm2_kernel",
+      "out_proj_kernel",
+      "qkv_kernel",
+      "rotary_k_kernel",
+      "rotary_q_kernel",
+      "swiglu_kernel"
+    ],
+    "observed_candidate_symbols": [
+      "attention_kernel",
+      "down_proj_kernel",
+      "mlp_proj_kernel",
+      "norm1_kernel",
+      "norm2_kernel",
+      "out_proj_kernel",
+      "qkv_kernel",
+      "rotary_k_kernel",
+      "rotary_q_kernel",
+      "swiglu_kernel"
+    ],
+    "unobserved_candidate_symbols": [],
+    "iteration": {
+      "iterations": 55,
+      "kernels_per_iteration": 10,
+      "span_us": 7338.901,
+      "busy_us": 7336.597,
+      "gap_us": 2.304,
+      "gap_pct": 0.03,
+      "largest_gap_us": 0.257,
+      "largest_gap_before": "K47",
+      "between_iterations_us": 45.984,
+      "rows": [
+        {
+          "activity": "K39",
+          "start_us": 0.0,
+          "end_us": 9.376,
+          "duration_us": 9.376,
+          "gap_before_us": null
+        },
+        {
+          "activity": "K40",
+          "start_us": 9.632,
+          "end_us": 1789.221,
+          "duration_us": 1779.589,
+          "gap_before_us": 0.256
+        },
+        {
+          "activity": "K41",
+          "start_us": 1789.477,
+          "end_us": 1809.477,
+          "duration_us": 20.0,
+          "gap_before_us": 0.256
+        },
+        {
+          "activity": "K42",
+          "start_us": 1809.733,
+          "end_us": 1827.845,
+          "duration_us": 18.112,
+          "gap_before_us": 0.256
+        },
+        {
+          "activity": "K43",
+          "start_us": 1828.101,
+          "end_us": 1983.302,
+          "duration_us": 155.201,
+          "gap_before_us": 0.256
+        },
+        {
+          "activity": "K44",
+          "start_us": 1983.558,
+          "end_us": 2605.288,
+          "duration_us": 621.73,
+          "gap_before_us": 0.256
+        },
+        {
+          "activity": "K45",
+          "start_us": 2605.543,
+          "end_us": 2614.408,
+          "duration_us": 8.865,
+          "gap_before_us": 0.255
+        },
+        {
+          "activity": "K46",
+          "start_us": 2614.663,
+          "end_us": 5867.184,
+          "duration_us": 3252.521,
+          "gap_before_us": 0.255
+        },
+        {
+          "activity": "K47",
+          "start_us": 5867.441,
+          "end_us": 5873.904,
+          "duration_us": 6.463,
+          "gap_before_us": 0.257
+        },
+        {
+          "activity": "K48",
+          "start_us": 5874.161,
+          "end_us": 7338.901,
+          "duration_us": 1464.74,
+          "gap_before_us": 0.257
+        }
+      ]
+    }
+  },
+  "profile_summary": {
+    "device": {
+      "name": "NVIDIA B300 SXM6 AC",
+      "num_sms": 148,
+      "shared_mem_per_block_optin": 232448
+    },
+    "gpu_time_ms": 404.402559,
+    "kernel_time_ms": 404.367134,
+    "kernel_calls": 735,
+    "memcpy_time_ms": 0.032993,
+    "memcpy_calls": 17,
+    "memset_time_ms": 0.002432,
+    "memset_calls": 2,
+    "distinct_kernels": 54,
+    "top_kernels": [
+      {
+        "name": "kernel_cutlass_mlp_proj_kernel_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tens_7",
+        "total_ms": 179.013938,
+        "calls": 55,
+        "pct_gpu_time": 44.27
+      },
+      {
+        "name": "kernel_cutlass_qkv_kernel_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptr_1",
+        "total_ms": 97.929585,
+        "calls": 55,
+        "pct_gpu_time": 24.22
+      },
+      {
+        "name": "kernel_cutlass_down_proj_kernel_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf32_gmem_o_i641_tensorptrf32_gmem_o_i641_9",
+        "total_ms": 80.398781,
+        "calls": 55,
+        "pct_gpu_time": 19.88
+      },
+      {
+        "name": "kernel_cutlass_out_proj_kernel_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf32_gmem_o_i641_5",
+        "total_ms": 34.217056,
+        "calls": 55,
+        "pct_gpu_time": 8.46
+      },
+      {
+        "name": "kernel_cutlass_attention_kernel_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_ten_4",
+        "total_ms": 8.475,
+        "calls": 55,
+        "pct_gpu_time": 2.1
+      },
+      {
+        "name": "kernel_cutlass_rotary_q_kernel_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf32_gmem_o_2561_tensorptrf32_gmem_o_i641_tensorptrf32_gmem_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_2",
+        "total_ms": 1.107939,
+        "calls": 55,
+        "pct_gpu_time": 0.27
+      },
+      {
+        "name": "kernel_cutlass_rotary_k_kernel_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf32_gmem_o_2561_tensorptrf32_gmem_o_i641_tensorptrf32_gmem_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_3",
+        "total_ms": 1.011363,
+        "calls": 55,
+        "pct_gpu_time": 0.25
+      },
+      {
+        "name": "kernel_cutlass_norm1_kernel_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf32_gmem_o_25601_tensorptrf8E4M3FN_gmem_align16_o_i641_0",
+        "total_ms": 0.518175,
+        "calls": 55,
+        "pct_gpu_time": 0.13
+      },
+      {
+        "name": "kernel_cutlass_norm2_kernel_tensorptrf32_gmem_o_i641_tensorptrf32_gmem_o_25601_tensorptrf8E4M3FN_gmem_align16_o_i641_6",
+        "total_ms": 0.493341,
+        "calls": 55,
+        "pct_gpu_time": 0.12
+      },
+      {
+        "name": "kernel_cutlass_swiglu_kernel_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_tensorptrf8E4M3FN_gmem_align16_o_i641_8",
+        "total_ms": 0.355263,
+        "calls": 55,
+        "pct_gpu_time": 0.09
+      }
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+id: cute_dsl_4_2_bf16_predicated_add
+dialect: cute_dsl_python
+cutlass_version: 4.2.1
+architecture:
+  required: sm_80_or_newer
+operation:
+  kind: elementwise
+  equation: C = A + B
+supported:
+  a_dtype: bf16
+  b_dtype: bf16
+  c_dtype: bf16
+  constraints:
+    - A, B, and C are equally shaped contiguous 2D tensors.
+    - DLPack pointers are at least 16-byte aligned.
+mapping:
+  threads: 128
+  value_ownership: eight contiguous BF16 values per thread in the TV layout
+  boundary_handling: identity tensor predicate
+files:
+  kernel: kernel.py
+  expected_codegen: expected_codegen.yaml
+correctness:
+  reference: torch.add
+  tested_shapes:
+    - [1024, 1024]
+    - [3, 12]
+    - [1000, 777]
+expected_codegen:
+  forbidden_instruction_families: [wgmma, tma]
+known_failures:
+  - condition: pointer or row offset is not 16-byte aligned
+    symptom: vector copy is not legal; use a narrower/residue path
+known_codegen:
+  - Per-element predication scalarizes the verified H200 BF16 global loads/stores.
+  - Use the aligned minimal-pair example for an enforced 128-bit fast path.
+validated_h200_codegen:
+  registers_per_thread: 106
+  vector_global_load_128: 0
+  vector_global_store_128: 0
+  local_load_store: 0

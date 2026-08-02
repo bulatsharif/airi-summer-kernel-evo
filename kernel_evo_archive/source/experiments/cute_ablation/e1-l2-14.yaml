@@ -1,0 +1,28 @@
+schema_version: 1
+order_seed: 20260731
+model: deepseek/deepseek-v4-flash
+task: level2_14_gemm_divide_sum_scaling_fp8
+tiers: [bare, docs, examples, errors]
+agent:
+  replications: 1
+  # Attempts the agent gets to reach a working kernel. Each attempt is one
+  # OpenCode session that sees its own previous candidate and the B300
+  # diagnostic, never a reference implementation.
+  steps: 6
+  islands: 1
+  # One arm per process; arms are isolated by running each in its own git
+  # worktree. See e1-l2-63.yaml for why a shared checkout leaks kernels.
+  concurrency: 1
+  max_output_tokens: 8192
+  max_repairs_per_island: 0
+  b300_seed: starter
+  session_timeout_seconds: 900
+evaluator:
+  seed: 0
+  warmup: 5
+  repeats: 50
+  timeout_seconds: 900
+# E1 reference cell: every knob off, documentation delivered as `files`.
+
+# GEMM, divide, row sum, scale. The only task in the grid with a reduction in
+# the epilogue, and one with no established DeepSeek pass.

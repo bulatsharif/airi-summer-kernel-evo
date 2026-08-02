@@ -1,0 +1,99 @@
+{
+  "task_id": "model_qwen35_4b_full_attention_block_fp8",
+  "candidate_sha256": "54ecc04c09078c75f7a4ca53053da265f6f0c4ed8dde6744ee6c376805dcb0bb",
+  "submission_sha256": "ccca6cc53e710ad0f95f82fcea195cef83ae195aae8bc8e15013e16d4c799a58",
+  "passed": true,
+  "success_pattern_matched": true,
+  "kernel_time_ms": 51.180927,
+  "wall_seconds": 9.447036665980704,
+  "response": {
+    "success": true,
+    "exit_code": 0,
+    "stdout": "task=model_qwen35_4b_full_attention_block_fp8 max_abs=0.016584 kernel_time_ms=51.180386 PASS\ntask=model_qwen35_4b_full_attention_block_fp8 max_abs=0.016584 kernel_time_ms=51.180927 PASS\n",
+    "stderr": "",
+    "device_time_ms": 2815.4230160000025,
+    "device_times_ms": [
+      2815.4230160000025
+    ],
+    "profile_id": "9c44a77f-e027-4bdf-8041-710824029229",
+    "profile_error": null,
+    "timed_out": false
+  },
+  "profile_summary": {
+    "device": {
+      "name": "NVIDIA B300 SXM6 AC",
+      "num_sms": 148,
+      "shared_mem_per_block_optin": 232448
+    },
+    "gpu_time_ms": 2814.713735,
+    "kernel_time_ms": 2814.678469,
+    "kernel_calls": 790,
+    "memcpy_time_ms": 0.032065,
+    "memcpy_calls": 17,
+    "memset_time_ms": 0.003201,
+    "memset_calls": 2,
+    "distinct_kernels": 55,
+    "top_kernels": [
+      {
+        "name": "kernel_cutlass_mlp_gateup_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_9",
+        "total_ms": 1160.735563,
+        "calls": 55,
+        "pct_gpu_time": 41.24
+      },
+      {
+        "name": "kernel_cutlass_mlp_down_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemoi641_tensorptrf32gmemoi641_10",
+        "total_ms": 600.597412,
+        "calls": 55,
+        "pct_gpu_time": 21.34
+      },
+      {
+        "name": "kernel_cutlass_qkv_q_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_1",
+        "total_ms": 529.210191,
+        "calls": 55,
+        "pct_gpu_time": 18.8
+      },
+      {
+        "name": "kernel_cutlass_out_proj_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemoi641_7",
+        "total_ms": 263.931467,
+        "calls": 55,
+        "pct_gpu_time": 9.38
+      },
+      {
+        "name": "kernel_cutlass_attention_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemoi6_6",
+        "total_ms": 98.669025,
+        "calls": 55,
+        "pct_gpu_time": 3.51
+      },
+      {
+        "name": "kernel_cutlass_qkv_kv_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_3",
+        "total_ms": 76.245602,
+        "calls": 55,
+        "pct_gpu_time": 2.71
+      },
+      {
+        "name": "kernel_cutlass_qkv_kv_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_2",
+        "total_ms": 76.245056,
+        "calls": 55,
+        "pct_gpu_time": 2.71
+      },
+      {
+        "name": "kernel_cutlass_q_rope_norm_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemo2561_tensorptrf32gmemoi641_tensorptrf32gmemoi641_tensorptrf8E4M3FNgmemalign16oi641_4",
+        "total_ms": 2.806505,
+        "calls": 55,
+        "pct_gpu_time": 0.1
+      },
+      {
+        "name": "kernel_cutlass_rms_norm_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemo25601_tensorptrf8E4M3FNgmemalign16oi641_0",
+        "total_ms": 2.54699,
+        "calls": 55,
+        "pct_gpu_time": 0.09
+      },
+      {
+        "name": "kernel_cutlass_mlp_norm_kernel_tensorptrf32gmemoi641_tensorptrf32gmemo25601_tensorptrf8E4M3FNgmemalign16oi641_8",
+        "total_ms": 2.038084,
+        "calls": 55,
+        "pct_gpu_time": 0.07
+      }
+    ]
+  }
+}

@@ -1,0 +1,966 @@
+From 44708251c118beb421e65a1d62d2eacf07650df4 Mon Sep 17 00:00:00 2001
+From: bulatsaripov <b.sharipov@innopolis.university>
+Date: Sun, 2 Aug 2026 01:04:23 +0300
+Subject: [PATCH 5/8] Add optional B300 GPU timeline profiles
+
+---
+ experiments/cute_ablation/README.md          |  20 ++
+ experiments/cute_ablation/run_iter_matrix.py |   5 +-
+ src/kernel_evo/agent/config.py               |   8 +
+ src/kernel_evo/agent/controller.py           |   2 +
+ src/kernel_evo/agent/evaluator.py            |   1 +
+ src/kernel_evo/commands/agent.py             |   7 +
+ src/kernel_evo/cute_harness/b300.py          |  54 ++-
+ src/kernel_evo/cute_harness/trace_summary.py | 356 ++++++++++++++++++-
+ tests/test_agent_cli.py                      |  40 +++
+ tests/test_agent_config.py                   |  38 ++
+ tests/test_b300_trace_summary.py             | 128 ++++++-
+ 11 files changed, 646 insertions(+), 13 deletions(-)
+
+diff --git a/experiments/cute_ablation/README.md b/experiments/cute_ablation/README.md
+index 23bc461..627d81d 100644
+--- a/experiments/cute_ablation/README.md
++++ b/experiments/cute_ablation/README.md
+@@ -155,6 +155,26 @@ With it on, the next turn's packet carries the previous candidate's table as
+ it was. With it off, the study runs exactly as frozen: the summary is written to
+ disk and no packet mentions it.
+ 
++The legacy top-k table remains the default. To additionally select the complete
++timeline formatter, enable the explicit second option:
++
++```yaml
++profiling:
++  enabled: true
++  timeline: true
++```
++
++For direct CLI initialization, the equivalent flags are `--profile
++--profile-timeline`.
++
++The timeline retains every GPU kernel, memcpy, and memset in timestamp order,
++including an exact `gap before` each activity. It does not median-filter or
++sample launches. CPU/Python trace records are omitted because they are not GPU
++activity. Kernel names declared with `@cute.kernel` in the candidate are used
++only as attribution hints; the packet separately lists candidate symbols that
++were observed and symbols that never launched. The legacy aggregate is included
++above the timeline, and the original Chrome trace remains the replay authority.
++
+ Only the island's own trace is ever delivered. The reference baseline's summary
+ stays in `<run>/b300/baseline/`, unreachable from any packet, for the same reason
+ the verified kernel is: an author must never see it.
+diff --git a/experiments/cute_ablation/run_iter_matrix.py b/experiments/cute_ablation/run_iter_matrix.py
+index bc57498..090b90b 100644
+--- a/experiments/cute_ablation/run_iter_matrix.py
++++ b/experiments/cute_ablation/run_iter_matrix.py
+@@ -559,6 +559,9 @@ def agent_config(config: dict[str, Any], tier: str, task_path: Path) -> dict[str
+     evaluation = config["evaluator"]
+     profiling = config.get("profiling") or {}
+     from_scratch = settings["b300_seed"] == "starter"
++    profile_config = {"enabled": bool(profiling.get("enabled", False))}
++    if "timeline" in profiling:
++        profile_config["timeline"] = bool(profiling["timeline"])
+     return {
+         "run": {
+             "name": f"iter-{tier}",
+@@ -605,7 +608,7 @@ def agent_config(config: dict[str, Any], tier: str, task_path: Path) -> dict[str
+         },
+         # When enabled, each turn also receives the previous candidate's B300
+         # kernel breakdown as PARENT_PROFILE.md. Off is the frozen protocol.
+-        "profiling": {"enabled": bool(profiling.get("enabled", False))},
++        "profiling": profile_config,
+         "cute": {"harness_enabled": True},
+     }
+ 
+diff --git a/src/kernel_evo/agent/config.py b/src/kernel_evo/agent/config.py
+index 680d782..22fee71 100644
+--- a/src/kernel_evo/agent/config.py
++++ b/src/kernel_evo/agent/config.py
+@@ -75,6 +75,7 @@ class AgentRunConfig:
+     evaluation_repeats: int = 5
+     harness_url: str = ""
+     profile_enabled: bool = False
++    profile_timeline: bool = False
+     profile_runners: tuple[str, ...] = ("torch",)
+     profile_min_speedup: float = 1.0
+     profile_regression_budget: int = 4
+@@ -343,6 +344,9 @@ class AgentRunConfig:
+             profile_enabled=bool(
+                 _pick(payload, "profile_enabled", default=profiling.get("enabled", False))
+             ),
++            profile_timeline=bool(
++                _pick(payload, "profile_timeline", default=profiling.get("timeline", False))
++            ),
+             profile_runners=profile_runners,
+             profile_min_speedup=float(
+                 _pick(payload, "profile_min_speedup", default=profiling.get("min_speedup", 1.0))
+@@ -587,6 +591,10 @@ class AgentRunConfig:
+             raise ConfigurationError("migration_interval cannot be negative")
+         if self.profile_min_speedup < 0:
+             raise ConfigurationError("profiling.min_speedup cannot be negative")
++        if self.profile_timeline and not self.profile_enabled:
++            raise ConfigurationError("profiling.timeline=true requires profiling.enabled=true")
++        if self.profile_timeline and self.evaluator_kind != "cute_b300":
++            raise ConfigurationError("profiling.timeline=true requires evaluation.kind=cute_b300")
+         if self.profile_regression_budget < 0:
+             raise ConfigurationError("profiling.regression_budget cannot be negative")
+         if self.profile_agent_idea_limit < 1 or self.profile_agent_idea_limit > 8:
+diff --git a/src/kernel_evo/agent/controller.py b/src/kernel_evo/agent/controller.py
+index a1b88f7..5c77d94 100644
+--- a/src/kernel_evo/agent/controller.py
++++ b/src/kernel_evo/agent/controller.py
+@@ -2067,6 +2067,8 @@ def _b300_trace_profile(b300_dir: Path) -> ProfileResult:
+             record = {}
+         if isinstance(record, Mapping) and isinstance(record.get("profile_summary"), Mapping):
+             data["b300_trace"] = dict(record["profile_summary"])
++        if isinstance(record, Mapping) and isinstance(record.get("profile_timeline"), Mapping):
++            data["b300_timeline"] = dict(record["profile_timeline"])
+     return ProfileResult(
+         summary=summary_path.read_text(encoding="utf-8").strip(), data=data
+     )
+diff --git a/src/kernel_evo/agent/evaluator.py b/src/kernel_evo/agent/evaluator.py
+index 7e9cecb..500064f 100644
+--- a/src/kernel_evo/agent/evaluator.py
++++ b/src/kernel_evo/agent/evaluator.py
+@@ -69,6 +69,7 @@ class CuteB300Evaluator:
+             warmup=int(context.config.get("evaluation_warmup", 2)),
+             repeats=int(context.config.get("evaluation_repeats", 5)),
+             timeout=float(context.config.get("evaluator_timeout", 900.0)),
++            profile_timeline=bool(context.config.get("profile_timeline", False)),
+         )
+         baseline_root = context.run_dir / "b300" / "baseline"
+         baseline_result_path = baseline_root / "result.json"
+diff --git a/src/kernel_evo/commands/agent.py b/src/kernel_evo/commands/agent.py
+index 3c739b4..796f0b3 100644
+--- a/src/kernel_evo/commands/agent.py
++++ b/src/kernel_evo/commands/agent.py
+@@ -263,6 +263,12 @@ def _setup_run_init(subparsers: argparse._SubParsersAction) -> None:
+     parser.add_argument("--evaluation-repeats", type=int, default=None)
+     parser.add_argument("--harness-url", default=None)
+     parser.add_argument("--profile", dest="profile_enabled", action="store_true", default=None)
++    parser.add_argument(
++        "--profile-timeline",
++        action="store_true",
++        default=None,
++        help="Use the complete B300 GPU timeline packet; requires --profile or profiling.enabled.",
++    )
+     parser.add_argument("--profile-runners", default=None, help="Comma-separated torch,nsys,ncu.")
+     parser.add_argument("--profile-min-speedup", type=float, default=None)
+     parser.add_argument("--migration-interval", type=int, default=None)
+@@ -452,6 +458,7 @@ def _run_init(controller: KernelEvoAgent, args: argparse.Namespace) -> None:
+         "evaluation_repeats",
+         "harness_url",
+         "profile_enabled",
++        "profile_timeline",
+         "profile_runners",
+         "profile_min_speedup",
+         "migration_interval",
+diff --git a/src/kernel_evo/cute_harness/b300.py b/src/kernel_evo/cute_harness/b300.py
+index ea3dd21..3d0e058 100644
+--- a/src/kernel_evo/cute_harness/b300.py
++++ b/src/kernel_evo/cute_harness/b300.py
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++import ast
+ import fcntl
+ import hashlib
+ import json
+@@ -19,8 +20,11 @@ from urllib.request import Request, urlopen
+ 
+ from kernel_evo.cute_harness.b300_policy import check_candidate
+ from kernel_evo.cute_harness.trace_summary import (
++    compact_timeline_metadata,
+     summarize_chrome_trace,
++    summarize_chrome_timeline,
+     trace_summary_markdown,
++    trace_timeline_markdown,
+ )
+ from kernel_evo.resources.paths import get_repo_root
+ 
+@@ -100,6 +104,7 @@ class EvaluationConfig:
+     warmup: int = 2
+     repeats: int = 5
+     timeout: float = 600.0
++    profile_timeline: bool = False
+ 
+ 
+ def tasks_root() -> Path:
+@@ -224,7 +229,7 @@ def evaluate(
+         os.environ.get("CUTE_HARNESS_API_KEY", ""),
+         config.timeout,
+     )
+-    lock_path = get_repo_root() / ".kernelevo" / "b300.lock"
++    lock_path = _b300_lock_path()
+     lock_path.parent.mkdir(parents=True, exist_ok=True)
+     with lock_path.open("w") as lock:
+         fcntl.flock(lock, fcntl.LOCK_EX)
+@@ -266,10 +271,18 @@ def evaluate(
+             record["profile_download_error"] = str(error)
+         else:
+             try:
+-                summary = summarize_chrome_trace(
+-                    json.loads(profile_path.read_text(encoding="utf-8"))
+-                )
+-                summary_path.write_text(trace_summary_markdown(summary), encoding="utf-8")
++                trace = json.loads(profile_path.read_text(encoding="utf-8"))
++                summary = summarize_chrome_trace(trace)
++                if config.profile_timeline:
++                    timeline = summarize_chrome_timeline(
++                        trace,
++                        candidate_kernel_symbols=_candidate_kernel_symbols(candidate_snapshot),
++                    )
++                    summary_text = trace_timeline_markdown(timeline, aggregate=summary)
++                    record["profile_timeline"] = compact_timeline_metadata(timeline)
++                else:
++                    summary_text = trace_summary_markdown(summary)
++                summary_path.write_text(summary_text, encoding="utf-8")
+             except (OSError, ValueError) as error:
+                 # Author feedback is best-effort; it never fails a timed evaluation.
+                 record["profile_summary_error"] = f"{type(error).__name__}: {error}"
+@@ -351,6 +364,37 @@ def _sha256(path: Path) -> str:
+     return hashlib.sha256(path.read_bytes()).hexdigest()
+ 
+ 
++def _b300_lock_path() -> Path:
++    return get_repo_root() / ".kernelevo" / "b300.lock"
++
++
++def _candidate_kernel_symbols(path: Path) -> tuple[str, ...]:
++    """Read candidate-declared ``@cute.kernel`` names for timeline attribution."""
++    try:
++        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
++    except (OSError, SyntaxError, UnicodeError):
++        return ()
++    names = []
++    for node in ast.walk(tree):
++        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
++            continue
++        for decorator in node.decorator_list:
++            name = _ast_name(decorator.func if isinstance(decorator, ast.Call) else decorator)
++            if name in {"kernel", "cute.kernel"}:
++                names.append(node.name)
++                break
++    return tuple(sorted(set(names)))
++
++
++def _ast_name(node: ast.AST) -> str:
++    if isinstance(node, ast.Name):
++        return node.id
++    if isinstance(node, ast.Attribute):
++        prefix = _ast_name(node.value)
++        return f"{prefix}.{node.attr}" if prefix else node.attr
++    return ""
++
++
+ class RemoteHarnessError(RuntimeError):
+     pass
+ 
+diff --git a/src/kernel_evo/cute_harness/trace_summary.py b/src/kernel_evo/cute_harness/trace_summary.py
+index 291d6a2..c0b0b3f 100644
+--- a/src/kernel_evo/cute_harness/trace_summary.py
++++ b/src/kernel_evo/cute_harness/trace_summary.py
+@@ -1,8 +1,10 @@
+-"""Compact deterministic summaries of the B300 harness PyTorch Chrome trace.
++"""Deterministic summaries of the B300 harness PyTorch Chrome trace.
+ 
+ The remote harness returns a PyTorch profiler trace per run. Only the GPU-side
+-slices are actionable for an author, so aggregate those by kernel name and drop
+-everything else. `dur` is microseconds even though `displayTimeUnit` is "ms".
++slices are actionable for an author. The legacy summary aggregates them by
++kernel name; the optional timeline retains every GPU activity and every idle
++hole while omitting CPU/Python profiler bookkeeping. `ts` and `dur` are
++microseconds even though `displayTimeUnit` is "ms".
+ """
+ 
+ from __future__ import annotations
+@@ -73,6 +75,163 @@ def summarize_chrome_trace(trace: dict, *, top_k: int = 10) -> dict[str, Any]:
+     }
+ 
+ 
++def summarize_chrome_timeline(
++    trace: dict,
++    *,
++    candidate_kernel_symbols: tuple[str, ...] = (),
++) -> dict[str, Any]:
++    """Retain every ordered GPU activity and measure device-wide idle holes.
++
++    Candidate attribution is deliberately a hint rather than a claim: a GPU
++    kernel is marked as candidate-authored only when its generated name contains
++    one of the candidate source's ``@cute.kernel`` function names.
++    """
++    if not isinstance(trace, Mapping):
++        raise ValueError("Chrome trace must be a JSON object")
++    raw_events = trace.get("traceEvents")
++    if not isinstance(raw_events, list):
++        raise ValueError("Chrome trace has no traceEvents list")
++
++    symbols = tuple(sorted({str(item) for item in candidate_kernel_symbols if str(item)}))
++    ordered: list[tuple[float, int, Mapping[str, Any]]] = []
++    for ordinal, event in enumerate(raw_events):
++        if (
++            not isinstance(event, Mapping)
++            or event.get("ph") != "X"
++            or event.get("cat") not in GPU_CATEGORIES
++        ):
++            continue
++        timestamp = event.get("ts")
++        duration = event.get("dur")
++        if (
++            isinstance(timestamp, bool)
++            or isinstance(duration, bool)
++            or not isinstance(timestamp, (int, float))
++            or not isinstance(duration, (int, float))
++            or duration < 0
++        ):
++            continue
++        ordered.append((float(timestamp), ordinal, event))
++    ordered.sort(key=lambda item: (item[0], item[1]))
++
++    if not ordered:
++        return {
++            "device": _device(trace),
++            "event_count": 0,
++            "timeline_span_ms": 0.0,
++            "activity_time_ms": 0.0,
++            "busy_time_ms": 0.0,
++            "idle_time_ms": 0.0,
++            "idle_pct": 0.0,
++            "largest_gap_ms": 0.0,
++            "candidate_kernel_symbols": list(symbols),
++            "observed_candidate_symbols": [],
++            "unobserved_candidate_symbols": list(symbols),
++            "kernels": [],
++            "events": [],
++        }
++
++    origin_us = ordered[0][0]
++    busy_until_us = origin_us
++    idle_time_us = 0.0
++    largest_gap_us = 0.0
++    activity_time_us = 0.0
++    aliases: dict[tuple[Any, ...], dict[str, Any]] = {}
++    observed_symbols: set[str] = set()
++    timeline_events: list[dict[str, Any]] = []
++
++    for index, (timestamp, _ordinal, event) in enumerate(ordered, start=1):
++        duration_us = float(event["dur"])
++        gap_us = max(0.0, timestamp - busy_until_us)
++        idle_time_us += gap_us
++        largest_gap_us = max(largest_gap_us, gap_us)
++        busy_until_us = max(busy_until_us, timestamp + duration_us)
++        activity_time_us += duration_us
++
++        category = str(event["cat"])
++        name = str(event.get("name", ""))
++        args = event.get("args") if isinstance(event.get("args"), Mapping) else {}
++        stream = args.get("stream", event.get("tid"))
++        device = args.get("device")
++        item: dict[str, Any] = {
++            "index": index,
++            "start_ms": round((timestamp - origin_us) / 1000.0, 6),
++            "gap_before_us": round(gap_us, 6),
++            "duration_us": round(duration_us, 6),
++            "kind": _kind(category),
++            "device": device,
++            "stream": stream,
++        }
++
++        if category == "kernel":
++            symbol = _matching_symbol(name, symbols)
++            if symbol:
++                observed_symbols.add(symbol)
++            source_hint = (
++                f"candidate:{symbol}"
++                if symbol
++                else "CuTe helper/setup"
++                if name.startswith("kernel_cutlass_")
++                else "framework/validation"
++            )
++            launch = _launch(args)
++            alias_key = (
++                name,
++                source_hint,
++                tuple(launch.get("grid", ())),
++                tuple(launch.get("block", ())),
++                launch.get("shared_memory_bytes"),
++                launch.get("registers_per_thread"),
++            )
++            alias = aliases.get(alias_key)
++            if alias is None:
++                alias = {
++                    "id": f"K{len(aliases) + 1}",
++                    "name": name,
++                    "source_hint": source_hint,
++                    "calls": 0,
++                    "total_us": 0.0,
++                    **launch,
++                }
++                aliases[alias_key] = alias
++            alias["calls"] += 1
++            alias["total_us"] += duration_us
++            item["activity"] = alias["id"]
++        else:
++            item["activity"] = name
++            byte_count = args.get("bytes")
++            if isinstance(byte_count, (int, float)) and not isinstance(byte_count, bool):
++                item["bytes"] = int(byte_count)
++        timeline_events.append(item)
++
++    span_us = max(0.0, busy_until_us - origin_us)
++    busy_time_us = max(0.0, span_us - idle_time_us)
++    kernels = []
++    for alias in aliases.values():
++        kernels.append(
++            {
++                **alias,
++                "total_us": round(float(alias["total_us"]), 6),
++            }
++        )
++    observed = sorted(observed_symbols)
++    return {
++        "device": _device(trace),
++        "event_count": len(timeline_events),
++        "timeline_span_ms": round(span_us / 1000.0, 6),
++        "activity_time_ms": round(activity_time_us / 1000.0, 6),
++        "busy_time_ms": round(busy_time_us / 1000.0, 6),
++        "idle_time_ms": round(idle_time_us / 1000.0, 6),
++        "idle_pct": round(100.0 * idle_time_us / span_us, 2) if span_us else 0.0,
++        "largest_gap_ms": round(largest_gap_us / 1000.0, 6),
++        "candidate_kernel_symbols": list(symbols),
++        "observed_candidate_symbols": observed,
++        "unobserved_candidate_symbols": sorted(set(symbols) - observed_symbols),
++        "kernels": kernels,
++        "events": timeline_events,
++    }
++
++
+ def trace_summary_markdown(summary: dict, *, max_chars: int = 2000) -> str:
+     """Render one bounded markdown table; identical input yields identical text."""
+     if not isinstance(summary, Mapping):
+@@ -117,6 +276,120 @@ def trace_summary_markdown(summary: dict, *, max_chars: int = 2000) -> str:
+     return (text + _omitted(len(kernels) - shown))[:max_chars]
+ 
+ 
++def trace_timeline_markdown(timeline: dict, *, aggregate: dict | None = None) -> str:
++    """Render the complete GPU timeline without dropping or sampling activities."""
++    if not isinstance(timeline, Mapping):
++        raise ValueError("trace timeline must be a JSON object")
++    events = timeline.get("events")
++    kernels = timeline.get("kernels")
++    if not isinstance(events, list) or not isinstance(kernels, list):
++        raise ValueError("trace timeline has no events/kernels list")
++
++    lines = [
++        "# B300 complete GPU timeline of your last candidate",
++        "",
++        (
++            f"- complete GPU-side trace: {_count(timeline.get('event_count'))} activities; "
++            "CPU/Python profiler records are intentionally omitted"
++        ),
++        (
++            f"- observed span: {_ms(timeline.get('timeline_span_ms'))} ms; active union "
++            f"{_ms(timeline.get('busy_time_ms'))} ms; idle holes "
++            f"{_ms(timeline.get('idle_time_ms'))} ms "
++            f"({_pct(timeline.get('idle_pct'))}%); largest hole "
++            f"{_ms(timeline.get('largest_gap_ms'))} ms"
++        ),
++        (
++            f"- summed activity time: {_ms(timeline.get('activity_time_ms'))} ms; this may "
++            "exceed active union when streams overlap"
++        ),
++        (
++            "- source labels are hints: `candidate:<symbol>` is matched against this candidate's "
++            "`@cute.kernel` definitions; other labels describe likely harness/runtime work"
++        ),
++    ]
++    _append_symbols(lines, "candidate `@cute.kernel` symbols", timeline.get("candidate_kernel_symbols"))
++    _append_symbols(lines, "observed candidate symbols", timeline.get("observed_candidate_symbols"))
++    _append_symbols(
++        lines,
++        "candidate symbols not observed in this trace",
++        timeline.get("unobserved_candidate_symbols"),
++    )
++
++    if isinstance(aggregate, Mapping):
++        hot = aggregate.get("top_kernels")
++        if isinstance(hot, list) and hot:
++            lines.extend(
++                [
++                    "",
++                    "## Hottest GPU kernels (legacy aggregate)",
++                    "",
++                    "| kernel | ms | calls | % GPU |",
++                    "| --- | ---: | ---: | ---: |",
++                ]
++            )
++            for kernel in hot:
++                if not isinstance(kernel, Mapping):
++                    continue
++                lines.append(
++                    f"| {_name(kernel.get('name', ''))} | {_ms(kernel.get('total_ms'))} | "
++                    f"{_count(kernel.get('calls'))} | {_pct(kernel.get('pct_gpu_time'))} |"
++                )
++
++    lines.extend(
++        [
++            "",
++            "## Kernel legend",
++            "",
++            "| id | source hint | kernel | calls | total us | launch |",
++            "| --- | --- | --- | ---: | ---: | --- |",
++        ]
++    )
++    for kernel in kernels:
++        if not isinstance(kernel, Mapping):
++            continue
++        lines.append(
++            f"| {_cell(kernel.get('id', ''))} | {_cell(kernel.get('source_hint', ''))} | "
++            f"{_name(kernel.get('name', ''))} | {_count(kernel.get('calls'))} | "
++            f"{_us(kernel.get('total_us'))} | {_launch_text(kernel)} |"
++        )
++    if not kernels:
++        lines.append("| - | - | no GPU kernels observed | 0 | 0.000 | - |")
++
++    lines.extend(
++        [
++            "",
++            "## Ordered GPU activities",
++            "",
++            "`gap before` is device-wide idle time since all earlier GPU activity ended; "
++            "zero means overlap or no measurable hole.",
++            "",
++            "| # | start ms | gap before us | duration us | lane | activity |",
++            "| ---: | ---: | ---: | ---: | --- | --- |",
++        ]
++    )
++    for event in events:
++        if not isinstance(event, Mapping):
++            continue
++        lines.append(
++            f"| {_count(event.get('index'))} | {_ms(event.get('start_ms'))} | "
++            f"{_us(event.get('gap_before_us'))} | {_us(event.get('duration_us'))} | "
++            f"{_lane(event)} | {_activity(event)} |"
++        )
++    if not events:
++        lines.append("| - | - | - | - | - | no GPU activities observed |")
++    return "\n".join(lines) + "\n"
++
++
++def compact_timeline_metadata(timeline: Mapping[str, Any]) -> dict[str, Any]:
++    """Keep timeline diagnostics in result.json without duplicating every trace event."""
++    return {
++        str(key): value
++        for key, value in timeline.items()
++        if key not in {"events", "kernels", "device"}
++    }
++
++
+ def _device(trace: Mapping[str, Any]) -> dict[str, Any]:
+     properties = trace.get("deviceProperties")
+     first = properties[0] if isinstance(properties, list) and properties else None
+@@ -130,6 +403,75 @@ def _device(trace: Mapping[str, Any]) -> dict[str, Any]:
+     return {target: first[source] for source, target in fields if first.get(source) is not None}
+ 
+ 
++def _kind(category: str) -> str:
++    return {"gpu_memcpy": "memcpy", "gpu_memset": "memset"}.get(category, category)
++
++
++def _matching_symbol(name: str, symbols: tuple[str, ...]) -> str:
++    matches = [
++        symbol
++        for symbol in symbols
++        if name == f"kernel_cutlass_{symbol}" or name.startswith(f"kernel_cutlass_{symbol}_")
++    ]
++    return max(matches, key=len) if matches else ""
++
++
++def _launch(args: Mapping[str, Any]) -> dict[str, Any]:
++    result: dict[str, Any] = {}
++    for source, target in (
++        ("grid", "grid"),
++        ("block", "block"),
++        ("shared memory", "shared_memory_bytes"),
++        ("registers per thread", "registers_per_thread"),
++    ):
++        value = args.get(source)
++        if source in {"grid", "block"}:
++            if isinstance(value, (list, tuple)):
++                result[target] = list(value)
++        elif isinstance(value, (int, float)) and not isinstance(value, bool):
++            result[target] = int(value)
++    return result
++
++
++def _append_symbols(lines: list[str], label: str, value: Any) -> None:
++    if not isinstance(value, list):
++        return
++    rendered = ", ".join(f"`{str(item).replace('`', '')}`" for item in value) or "none"
++    lines.append(f"- {label}: {rendered}")
++
++
++def _launch_text(kernel: Mapping[str, Any]) -> str:
++    parts = []
++    for label, key in (("grid", "grid"), ("block", "block")):
++        value = kernel.get(key)
++        if isinstance(value, list):
++            parts.append(f"{label}=" + "x".join(str(item) for item in value))
++    for label, key in (("smem", "shared_memory_bytes"), ("regs", "registers_per_thread")):
++        value = kernel.get(key)
++        if isinstance(value, (int, float)) and not isinstance(value, bool):
++            parts.append(f"{label}={int(value)}")
++    return _cell(", ".join(parts) or "-")
++
++
++def _lane(event: Mapping[str, Any]) -> str:
++    device = event.get("device")
++    stream = event.get("stream")
++    parts = []
++    if device is not None:
++        parts.append(f"d{device}")
++    if stream is not None:
++        parts.append(f"s{stream}")
++    return _cell("/".join(parts) or "-")
++
++
++def _activity(event: Mapping[str, Any]) -> str:
++    activity = _name(event.get("activity", ""))
++    byte_count = event.get("bytes")
++    if isinstance(byte_count, (int, float)) and not isinstance(byte_count, bool):
++        activity += f" ({int(byte_count)} B)"
++    return activity
++
++
+ def _omitted(count: int) -> str:
+     return f"\n{count} lower-cost kernel(s) omitted.\n" if count > 0 else ""
+ 
+@@ -139,10 +481,18 @@ def _name(value: Any) -> str:
+     return text if len(text) <= NAME_WIDTH else text[: NAME_WIDTH - 1].rstrip() + "…"
+ 
+ 
++def _cell(value: Any) -> str:
++    return " ".join(str(value).split()).replace("|", "\\|")
++
++
+ def _ms(value: Any) -> str:
+     return f"{float(value):.3f}" if isinstance(value, (int, float)) and not isinstance(value, bool) else "n/a"
+ 
+ 
++def _us(value: Any) -> str:
++    return f"{float(value):.3f}" if isinstance(value, (int, float)) and not isinstance(value, bool) else "n/a"
++
++
+ def _pct(value: Any) -> str:
+     return f"{float(value):.1f}" if isinstance(value, (int, float)) and not isinstance(value, bool) else "n/a"
+ 
+diff --git a/tests/test_agent_cli.py b/tests/test_agent_cli.py
+index bd9800b..b4b82ee 100644
+--- a/tests/test_agent_cli.py
++++ b/tests/test_agent_cli.py
+@@ -75,3 +75,43 @@ def test_nested_cli_drives_complete_single_island_barrier(
+     main()
+     completed = json.loads(capsys.readouterr().out)
+     assert completed["phase"] == "complete"
++
++
++def test_run_init_accepts_the_optional_profile_timeline_flag(
++    tmp_path: Path, monkeypatch, capsys
++) -> None:
++    task = (
++        Path(__file__).resolve().parents[1]
++        / "tasks"
++        / "cute"
++        / "tasks"
++        / "level1_01_square_matrix_multiplication_fp8"
++    )
++    runs_dir = tmp_path / "runs"
++    monkeypatch.setattr(
++        sys,
++        "argv",
++        [
++            "kernel-evo",
++            "run",
++            "init",
++            "--runs-dir",
++            str(runs_dir),
++            "--run-id",
++            "timeline-cli",
++            "--problem-path",
++            str(task),
++            "--backend",
++            "cute",
++            "--evaluator-kind",
++            "cute_b300",
++            "--profile",
++            "--profile-timeline",
++        ],
++    )
++
++    main()
++    assert json.loads(capsys.readouterr().out)["phase"] == "ready"
++    state = json.loads((runs_dir / "timeline-cli" / "state.json").read_text(encoding="utf-8"))
++    assert state["config"]["profile_enabled"] is True
++    assert state["config"]["profile_timeline"] is True
+diff --git a/tests/test_agent_config.py b/tests/test_agent_config.py
+index 44ef141..57e256a 100644
+--- a/tests/test_agent_config.py
++++ b/tests/test_agent_config.py
+@@ -45,3 +45,41 @@ def test_config_can_disable_documentation(tmp_path: Path) -> None:
+     )
+ 
+     assert config.documentation_enabled is False
++
++
++def test_b300_timeline_is_an_explicit_profile_option(tmp_path: Path) -> None:
++    task = tmp_path / "task"
++    task.mkdir()
++    config = AgentRunConfig.from_mapping(
++        {
++            "problem": {"path": str(task), "backend": "cute"},
++            "evaluation": {"kind": "cute_b300"},
++            "profiling": {"enabled": True, "timeline": True},
++        }
++    )
++
++    assert config.profile_enabled is True
++    assert config.profile_timeline is True
++    defaults = AgentRunConfig.from_mapping(
++        {
++            "problem": {"path": str(task), "backend": "cute"},
++            "evaluation": {"kind": "cute_b300"},
++        }
++    )
++    assert defaults.profile_timeline is False
++
++    with pytest.raises(ConfigurationError, match="timeline=true requires"):
++        AgentRunConfig.from_mapping(
++            {
++                "problem": {"path": str(task), "backend": "cute"},
++                "evaluation": {"kind": "cute_b300"},
++                "profiling": {"timeline": True},
++            }
++        )
++    with pytest.raises(ConfigurationError, match="evaluation.kind=cute_b300"):
++        AgentRunConfig.from_mapping(
++            {
++                "problem": {"path": str(task), "backend": "triton"},
++                "profiling": {"enabled": True, "timeline": True},
++            }
++        )
+diff --git a/tests/test_b300_trace_summary.py b/tests/test_b300_trace_summary.py
+index 2cee29f..d47cc5d 100644
+--- a/tests/test_b300_trace_summary.py
++++ b/tests/test_b300_trace_summary.py
+@@ -12,12 +12,18 @@ from kernel_evo.agent import EvaluationResult, KernelEvoAgent
+ from kernel_evo.agent.config import AgentRunConfig
+ from kernel_evo.cute_harness import b300
+ from kernel_evo.cute_harness.b300 import EvaluationConfig, baseline_candidate, discover_tasks
+-from kernel_evo.cute_harness.trace_summary import summarize_chrome_trace, trace_summary_markdown
++from kernel_evo.cute_harness.trace_summary import (
++    summarize_chrome_trace,
++    summarize_chrome_timeline,
++    trace_summary_markdown,
++    trace_timeline_markdown,
++)
+ 
+ 
+ REPO_ROOT = Path(__file__).resolve().parents[1]
+ FIXTURE = Path(__file__).with_name("fixtures") / "b300_profile_trace.json"
+ TABLE_HEADER = "| kernel | ms | calls | % GPU |"
++TIMELINE_HEADER = "| # | start ms | gap before us | duration us | lane | activity |"
+ 
+ 
+ def real_trace() -> dict[str, Any]:
+@@ -68,8 +74,11 @@ def run_evaluate(
+     *,
+     profile_id: str | None,
+     profile: bytes | Exception = b"",
++    profile_timeline: bool = False,
+ ) -> tuple[dict[str, Any], Path]:
+     task = discover_tasks()["level1_01_square_matrix_multiplication_fp8"]
++    # Keep this unit test independent of the checkout's live B300 lock.
++    monkeypatch.setattr(b300, "_b300_lock_path", lambda: output_dir.parent / "b300.lock")
+     candidate = output_dir.parent / "candidate_source.py"
+     candidate.parent.mkdir(parents=True, exist_ok=True)
+     candidate.write_text(baseline_candidate(task), encoding="utf-8")
+@@ -85,7 +94,15 @@ def run_evaluate(
+         b300, "HarnessClient", lambda *_, **__: StubHarnessClient(response, profile)
+     )
+     record = b300.evaluate(
+-        task, candidate, output_dir, EvaluationConfig(seed=0, warmup=1, repeats=1)
++        task,
++        candidate,
++        output_dir,
++        EvaluationConfig(
++            seed=0,
++            warmup=1,
++            repeats=1,
++            profile_timeline=profile_timeline,
++        ),
+     )
+     return record, output_dir
+ 
+@@ -98,11 +115,14 @@ def load_run_iter_matrix():
+     return module
+ 
+ 
+-def b300_config(*, profile_enabled: bool, steps: int = 2) -> AgentRunConfig:
++def b300_config(
++    *, profile_enabled: bool, profile_timeline: bool = False, steps: int = 2
++) -> AgentRunConfig:
+     config = AgentRunConfig.from_file(REPO_ROOT / "examples" / "agent" / "airi_cute_b300.yaml")
+     return replace(
+         config,
+         profile_enabled=profile_enabled,
++        profile_timeline=profile_timeline,
+         b300_seed="starter",
+         seed_preflight=False,
+         steps=steps,
+@@ -198,6 +218,72 @@ def test_summarizes_a_real_trimmed_b300_trace() -> None:
+     assert 0.0 < summary["gpu_time_ms"] < 1.0
+ 
+ 
++def test_timeline_retains_every_gpu_activity_and_measures_idle_holes() -> None:
++    trace = {
++        "deviceProperties": [{"name": "NVIDIA B300 SXM6 AC"}],
++        "traceEvents": [
++            {
++                "ph": "X",
++                "cat": "kernel",
++                "name": "kernel_cutlass_candidate_kernel_cfg",
++                "ts": 1000.0,
++                "dur": 100.0,
++                "tid": 7,
++                "args": {"device": 0, "stream": 7, "grid": [1, 2, 1], "block": [128, 1, 1]},
++            },
++            {
++                "ph": "X",
++                "cat": "gpu_memcpy",
++                "name": "Memcpy HtoD",
++                "ts": 1050.0,
++                "dur": 25.0,
++                "args": {"device": 0, "stream": 8, "bytes": 64},
++            },
++            {
++                "ph": "X",
++                "cat": "kernel",
++                "name": "framework_kernel",
++                "ts": 1200.0,
++                "dur": 50.0,
++                "args": {"device": 0, "stream": 7},
++            },
++            {
++                "ph": "X",
++                "cat": "gpu_memset",
++                "name": "Memset (Device)",
++                "ts": 1400.0,
++                "dur": 10.0,
++                "args": {"device": 0, "stream": 7, "bytes": 4},
++            },
++            {"ph": "X", "cat": "cpu_op", "name": "aten::mm", "ts": 1100.0, "dur": 9000.0},
++        ],
++    }
++
++    timeline = summarize_chrome_timeline(
++        trace,
++        candidate_kernel_symbols=("candidate_kernel", "dead_kernel"),
++    )
++
++    assert timeline["event_count"] == 4
++    assert timeline["timeline_span_ms"] == 0.41
++    assert timeline["activity_time_ms"] == 0.185
++    assert timeline["busy_time_ms"] == 0.16
++    assert timeline["idle_time_ms"] == 0.25
++    assert timeline["largest_gap_ms"] == 0.15
++    assert [event["gap_before_us"] for event in timeline["events"]] == [0.0, 0.0, 100.0, 150.0]
++    assert timeline["observed_candidate_symbols"] == ["candidate_kernel"]
++    assert timeline["unobserved_candidate_symbols"] == ["dead_kernel"]
++    assert timeline["kernels"][0]["source_hint"] == "candidate:candidate_kernel"
++    assert timeline["kernels"][1]["source_hint"] == "framework/validation"
++
++    markdown = trace_timeline_markdown(timeline)
++    assert TIMELINE_HEADER in markdown
++    assert markdown.count("\n| 1 |") == 1
++    assert all(f"\n| {index} |" in markdown for index in range(1, 5))
++    assert "candidate symbols not observed in this trace: `dead_kernel`" in markdown
++    assert "aten::mm" not in markdown
++
++
+ def test_markdown_is_deterministic_and_stays_under_two_kilobytes() -> None:
+     summary = summarize_chrome_trace(real_trace())
+ 
+@@ -276,11 +362,37 @@ def test_evaluate_records_the_trace_summary_beside_the_profile(
+     assert record["profile_summary"]["kernel_calls"] == 10
+     assert "profile_summary_error" not in record
+     assert "profile_download_error" not in record
++    assert "profile_timeline" not in record
+ 
+     persisted = json.loads((output_dir / "result.json").read_text(encoding="utf-8"))
+     assert persisted["profile_summary"] == record["profile_summary"]
+ 
+ 
++def test_evaluate_can_write_the_complete_timeline_instead_of_the_legacy_packet(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    payload = json.dumps(real_trace()).encode("utf-8")
++
++    record, output_dir = run_evaluate(
++        monkeypatch,
++        tmp_path / "eval",
++        profile_id="abc123",
++        profile=payload,
++        profile_timeline=True,
++    )
++
++    text = (output_dir / "profile_summary.md").read_text(encoding="utf-8")
++    assert "# B300 complete GPU timeline" in text
++    assert TABLE_HEADER in text
++    assert TIMELINE_HEADER in text
++    assert record["profile_timeline"]["event_count"] == 18
++    assert "events" not in record["profile_timeline"]
++    assert "kernels" not in record["profile_timeline"]
++    # The candidate baseline declares this symbol, and all 18 GPU activities remain visible.
++    assert "candidate:square_gemm_kernel" in text
++    assert all(f"\n| {index} |" in text for index in range(1, 19))
++
++
+ def test_evaluate_records_a_parse_error_without_failing_the_run(
+     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+ ) -> None:
+@@ -455,9 +567,13 @@ def test_real_evaluator_delivers_its_own_trace_and_not_the_baseline(
+ 
+     monkeypatch.setenv("CUTE_HARNESS_API_KEY", "test-key")
+     monkeypatch.setattr(b300, "HarnessClient", lambda *_, **__: SequencedClient())
++    monkeypatch.setattr(b300, "_b300_lock_path", lambda: tmp_path / "b300.lock")
+ 
+     controller = KernelEvoAgent(tmp_path / "runs")
+-    controller.init_run(b300_config(profile_enabled=True), run_id="b300-end-to-end")
++    controller.init_run(
++        b300_config(profile_enabled=True, profile_timeline=True),
++        run_id="b300-end-to-end",
++    )
+     authoring = controller.prepare_iteration("b300-end-to-end")[0]
+     # Stand in for the authoring turn: a kernel that clears the policy gate and
+     # is not byte-identical to the reference, so it is timed on its own.
+@@ -474,6 +590,7 @@ def test_real_evaluator_delivers_its_own_trace_and_not_the_baseline(
+     run_dir = controller.store.run_dir("b300-end-to-end")
+     assert (run_dir / "b300" / "baseline" / "profile_summary.md").is_file()
+     text = (task.task_file.parent / "PARENT_PROFILE.md").read_text(encoding="utf-8")
++    assert TIMELINE_HEADER in text
+     assert "kernel_cutlass_square_gemm_kernel" in text
+     assert "reference_only_kernel" not in text
+ 
+@@ -495,6 +612,9 @@ def test_study_config_reads_profiling_enabled_and_defaults_off() -> None:
+     assert module.agent_config({**base, "profiling": {"enabled": True}}, "bare", task_path)[
+         "profiling"
+     ] == {"enabled": True}
++    assert module.agent_config(
++        {**base, "profiling": {"enabled": True, "timeline": True}}, "bare", task_path
++    )["profiling"] == {"enabled": True, "timeline": True}
+ 
+     # The frozen study config keeps the flag off.
+     import yaml
+-- 
+2.39.5 (Apple Git-154)
+

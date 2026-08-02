@@ -1,0 +1,96 @@
+{
+  "task_id": "model_qwen35_4b_full_attention_block_fp8",
+  "candidate_sha256": "14530dd7979282556cabcc62a87f7fdb33dc2f537f06a82b39771e2a96dc2c29",
+  "submission_sha256": "5204c162e467886a926f32005082fc34b48b989a9f52ac94bb42698a065d19be",
+  "passed": true,
+  "success_pattern_matched": true,
+  "kernel_time_ms": 0.626208,
+  "wall_seconds": 40.72142612503376,
+  "response": {
+    "success": true,
+    "exit_code": 0,
+    "stdout": "task=model_qwen35_4b_full_attention_block_fp8 max_abs=0.055800 kernel_time_ms=0.626208 PASS\n",
+    "stderr": "/usr/local/lib/python3.12/dist-packages/torch/profiler/profiler.py:224: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.\n  _warn_once(\n",
+    "device_time_ms": 35.29052500006009,
+    "profile_id": "56538a7c-f690-46a9-8f54-e7dd57aaef2f",
+    "profile_error": null,
+    "timed_out": false
+  },
+  "profile_summary": {
+    "device": {
+      "name": "NVIDIA B300 SXM6 AC",
+      "num_sms": 148,
+      "shared_mem_per_block_optin": 232448
+    },
+    "gpu_time_ms": 34.262496,
+    "kernel_time_ms": 34.228385,
+    "kernel_calls": 900,
+    "memcpy_time_ms": 0.03184,
+    "memcpy_calls": 17,
+    "memset_time_ms": 0.002271,
+    "memset_calls": 2,
+    "distinct_kernels": 57,
+    "top_kernels": [
+      {
+        "name": "kernel_cutlass_fp8_gemm_kernel_TiledMMA_ThrLayoutVMNK11110000_PermutationMNK____MMAAtom_ThrID10_ShapeMNK12812832_TVLayoutA1128321281128_TVLayoutB1128321281128_TVLayoutC11281281281128_Copy_12",
+        "total_ms": 6.965202,
+        "calls": 55,
+        "pct_gpu_time": 20.33
+      },
+      {
+        "name": "kernel_cutlass_attention_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemoi6_6",
+        "total_ms": 4.742927,
+        "calls": 55,
+        "pct_gpu_time": 13.84
+      },
+      {
+        "name": "kernel_cutlass_fp8_gemm_kernel_TiledMMA_ThrLayoutVMNK11110000_PermutationMNK____MMAAtom_ThrID10_ShapeMNK12812832_TVLayoutA1128321281128_TVLayoutB1128321281128_TVLayoutC11281281281128_Copy_7",
+        "total_ms": 3.853833,
+        "calls": 55,
+        "pct_gpu_time": 11.25
+      },
+      {
+        "name": "kernel_cutlass_fp8_gemm_kernel_TiledMMA_ThrLayoutVMNK11110000_PermutationMNK____MMAAtom_ThrID10_ShapeMNK12812832_TVLayoutA1128321281128_TVLayoutB1128321281128_TVLayoutC11281281281128_Copy_10",
+        "total_ms": 2.850727,
+        "calls": 55,
+        "pct_gpu_time": 8.32
+      },
+      {
+        "name": "kernel_cutlass_fp8_gemm_kernel_TiledMMA_ThrLayoutVMNK11110000_PermutationMNK____MMAAtom_ThrID10_ShapeMNK12812832_TVLayoutA1128321281128_TVLayoutB1128321281128_TVLayoutC11281281281128_Copy_9",
+        "total_ms": 2.722151,
+        "calls": 55,
+        "pct_gpu_time": 7.94
+      },
+      {
+        "name": "kernel_cutlass_fp8_gemm_kernel_TiledMMA_ThrLayoutVMNK11110000_PermutationMNK____MMAAtom_ThrID10_ShapeMNK12812832_TVLayoutA1128321281128_TVLayoutB1128321281128_TVLayoutC11281281281128_Copy_3",
+        "total_ms": 2.515333,
+        "calls": 55,
+        "pct_gpu_time": 7.34
+      },
+      {
+        "name": "kernel_cutlass_fp8_gemm_kernel_TiledMMA_ThrLayoutVMNK11110000_PermutationMNK____MMAAtom_ThrID10_ShapeMNK12812832_TVLayoutA1128321281128_TVLayoutB1128321281128_TVLayoutC11281281281128_Copy_1",
+        "total_ms": 2.500072,
+        "calls": 55,
+        "pct_gpu_time": 7.3
+      },
+      {
+        "name": "kernel_cutlass_fp8_gemm_kernel_TiledMMA_ThrLayoutVMNK11110000_PermutationMNK____MMAAtom_ThrID10_ShapeMNK12812832_TVLayoutA1128321281128_TVLayoutB1128321281128_TVLayoutC11281281281128_Copy_2",
+        "total_ms": 2.495431,
+        "calls": 55,
+        "pct_gpu_time": 7.28
+      },
+      {
+        "name": "kernel_cutlass_rms_norm_kernel_tensorptrf8E4M3FNgmemalign16oi641_tensorptrf32gmemo25601_tensorptrf8E4M3FNgmemalign16oi641_0",
+        "total_ms": 1.678757,
+        "calls": 55,
+        "pct_gpu_time": 4.9
+      },
+      {
+        "name": "kernel_cutlass_post_norm_kernel_tensorptrf32gmemoi641_tensorptrf32gmemo25601_tensorptrf8E4M3FNgmemalign16oi641_8",
+        "total_ms": 1.643237,
+        "calls": 55,
+        "pct_gpu_time": 4.8
+      }
+    ]
+  }
+}

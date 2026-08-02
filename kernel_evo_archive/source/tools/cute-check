@@ -1,0 +1,12 @@
+#!/bin/sh
+# Static policy check for one CuTe candidate: required calls, kernel count,
+# entry-point signature, parse validity. No GPU, no network, no evaluation --
+# the B300 measurement stays one per barrier iteration.
+#
+# The author agent is allowed to run exactly this script, so it can catch a
+# rejected candidate before spending the turn's single evaluation on it. The
+# script hard-codes the subcommand: nothing else in the CLI is reachable
+# through it.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+exec env PYTHONPATH="$ROOT/src" "$ROOT/.venv/bin/python" -m kernel_evo cute task-check "$@"

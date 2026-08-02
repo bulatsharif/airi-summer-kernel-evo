@@ -1,0 +1,593 @@
+{
+ "schemaVersion": 1,
+ "deviceProperties": [
+  {
+   "id": 0,
+   "name": "NVIDIA B300 SXM6 AC",
+   "totalGlobalMem": 287421038592,
+   "computeMajor": 10,
+   "computeMinor": 3,
+   "maxThreadsPerBlock": 1024,
+   "maxThreadsPerMultiprocessor": 2048,
+   "regsPerBlock": 65536,
+   "warpSize": 32,
+   "sharedMemPerBlock": 49152,
+   "numSms": 148,
+   "regsPerMultiprocessor": 65536,
+   "sharedMemPerBlockOptin": 232448,
+   "sharedMemPerMultiprocessor": 233472
+  }
+ ],
+ "displayTimeUnit": "ms",
+ "baseTimeNanoseconds": 1782967788000000000,
+ "traceEvents": [
+  {
+   "name": "process_labels",
+   "ph": "M",
+   "ts": 2447219379488.908,
+   "pid": 200809,
+   "tid": 0,
+   "args": {
+    "labels": "CPU"
+   }
+  },
+  {
+   "name": "process_name",
+   "ph": "M",
+   "ts": 2447219379488.908,
+   "pid": 200809,
+   "tid": 0,
+   "args": {
+    "name": "python3"
+   }
+  },
+  {
+   "name": "process_sort_index",
+   "ph": "M",
+   "ts": 2447219379488.908,
+   "pid": 200809,
+   "tid": 0,
+   "args": {
+    "sort_index": 200809
+   }
+  },
+  {
+   "ph": "f",
+   "id": 509,
+   "pid": 200809,
+   "tid": 200809,
+   "ts": 2447219816622.659,
+   "cat": "ac2g",
+   "name": "ac2g",
+   "bp": "e"
+  },
+  {
+   "ph": "X",
+   "cat": "cuda_runtime",
+   "name": "cudaGetDeviceCount",
+   "pid": 200809,
+   "tid": 200809,
+   "ts": 2447219816622.659,
+   "dur": 1.046,
+   "args": {
+    "cbid": 3,
+    "correlation": 509
+   }
+  },
+  {
+   "ph": "f",
+   "id": 510,
+   "pid": 200809,
+   "tid": 200809,
+   "ts": 2447219816640.632,
+   "cat": "ac2g",
+   "name": "ac2g",
+   "bp": "e"
+  },
+  {
+   "ph": "X",
+   "cat": "cuda_runtime",
+   "name": "cudaGetDeviceProperties_v2",
+   "pid": 200809,
+   "tid": 200809,
+   "ts": 2447219816640.632,
+   "dur": 0.398,
+   "args": {
+    "cbid": 440,
+    "correlation": 510
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "void at::native::(anonymous namespace)::distribution_elementwise_grid_stride_kernel<float, 4, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2}, at::native::(anonymous namespace)::distribution_nullary_kernel<float, float, float4, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2}, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2} const&, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(int, float)#1}>(long, at::PhiloxCudaState, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2}, at::native::(anonymous namespace)::distribution_nullary_kernel<float, float, float4, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2}, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2} const&, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(int, float)#1})",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447220672469.319,
+   "dur": 23.968,
+   "args": {
+    "External id": 3,
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 541,
+    "registers per thread": 56,
+    "shared memory": 0,
+    "blocks per SM": 8.0,
+    "warps per SM": 64.0,
+    "grid": [
+     1184,
+     1,
+     1
+    ],
+    "block": [
+     256,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 50
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "void at::native::(anonymous namespace)::distribution_elementwise_grid_stride_kernel<float, 4, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2}, at::native::(anonymous namespace)::distribution_nullary_kernel<float, float, float4, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2}, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2} const&, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(int, float)#1}>(long, at::PhiloxCudaState, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2}, at::native::(anonymous namespace)::distribution_nullary_kernel<float, float, float4, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2}, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_and_transform<float, float, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(curandStatePhilox4_32_10*)#2} const&, at::native::templates::cuda::uniform_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, double, double, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1})::{lambda(int, float)#1})",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447220672921.64,
+   "dur": 23.969,
+   "args": {
+    "External id": 6,
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 565,
+    "registers per thread": 56,
+    "shared memory": 0,
+    "blocks per SM": 8.0,
+    "warps per SM": 64.0,
+    "grid": [
+     1184,
+     1,
+     1
+    ],
+    "block": [
+     256,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 50
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul> >(int, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul>)",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447221297300.072,
+   "dur": 23.232,
+   "args": {
+    "External id": 10,
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 607,
+    "registers per thread": 32,
+    "shared memory": 0,
+    "blocks per SM": 110.702705,
+    "warps per SM": 442.810822,
+    "grid": [
+     16384,
+     1,
+     1
+    ],
+    "block": [
+     128,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 100
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "kernel_cutlass__convert_kernel_tensorptrf32gmemo151201i64512_tensorptrf8E4M3FNgmemalign16o151201i64512_tensor00o1512011105121___Float32_Float8E4M3FN_0",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447221625351.27,
+   "dur": 20.961,
+   "args": {
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 1799,
+    "registers per thread": 20,
+    "shared memory": 0,
+    "blocks per SM": 221.405411,
+    "warps per SM": 885.621643,
+    "grid": [
+     32768,
+     1,
+     1
+    ],
+    "block": [
+     128,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 100
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul> >(int, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul>)",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447221625501.191,
+   "dur": 19.456,
+   "args": {
+    "External id": 11,
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 1806,
+    "registers per thread": 32,
+    "shared memory": 0,
+    "blocks per SM": 110.702705,
+    "warps per SM": 442.810822,
+    "grid": [
+     16384,
+     1,
+     1
+    ],
+    "block": [
+     128,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 100
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "kernel_cutlass__convert_kernel_tensorptrf32gmemo151201i64512_tensorptrf8E4M3FNgmemalign16o151201i64512_tensor00o1512011105121___Float32_Float8E4M3FN_0",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447221708567.298,
+   "dur": 20.992,
+   "args": {
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 1819,
+    "registers per thread": 20,
+    "shared memory": 0,
+    "blocks per SM": 221.405411,
+    "warps per SM": 885.621643,
+    "grid": [
+     32768,
+     1,
+     1
+    ],
+    "block": [
+     128,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 100
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "kernel_cutlass_square_gemm_kernel_TiledMMA_ThrLayoutVMNK11110000_PermutationMNK____MMAAtom_ThrID10_ShapeMNK12825632_TVLayoutA1128321281128_TVLayoutB1256322561256_TVLayoutC11282561281128_C_0",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447222051787.375,
+   "dur": 136.801,
+   "args": {
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 1829,
+    "registers per thread": 96,
+    "shared memory": 196736,
+    "blocks per SM": 3.45946,
+    "warps per SM": 13.837838,
+    "grid": [
+     32,
+     16,
+     1
+    ],
+    "block": [
+     128,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 0
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "kernel_cutlass_square_gemm_kernel_TiledMMA_ThrLayoutVMNK11110000_PermutationMNK____MMAAtom_ThrID10_ShapeMNK12825632_TVLayoutA1128321281128_TVLayoutB1256322561256_TVLayoutC11282561281128_C_0",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447222051924.72,
+   "dur": 131.712,
+   "args": {
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 1831,
+    "registers per thread": 96,
+    "shared memory": 196736,
+    "blocks per SM": 3.45946,
+    "warps per SM": 13.837838,
+    "grid": [
+     32,
+     16,
+     1
+    ],
+    "block": [
+     128,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 0
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "kernel_cutlass_square_gemm_kernel_TiledMMA_ThrLayoutVMNK11110000_PermutationMNK____MMAAtom_ThrID10_ShapeMNK12825632_TVLayoutA1128321281128_TVLayoutB1256322561256_TVLayoutC11282561281128_C_0",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447222052056.656,
+   "dur": 132.48,
+   "args": {
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 1833,
+    "registers per thread": 96,
+    "shared memory": 196736,
+    "blocks per SM": 3.45946,
+    "warps per SM": 13.837838,
+    "grid": [
+     32,
+     16,
+     1
+    ],
+    "block": [
+     128,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 0
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "gpu_memcpy",
+   "name": "Memcpy HtoD (Pageable -> Device)",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447222061632.621,
+   "dur": 2.208,
+   "args": {
+    "External id": 18,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 3551,
+    "bytes": 4,
+    "memory bandwidth (GB/s)": 0.0018115942028985507
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "kernel",
+   "name": "nvjet_sm103_qqsss_128x256_128x6_2x2_2cta_h_bz_TNT",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447222070342.599,
+   "dur": 43.776,
+   "args": {
+    "External id": 25,
+    "queued": 0,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 4798,
+    "registers per thread": 255,
+    "shared memory": 205104,
+    "blocks per SM": 3.45946,
+    "warps per SM": 27.675676,
+    "grid": [
+     512,
+     1,
+     1
+    ],
+    "block": [
+     256,
+     1,
+     1
+    ],
+    "est. achieved occupancy %": 0
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "gpu_memset",
+   "name": "Memset (Device)",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447223220709.915,
+   "dur": 1.696,
+   "args": {
+    "External id": 39,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 4847,
+    "bytes": 4,
+    "memory bandwidth (GB/s)": 0.0023584905660377358
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "gpu_memcpy",
+   "name": "Memcpy DtoH (Device -> Pinned)",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447224334602.144,
+   "dur": 3.808,
+   "args": {
+    "External id": 43,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 4861,
+    "bytes": 4,
+    "memory bandwidth (GB/s)": 0.0010504201680672268
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "gpu_memcpy",
+   "name": "Memcpy HtoD (Pageable -> Device)",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447224334755.52,
+   "dur": 1.856,
+   "args": {
+    "External id": 48,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 4875,
+    "bytes": 64,
+    "memory bandwidth (GB/s)": 0.034482758620689655
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "gpu_memcpy",
+   "name": "Memcpy HtoD (Pageable -> Device)",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447224334808.16,
+   "dur": 1.92,
+   "args": {
+    "External id": 56,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 4889,
+    "bytes": 64,
+    "memory bandwidth (GB/s)": 0.03333333333333333
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "cpu_op",
+   "name": "aten::index_select",
+   "pid": 200809,
+   "tid": 200809,
+   "ts": 2447224334863.776,
+   "dur": 5036733.173,
+   "args": {
+    "External id": 60,
+    "Record function id": 0,
+    "Sequence number": 0,
+    "Fwd thread id": 0,
+    "Ev Idx": 59
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "cpu_op",
+   "name": "aten::index",
+   "pid": 200809,
+   "tid": 200809,
+   "ts": 2447230819835.007,
+   "dur": 2968903.172,
+   "args": {
+    "External id": 69,
+    "Record function id": 0,
+    "Sequence number": 0,
+    "Fwd thread id": 0,
+    "Ev Idx": 68
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "gpu_memcpy",
+   "name": "Memcpy DtoH (Device -> Pinned)",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447236169668.13,
+   "dur": 3.487,
+   "args": {
+    "External id": 90,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 5040,
+    "bytes": 4,
+    "memory bandwidth (GB/s)": 0.0011471178663607685
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "gpu_memset",
+   "name": "Memset (Device)",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447237652284.763,
+   "dur": 1.728,
+   "args": {
+    "External id": 99,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 5098,
+    "bytes": 4,
+    "memory bandwidth (GB/s)": 0.0023148148148148147
+   }
+  },
+  {
+   "ph": "X",
+   "cat": "gpu_memcpy",
+   "name": "Memcpy DtoH (Device -> Pinned)",
+   "pid": 0,
+   "tid": 7,
+   "ts": 2447238823544.585,
+   "dur": 3.744,
+   "args": {
+    "External id": 102,
+    "device": 0,
+    "context": 1,
+    "stream": 7,
+    "correlation": 5112,
+    "bytes": 1,
+    "memory bandwidth (GB/s)": 0.0002670940170940171
+   }
+  }
+ ],
+ "traceName": "trimmed from a real B300 harness run"
+}

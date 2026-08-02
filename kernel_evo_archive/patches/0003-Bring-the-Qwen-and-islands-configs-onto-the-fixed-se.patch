@@ -1,0 +1,145 @@
+From f459b524342d970df64c3c48de4c067028064cd4 Mon Sep 17 00:00:00 2001
+From: bulatsaripov <b.sharipov@innopolis.university>
+Date: Sun, 2 Aug 2026 00:03:27 +0300
+Subject: [PATCH 3/8] Bring the Qwen and islands configs onto the fixed
+ settings
+
+best-gpt2.yaml had the reasoning-era fixes; nothing else did. Qwen and the
+islands config were still on the 8192 output cap and the islands config was
+still on files delivery, so either would have reproduced the failure that
+produced no candidate at all.
+
+All three now use max_output_tokens 24576, a 2400s session and prompt delivery,
+and islands-gpt2.yaml is added so evolution can run on the cheaper of the two
+layer tasks -- the GPT-2 reference is 3.5923 ms against Qwen's 49.8871 ms, so
+four islands cost far less device time there.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ experiments/cute_ablation/best-qwen.yaml    |  8 +++-
+ experiments/cute_ablation/islands-gpt2.yaml | 52 +++++++++++++++++++++
+ experiments/cute_ablation/islands-qwen.yaml | 14 +++++-
+ 3 files changed, 70 insertions(+), 4 deletions(-)
+ create mode 100644 experiments/cute_ablation/islands-gpt2.yaml
+
+diff --git a/experiments/cute_ablation/best-qwen.yaml b/experiments/cute_ablation/best-qwen.yaml
+index d7773ab..91f795e 100644
+--- a/experiments/cute_ablation/best-qwen.yaml
++++ b/experiments/cute_ablation/best-qwen.yaml
+@@ -13,13 +13,17 @@ agent:
+   islands: 1
+   # One arm per process; isolation is per-arm git worktrees.
+   concurrency: 1
+-  max_output_tokens: 8192
++  # Raised from 8192. DeepSeek's reasoning is not suppressible through any
++  # opencode config path, so it is bounded by a local proxy injecting
++  # reasoning_effort=low. Headroom still matters: unbounded reasoning
++  # consumed 8,192/8,192 and 32,767/32,768 with zero visible output.
++  max_output_tokens: 24576
+   max_repairs_per_island: 0
+   b300_seed: starter
+   # Layer tasks need room to write. At 900s the agent spent the whole
+   # session reading the 27-file bundle (52 reads, 40 steps) and never
+   # wrote a kernel; the barrier then graded the untouched skeleton.
+-  session_timeout_seconds: 1800
++  session_timeout_seconds: 2400
+ evaluator:
+   seed: 0
+   warmup: 5
+diff --git a/experiments/cute_ablation/islands-gpt2.yaml b/experiments/cute_ablation/islands-gpt2.yaml
+new file mode 100644
+index 0000000..137acfe
+--- /dev/null
++++ b/experiments/cute_ablation/islands-gpt2.yaml
+@@ -0,0 +1,52 @@
++schema_version: 1
++order_seed: 20260801
++model: deepseek/deepseek-v4-flash
++task: model_gpt2_small_transformer_block_fp8
++# Best tier measured in E1-E4: `errors` scored 28/30 turns across five tasks,
++# tied best on correctness and cheapest in tokens.
++tiers: [errors]
++agent:
++  replications: 1
++  # 4 islands x 4 turns = 16 author sessions, plus up to 2 bounded repairs per
++  # island. The single-island study plateaued after ~turn 3 on every task
++  # (0.2689 -> 0.1265 -> 0.1179, then noise), so spending the budget on breadth
++  # rather than a fifth and sixth refinement turn is the whole point.
++  islands: 4
++  steps: 4
++  # Islands author concurrently; this bounds how many OpenCode streams the
++  # driver opens at once.
++  concurrency: 4
++  # Raised from 8192. DeepSeek's reasoning is not suppressible through any
++  # opencode config path, so it is bounded by a local proxy injecting
++  # reasoning_effort=low. Headroom still matters: unbounded reasoning
++  # consumed 8,192/8,192 and 32,767/32,768 with zero visible output.
++  max_output_tokens: 24576
++  # A localized failure -- did not compile, failed correctness, or a
++  # compliance/codegen/graph rejection -- reopens that island for one bounded
++  # repair against its own diagnostic, without consuming a turn. Two is enough
++  # to clear a signature error without letting one island monopolise the budget.
++  max_repairs_per_island: 2
++  # Islands pull from a shared elite every other iteration rather than every
++  # third; with only 4 turns, interval 3 would migrate once and the run would be
++  # four independent chains instead of a population.
++  b300_seed: starter
++  session_timeout_seconds: 2400
++migration_interval: 2
++evaluator:
++  seed: 0
++  warmup: 5
++  repeats: 50
++  timeout_seconds: 900
++
++# Full GPT-2 Small decoder block: LN, causal MHA, residual, LN, GELU MLP,
++# residual. Reference 3.5923 ms on B300 -- 14x cheaper to evaluate than the
++# Qwen block, so islands cost less device time here.
++
++# Every island authors from the skeleton. This is not the removed GigaEvo diff
++# path: no island is ever shown a working kernel.
++
++# `prompt` delivery: under `files` the author opens the 27-file bundle one
++# call at a time and every tool result replays into later steps. On a layer
++# task that consumed the whole session (52 reads, 0 writes).
++documentation:
++  delivery: prompt
+diff --git a/experiments/cute_ablation/islands-qwen.yaml b/experiments/cute_ablation/islands-qwen.yaml
+index 22ac9ef..09a5011 100644
+--- a/experiments/cute_ablation/islands-qwen.yaml
++++ b/experiments/cute_ablation/islands-qwen.yaml
+@@ -16,7 +16,11 @@ agent:
+   # Islands author concurrently; this bounds how many OpenCode streams the
+   # driver opens at once.
+   concurrency: 4
+-  max_output_tokens: 8192
++  # Raised from 8192. DeepSeek's reasoning is not suppressible through any
++  # opencode config path, so it is bounded by a local proxy injecting
++  # reasoning_effort=low. Headroom still matters: unbounded reasoning
++  # consumed 8,192/8,192 and 32,767/32,768 with zero visible output.
++  max_output_tokens: 24576
+   # A localized failure -- did not compile, failed correctness, or a
+   # compliance/codegen/graph rejection -- reopens that island for one bounded
+   # repair against its own diagnostic, without consuming a turn. Two is enough
+@@ -26,7 +30,7 @@ agent:
+   # third; with only 4 turns, interval 3 would migrate once and the run would be
+   # four independent chains instead of a population.
+   b300_seed: starter
+-  session_timeout_seconds: 1200
++  session_timeout_seconds: 2400
+ migration_interval: 2
+ evaluator:
+   seed: 0
+@@ -41,3 +45,9 @@ evaluator:
+ #
+ # Every island authors from the skeleton. This is not the removed GigaEvo diff
+ # path: no island is ever shown a working kernel.
++
++# `prompt` delivery: under `files` the author opens the 27-file bundle one
++# call at a time and every tool result replays into later steps. On a layer
++# task that consumed the whole session (52 reads, 0 writes).
++documentation:
++  delivery: prompt
+-- 
+2.39.5 (Apple Git-154)
+

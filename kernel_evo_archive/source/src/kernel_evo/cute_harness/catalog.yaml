@@ -1,0 +1,205 @@
+schema_version: 1
+dialect: cute_dsl_python
+entries:
+  - id: environment-contract-4_2
+    title: Exact Python CuTe DSL environment contract
+    kind: environment
+    path: semantics/environment_contract.md
+    why: Prevents copying APIs or synchronization protocols from a different DSL release or GPU target.
+    use_when:
+      - Always read its short contract before architecture-specific editing.
+    symbols: [cute.compile]
+    files:
+      - environment/lock.yaml
+      - environment/capability_report.json
+    versions: ["4.2"]
+    arches: [any]
+    precisions: [any]
+    operations: [any]
+    concepts: [environment, compilation, architecture, api]
+    always: true
+    priority: 100
+
+  - id: layout-copy-predication-4_2
+    title: Layout, TV partition, vector copy, and predication
+    kind: semantic
+    path: semantics/layout_copy_predication.md
+    why: Establishes coordinate mapping, thread/value ownership, legal vectorization, and residue proofs.
+    use_when:
+      - Read for layout, copy, coalescing, vectorization, or boundary changes.
+      - Use probe-layout before changing an unfamiliar mapping.
+    symbols: [cute.make_layout, cute.make_layout_tv, cute.make_tiled_copy_tv, cute.zipped_divide, cute.elem_less]
+    versions: ["4.2"]
+    arches: [any]
+    precisions: [any]
+    operations: [any]
+    concepts: [layout, tiling, tiled-copy, vectorization, predication, fragments]
+    always: true
+    priority: 90
+
+  - id: bf16-wgmma-sm90-4_2
+    title: BF16 WGMMA with Float32 accumulation
+    kind: semantic
+    path: semantics/bf16_wgmma.md
+    why: Gives the exact Hopper BF16 WGMMA atom and its Float32 accumulation protocol.
+    use_when:
+      - Read only when the hypothesis replaces or retunes a matrix mainloop.
+    symbols: [warpgroup.MmaF16BF16Op, cute.make_tiled_mma, cute.gemm]
+    versions: ["4.2"]
+    arches: [sm_90a]
+    precisions: [bf16]
+    operations: [any]
+    concepts: [bf16, wgmma, mma, accumulation, epilogue]
+    priority: 95
+
+  - id: fp8-wgmma-sm90-4_2
+    title: Genuine Hopper FP8 WGMMA
+    kind: semantic
+    path: semantics/fp8_wgmma.md
+    why: Separates genuine FP8 tensor-core compute from casts and makes scale/conversion cost explicit.
+    use_when:
+      - Read for any FP8 matrix path, quantization policy, or prepacking decision.
+    symbols: [warpgroup.MmaF8Op, cute.make_tiled_mma, cute.gemm]
+    versions: ["4.2"]
+    arches: [sm_90a]
+    precisions: [fp8]
+    operations: [any]
+    concepts: [fp8, e4m3, e5m2, wgmma, quantization, prepacking]
+    priority: 100
+
+  - id: hopper-tma-pipeline-4_2
+    title: Hopper TMA, barriers, WGMMA pipeline, and clusters
+    kind: semantic
+    path: semantics/hopper_tma_pipeline.md
+    why: Defines the producer/consumer barrier, transaction-byte, stage-lifetime, and cluster invariants.
+    use_when:
+      - Read after changing TMA, stage count, barriers, multicast, or warp-group overlap.
+    symbols: [cpasync.make_tiled_tma_atom, pipeline.PipelineTmaAsync, cute.arch.mbarrier_init]
+    versions: ["4.2"]
+    arches: [sm_90a]
+    precisions: [bf16, fp8]
+    operations: [gemm, attention, convolution]
+    concepts: [tma, pipeline, mbarrier, wgmma, cluster, multicast, smem]
+    priority: 85
+
+  - id: hopper-low-level-playbook-4_2
+    title: Low-level Hopper optimization playbook
+    kind: playbook
+    path: semantics/optimization_playbook.md
+    why: Routes a measured bottleneck to the smallest relevant Hopper optimization lever and evidence check.
+    use_when:
+      - Read after correctness when choosing the next memory, compute, pipeline, or resource hypothesis.
+    symbols: [cute.arch.warpgroup_reg_alloc, cute.arch.warpgroup_reg_dealloc]
+    versions: ["4.2"]
+    arches: [sm_90a]
+    precisions: [bf16, fp8]
+    operations: [any]
+    concepts: [occupancy, register-pressure, smem, fusion, vectorization, specialization, codegen]
+    priority: 80
+
+  - id: hopper-config-feasibility-4_2
+    title: Hopper WGMMA configuration feasibility
+    kind: tool-guide
+    path: semantics/hopper_config_feasibility.md
+    why: Rejects tile, cluster, stage, and shared-memory proposals outside the verified corpus before compilation.
+    use_when:
+      - Use before changing CTA tile, cluster shape, input dtype, or TMA stage count.
+    versions: ["4.2"]
+    arches: [sm_90a]
+    precisions: [bf16, fp8]
+    operations: [gemm, attention, convolution]
+    concepts: [wgmma, tma, pipeline, cluster, smem, occupancy, register-pressure]
+    priority: 82
+
+  - id: debugging-codegen-4_2
+    title: Version-aware compilation and code-generation inspection
+    kind: playbook
+    path: semantics/debugging_codegen.md
+    why: Selects the smallest diagnostic and distinguishes debug artifacts from production performance evidence.
+    use_when:
+      - Read after a lowering, PTXAS, runtime, codegen, spill, sanitizer, or profiling question appears.
+    symbols: [cute.compile]
+    versions: ["4.2"]
+    arches: [any]
+    precisions: [any]
+    operations: [any]
+    concepts: [compilation, diagnostics, ir, cubin, sass, sanitizer, ncu]
+    priority: 70
+
+  - id: failure-repair-cards-4_2
+    title: CuTe DSL failure and repair cards
+    kind: failure
+    path: failures/repair_cards.yaml
+    why: Maps a concrete symptom to the smallest diagnostic and repair without replaying raw logs.
+    use_when:
+      - Read only after KernelEvo reports a localized compile, correctness, synchronization, or performance symptom.
+    versions: ["4.2"]
+    arches: [any]
+    precisions: [any]
+    operations: [any]
+    concepts: [repair, compilation, correctness, synchronization, performance]
+    priority: 45
+
+  - id: bf16-vector-add-4_2
+    title: Executable BF16 predicated copy/residue example
+    kind: example
+    path: examples/bf16_vector_add/README.md
+    files:
+      - examples/bf16_vector_add/manifest.yaml
+      - examples/bf16_vector_add/expected_codegen.yaml
+    deep_files:
+      - examples/bf16_vector_add/kernel.py
+    why: A small general reference for TV layouts, fragments, predication, DLPack, and compile caching whose scalarized SASS makes residue cost explicit.
+    use_when:
+      - Read the manifest for elementwise residue, predication, or tail work.
+      - Open kernel.py only when reusing its exact general copy/fragment construction.
+    symbols: [cute.make_layout_tv, cute.make_tiled_copy_tv, cute.make_identity_tensor, cute.copy]
+    versions: ["4.2"]
+    arches: [any]
+    precisions: [bf16]
+    operations: [elementwise, reduction]
+    concepts: [tiled-copy, vectorization, predication, fragments, compile-cache]
+    priority: 75
+
+  - id: bf16-vector-add-aligned-4_2
+    title: Executable aligned BF16 128-bit fast path
+    kind: example
+    path: examples/bf16_vector_add_aligned/README.md
+    files:
+      - examples/bf16_vector_add_aligned/manifest.yaml
+      - examples/bf16_vector_add_aligned/expected_codegen.yaml
+    deep_files:
+      - examples/bf16_vector_add_aligned/kernel.py
+    why: Proves the aligned half of the copy minimal pair with explicit 128-bit atoms and enforced vector SASS.
+    use_when:
+      - Read when the task can dispatch a contiguous aligned full-tile fast path.
+      - Open kernel.py only when reusing the explicit 128-bit atom and one-dimensional TV construction.
+    symbols: [cute.make_copy_atom, cute.make_tiled_copy_tv, cute.copy]
+    versions: ["4.2"]
+    arches: [any]
+    precisions: [bf16]
+    operations: [elementwise, reduction]
+    concepts: [tiled-copy, vectorization, alignment, fragments, compile-cache, specialization]
+    priority: 82
+
+  - id: hopper-wgmma-gemm-4_2
+    title: Executable Hopper TMA/WGMMA GEMM for BF16 and FP8
+    kind: example
+    path: examples/hopper_wgmma_gemm/CONSTRUCTION.md
+    files:
+      - examples/hopper_wgmma_gemm/README.md
+      - examples/hopper_wgmma_gemm/manifest.yaml
+      - examples/hopper_wgmma_gemm/expected_codegen.yaml
+    deep_files:
+      - examples/hopper_wgmma_gemm/kernel.py
+    why: The verified end-to-end Hopper construction joining dtype/layout selection, TMA, WGMMA, barriers, epilogue, and launch.
+    use_when:
+      - Read CONSTRUCTION.md for a GEMM-like mainloop, pipeline, SMEM, or resource change.
+      - Open kernel.py only when borrowing the complete matching TMA/WGMMA construction.
+    symbols: [warpgroup.MmaF16BF16Op, warpgroup.MmaF8Op, cpasync.make_tiled_tma_atom, pipeline.PipelineTmaAsync]
+    versions: ["4.2"]
+    arches: [sm_90a]
+    precisions: [bf16, fp8]
+    operations: [gemm, attention, convolution]
+    concepts: [tma, wgmma, pipeline, cluster, multicast, smem, bf16, fp8]
+    priority: 100

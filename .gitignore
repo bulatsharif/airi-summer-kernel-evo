@@ -11,3 +11,5 @@ tmp/
 profiles/
 results/
 remote_agent_smoke/
+!kernel_evo_archive/results/
+!kernel_evo_archive/results/*.tar.gz

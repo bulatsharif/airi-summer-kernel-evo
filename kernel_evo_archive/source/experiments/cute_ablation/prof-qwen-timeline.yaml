@@ -1,0 +1,60 @@
+schema_version: 1
+order_seed: 20260801
+model: deepseek/deepseek-v4-flash
+task: model_qwen35_4b_full_attention_block_fp8
+# Best configuration measured in E1-E4 across five tasks: `errors` tier scored
+# 28/30 turns, tied best on correctness and cheapest in tokens. Knobs off --
+# E3 (critic) replicated as a negative on every task, E4 (profiler) was null,
+# and E2 (prompt delivery) was mixed and timeout-confounded.
+tiers: [errors]
+agent:
+  replications: 1
+  steps: 9
+  islands: 1
+  # One arm per process; isolation is per-arm git worktrees.
+  concurrency: 1
+  # Raised from 8192. DeepSeek's reasoning is not suppressible through any
+  # opencode config path, so it is bounded by a local proxy injecting
+  # reasoning_effort=low. Headroom still matters: unbounded reasoning
+  # consumed 8,192/8,192 and 32,767/32,768 with zero visible output.
+  max_output_tokens: 24576
+  max_repairs_per_island: 0
+  b300_seed: starter
+  # Layer tasks need room to write. At 900s the agent spent the whole
+  # session reading the 27-file bundle (52 reads, 40 steps) and never
+  # wrote a kernel; the barrier then graded the untouched skeleton.
+  session_timeout_seconds: 2400
+evaluator:
+  seed: 0
+  warmup: 5
+  repeats: 50
+  timeout_seconds: 900
+
+# Real-world layer task: full Qwen3.5-4B attention block (RMSNorm, gated QKV with RoPE, attention,
+# residual, RMSNorm, SwiGLU MLP). Reference 49.8871 ms.
+# Three independent replications are run as separate results roots so each gets
+# its own worktree; speedup was shown not to replicate at one replication, so
+# the ladder is reported over replications rather than from a single arm.
+
+# `prompt` rather than `files`: under files delivery the author opens the
+# bundle one call at a time and every tool result replays into later steps,
+# which consumed the entire session on these larger tasks. Delivering the
+# bundle once removes the read loop. E2 scored 6/6 on level1_02, level2_12
+# and level2_14, so this is not a weak tier -- it was only timeout-confounded
+# on level2_63.
+documentation:
+  delivery: prompt
+
+# E4-style profiler feedback, timeline regime. Since d0e445d the summary leads
+# with one representative iteration -- every launch's start, end, duration and
+# the idle gap in front of it -- so a launch-bound block reads as gaps rather
+# than disappearing into a per-kernel total. The whole-capture idle figure is
+# still printed but is now labelled as covering setup and the reference too;
+# before that fix it announced 99.4% idle for a block that is 0.4% idle.
+#
+# This block launches far more kernels than the GPT-2 one (RMSNorm, gated QKV
+# with partial RoPE, GQA attention, SwiGLU), so gaps are where its overhead
+# most plausibly hides.
+profiling:
+  enabled: true
+  timeline: true

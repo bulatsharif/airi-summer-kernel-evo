@@ -1,0 +1,16 @@
+#!/bin/sh
+# Run one real B300 evaluation of a candidate, from inside an authoring turn.
+#
+# The frozen protocol evaluated once per barrier iteration, so an author wrote
+# blind and learned the outcome only in the next session, by which time its
+# context was gone. This lets a turn close its own loop: write, evaluate, read
+# the failure, fix, evaluate again -- the shape the comparison harness had, and
+# the one that produced working kernels there.
+#
+# Bounded: CUTE_AGENT_EVAL_BUDGET evaluations per island turn (default 4). The
+# B300 device is shared, so every call serialises on .kernelevo/b300.lock and
+# costs real GPU time. The static policy check runs first and a rejected
+# candidate never reaches the device.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+exec env PYTHONPATH="$ROOT/src" "$ROOT/.venv/bin/python" "$ROOT/tools/_cute_eval.py" "$@"

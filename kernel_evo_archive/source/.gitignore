@@ -1,0 +1,39 @@
+# secrets / local env (never commit)
+.env
+.env.*
+
+.ruff_cache/
+__pycache__/
+*.egg-info/
+.python-version
+*.pyc
+.pytest_cache/
+.venv/
+dist/
+*.ncu-rep
+
+# local state and experiment outputs
+outputs/
+outputs*/
+.kernelevo/
+memory/
+!src/kernel_evo/resources/gigaevo/config/memory/
+!src/kernel_evo/resources/gigaevo/config/memory/*.yaml
+os/
+plans/
+gifs/
+src/kernel_evo/resources/run_config.json
+src/kernel_evo/resources/initial_programs/
+src/kernel_evo/resources/prompts_run/
+src/kernel_evo/resources/memory.runtime.yaml
+src/kernel_evo/resources/gigaevo/mut_dmp/
+
+# Heavy raw study artifacts. Commit summaries, manifests, reports, and the
+# LLM traces that analyze.py counts; drop binaries and per-run workspace copies
+# that are reconstructible from run_config.json and the documentation manifest.
+experiments/cute_ablation/results/**/profile.json
+experiments/cute_ablation/results/**/programs.json
+experiments/cute_ablation/results/**/tensorboard/
+experiments/cute_ablation/results/**/problem/
+experiments/cute_ablation/results/**/submission.py
+experiments/cute_ablation/results/**/candidate.py

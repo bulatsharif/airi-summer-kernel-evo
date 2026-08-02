@@ -1,0 +1,3689 @@
+[
+  {
+    "root": "results/ds-e1-l1-02",
+    "tiers": [
+      "bare",
+      "docs",
+      "errors",
+      "examples"
+    ],
+    "evaluations": 119,
+    "passed": 65,
+    "failed": 50,
+    "gate_rejected_no_device_run": 4,
+    "counts": {
+      "import/API": 23,
+      "compile": 12,
+      "layout/shape": 0,
+      "numeric mismatch": 0,
+      "timeout": 0,
+      "other": 15
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 3,
+        "compile": 2,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 2
+      },
+      "in-turn": {
+        "import/API": 20,
+        "compile": 10,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 13
+      }
+    },
+    "numeric_mismatch_with_zero_output": 0,
+    "failures": [
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE CORE=['AddressSpace', 'Any', 'Boolean', 'BuiltinMemRefType', 'Callable', 'ComposedLa"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: make_tensor() got an unexpected keyword argument 'shape'"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "RuntimeError: API=['AddressSpace', 'Any', 'Atom', 'BFloat16', 'BitCode', 'Boolean', 'CacheEvictionPriori"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE CORE=['AddressSpace', 'Any', 'Boolean', 'BuiltinMemRefType', 'Callable', 'ComposedLa"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE {'nvgpu': ['CacheEvictionPriority', 'CopyG2ROp', 'CopyG2RTrait', 'CopyR2GOp', 'CopyR"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE {'cute': ['blocked_product', 'compile', 'kernel', 'runtime'], 'core': ['blocked_prod"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE ALL=['AddressSpace', 'Any', 'Atom', 'BFloat16', 'BitCode', 'Boolean', 'CacheEviction"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE {'nvgpu': ['CacheEvictionPriority', 'CopyG2ROp', 'CopyG2RTrait', 'CopyR2GOp', 'CopyR"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE4 {'la': [], 'tid': [], 'thr': [], 'blk': ['blocked_product'], 'grd': [], 'kern': ['k"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: make_tensor() got an unexpected keyword argument 'shape'"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE {'launch': [], 'kernel': ['kernel'], 'grid': ['blocked_product'], 'tid': [], 'kern_d"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": false,
+        "signal": "cutlass.base_dsl.common.DSLNotImplemented: DSLNotImplemented: <class 'str'> is not support"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE4 {'la': [], 'tid': [], 'thr': [], 'blk': ['blocked_product'], 'grd': [], 'kern': ['k"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'cute'"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'cute'"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=nan, out_abs=nan"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=nan, out_abs=nan"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=nan, out_abs=nan"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=3.000000, out_abs=3.000000"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=nan, out_abs=nan"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=nan, out_abs=nan"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "TypeError: SmemAllocator.allocate_tensor() missing 1 required positional argument: 'layout'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "TypeError: SmemAllocator.allocate_tensor() missing 1 required positional argument: 'layout'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.base_dsl.typing"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.cute.core._Poin"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.base_dsl.typing"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.cute.core._Poin"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.cute.core._Poin"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.base_dsl.typing"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.cute.core._Poin"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.base_dsl.typing"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.base_dsl.typing"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.cute.core._Poin"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "errors",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: \ud83e\uddca\ud83e\uddca\ud83e\uddca ICE IR Verification Failed \ud83e\uddca\ud83e\uddca\ud83e\uddca"
+      },
+      {
+        "tier": "errors",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=nan, out_abs=nan"
+      },
+      {
+        "tier": "errors",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=nan, out_abs=nan"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=3.000000, out_abs=6.000000"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.base_dsl.typing"
+      },
+      {
+        "tier": "examples",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.base_dsl.typing"
+      },
+      {
+        "tier": "examples",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=6.000000, out_abs=3.000000"
+      },
+      {
+        "tier": "examples",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.base_dsl.typing"
+      },
+      {
+        "tier": "examples",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.cute.core._Poin"
+      },
+      {
+        "tier": "examples",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "examples",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": false,
+        "signal": "ValueError: Expected Coord, whose leaves are integers or None, but got (0, slice(None, None, None))"
+      }
+    ]
+  },
+  {
+    "root": "results/ds-e1-l1-40",
+    "tiers": [
+      "bare",
+      "docs",
+      "errors",
+      "examples"
+    ],
+    "evaluations": 85,
+    "passed": 51,
+    "failed": 31,
+    "gate_rejected_no_device_run": 3,
+    "counts": {
+      "import/API": 6,
+      "compile": 2,
+      "layout/shape": 0,
+      "numeric mismatch": 0,
+      "timeout": 0,
+      "other": 23
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 1,
+        "compile": 0,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 5
+      },
+      "in-turn": {
+        "import/API": 5,
+        "compile": 2,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 18
+      }
+    },
+    "numeric_mismatch_with_zero_output": 15,
+    "failures": [
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=449.726929, mean_abs=140.389648438, out_abs=448.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=449.727417, mean_abs=196.105743408, out_abs=448.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: \ud83d\udca5\ud83d\udca5\ud83d\udca5 Error during runtime code generation for function `layer_norm` \ud83d\udca5\ud83d\udca5\ud83d\udca5"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.base_dsl.typing"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Expect int or ctypes.POINTER for value but got type(value)=<class 'cutlass.cute.core._Poin"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=0.863792, mean_abs=0.040836379, out_abs=2.590768"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=382.037415, mean_abs=26.898387909, out_abs=383.766052"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=0.863792, mean_abs=0.040560052, out_abs=2.590768"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=4.904515, mean_abs=0.000002676, out_abs=3.457396"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=4.904515, mean_abs=0.000002676, out_abs=3.457396"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=nan, mean_abs=nan, out_abs=nan"
+      }
+    ]
+  },
+  {
+    "root": "results/ds-e1-l2-12",
+    "tiers": [
+      "bare",
+      "docs",
+      "errors",
+      "examples"
+    ],
+    "evaluations": 59,
+    "passed": 44,
+    "failed": 15,
+    "gate_rejected_no_device_run": 0,
+    "counts": {
+      "import/API": 7,
+      "compile": 0,
+      "layout/shape": 0,
+      "numeric mismatch": 8,
+      "timeout": 0,
+      "other": 0
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 2,
+        "compile": 0,
+        "layout/shape": 0,
+        "numeric mismatch": 2,
+        "timeout": 0,
+        "other": 0
+      },
+      "in-turn": {
+        "import/API": 5,
+        "compile": 0,
+        "layout/shape": 0,
+        "numeric mismatch": 6,
+        "timeout": 0,
+        "other": 0
+      }
+    },
+    "numeric_mismatch_with_zero_output": 4,
+    "failures": [
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "numeric mismatch",
+        "zero_output": false,
+        "signal": "validation failed: out_abs=29203712.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "numeric mismatch",
+        "zero_output": false,
+        "signal": "validation failed: out_abs=29203712.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: gemm() missing 2 required positional arguments: 'b' and 'c'"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: gemm() missing 2 required positional arguments: 'b' and 'c'"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: gemm() missing 4 required positional arguments: 'd', 'a', 'b', and 'c'"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: gemm() missing 4 required positional arguments: 'd', 'a', 'b', and 'c'"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: 'tuple' object has no attribute 'y'"
+      },
+      {
+        "tier": "errors",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'make_shape'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "numeric mismatch",
+        "zero_output": false,
+        "signal": "validation failed: out_abs=7.108453"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for *: '_Tensor' and 'Float32'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "numeric mismatch",
+        "zero_output": false,
+        "signal": "validation failed: out_abs=7.108453"
+      }
+    ]
+  },
+  {
+    "root": "results/ds-e1-l2-14",
+    "tiers": [
+      "bare",
+      "docs",
+      "errors",
+      "examples"
+    ],
+    "evaluations": 93,
+    "passed": 46,
+    "failed": 46,
+    "gate_rejected_no_device_run": 1,
+    "counts": {
+      "import/API": 25,
+      "compile": 7,
+      "layout/shape": 1,
+      "numeric mismatch": 0,
+      "timeout": 0,
+      "other": 13
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 6,
+        "compile": 1,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 3
+      },
+      "in-turn": {
+        "import/API": 19,
+        "compile": 6,
+        "layout/shape": 1,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 10
+      }
+    },
+    "numeric_mismatch_with_zero_output": 0,
+    "failures": [
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: type object 'CtaGroup' has no attribute 'CTA_GROUP1'"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: gemm() missing 2 required positional arguments: 'b' and 'c'"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: gemm() missing 5 required positional arguments: 'atom', 'd', 'a', 'b', and 'c'"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "TypeError: CUTE=['AddressSpace', 'Any', 'Atom', 'BFloat16', 'BitCode', 'Boolean', 'CacheEvictionPrior"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: MMA_TILED=<class 'TypeError'>:make_tiled_mma() missing 1 required positional argument: 'op"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Value after * must be an iterable, not int"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "OpError: OpError: expects the 'cta_group' Op parameter to be a tcgen05.CtaGroup instance"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: type object 'OperandMajorMode' has no attribute 'K_MAJOR'"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Value after * must be an iterable, not int"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "OpError: OpError: expects the 'cta_group' Op parameter to be a tcgen05.CtaGroup instance"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "OpError: OpError: expects the 'a_major_mode' Op parameter to be a cute.nvgpu.OperandMajorMode or tc"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: type object 'OperandMajorMode' has no attribute 'K_MAJOR'"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: 'TensorSSA' object has no attribute 'value'"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: Value after * must be an iterable, not int"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "OpError: OpError: expects the 'cta_group' Op parameter to be a tcgen05.CtaGroup instance"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "OpError: OpError: expects the 'a_major_mode' Op parameter to be a cute.nvgpu.OperandMajorMode or tc"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: 'NoneType' object has no attribute 'shape'"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "layout/shape",
+        "zero_output": false,
+        "signal": "ValueError: shape must be static"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'zeros'"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: make_layout() takes 1 positional argument but 2 positional arguments (and 1 keyword-only a"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLOperationBuildError: "
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: make_layout() takes 1 positional argument but 2 positional arguments (and 1 keyword-only a"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported iterator type, got <class 'cutlass.cute.tensor._Tensor'>"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: can only concatenate tuple (not \"Int32\") to tuple"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLOperationBuildError: "
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: make_layout() got an unexpected keyword argument 'strides'"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLOperationBuildError: "
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLOperationBuildError: "
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: make_layout() got an unexpected keyword argument 'strides'"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLOperationBuildError: "
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'SM90_16x8x32_F32E4M3E4M3F32_TN'"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'SM90_16x8x32_F32E4M3E4M3F32_TN'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE3_BEGIN"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE_BEGIN"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.utils.blackwell_helpers' has no attribute 'sm90_make_trivial_tiled_mma'. D"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE2_BEGIN"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE3_BEGIN"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE_BEGIN"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE4_BEGIN"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE5_BEGIN"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.utils.blackwell_helpers' has no attribute 'epilog_tmem_copy_and_partition'"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: PROBE7_BEGIN"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "OpError: OpError: expects arch to be sm_90a, but got sm_103a"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for *: '_Tensor' and 'Float32'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for *: '_Tensor' and 'Float32'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for *: '_Tensor' and 'float'"
+      }
+    ]
+  },
+  {
+    "root": "results/e1-l2-63",
+    "tiers": [
+      "bare",
+      "docs",
+      "errors",
+      "examples"
+    ],
+    "evaluations": 86,
+    "passed": 52,
+    "failed": 34,
+    "gate_rejected_no_device_run": 0,
+    "counts": {
+      "import/API": 12,
+      "compile": 10,
+      "layout/shape": 1,
+      "numeric mismatch": 5,
+      "timeout": 0,
+      "other": 6
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 2,
+        "compile": 4,
+        "layout/shape": 0,
+        "numeric mismatch": 2,
+        "timeout": 0,
+        "other": 1
+      },
+      "in-turn": {
+        "import/API": 10,
+        "compile": 6,
+        "layout/shape": 1,
+        "numeric mismatch": 3,
+        "timeout": 0,
+        "other": 5
+      }
+    },
+    "numeric_mismatch_with_zero_output": 4,
+    "failures": [
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "numeric mismatch",
+        "zero_output": true,
+        "signal": "validation failed: out_abs=0.000000"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "TypeError: TmemAllocator.__init__() missing 1 required positional argument: 'alloc_result_dst_smem_pt"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass' has no attribute 'float32'. Did you mean: 'Float32'?"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Cannot convert <cutlass.cute.arch.elect.IfOpRegion object at 0x71ad7bd6ae"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: '_Pointer' object has no attribute 'arrive_and_wait'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: '_Pointer' object has no attribute 'arrive_and_wait'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'range_constexpr'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for +: 'int' and 'tuple'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "AssertionError: Cannot allocate 16384 columns, only 128 remaining"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'range_constexpr'"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for +: 'int' and 'tuple'"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "AssertionError: Cannot allocate 16384 columns, only 128 remaining"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "layout/shape",
+        "zero_output": false,
+        "signal": "AssertionError: num_columns must be multiple of 32 and power of two, and between 0 and 512"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "  what():  Unexpected index"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for +: 'int' and 'tuple'"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "AssertionError: Cannot allocate 16384 columns, only 128 remaining"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": false,
+        "signal": "  what():  Unexpected index"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for *: '_Tensor' and 'Float32'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: range_constexpr should be preprocessed by preprocessor."
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'tuple' object cannot be interpreted as an integer"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "numeric mismatch",
+        "zero_output": false,
+        "signal": "validation failed: out_abs=1.863818"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'make_shape'"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: make_layout() takes 1 positional argument but 2 positional arguments (and 1 keyword-only a"
+      },
+      {
+        "tier": "examples",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLCudaRuntimeError: DSLCudaRuntimeError: CUDA_ERROR_INVALID_VALUE (error code: 1)"
+      }
+    ]
+  },
+  {
+    "root": "results/gem-e1-l1-40",
+    "tiers": [
+      "bare",
+      "docs",
+      "errors",
+      "examples"
+    ],
+    "evaluations": 167,
+    "passed": 2,
+    "failed": 143,
+    "gate_rejected_no_device_run": 22,
+    "counts": {
+      "import/API": 92,
+      "compile": 32,
+      "layout/shape": 0,
+      "numeric mismatch": 0,
+      "timeout": 0,
+      "other": 19
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 12,
+        "compile": 6,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 5
+      },
+      "in-turn": {
+        "import/API": 80,
+        "compile": 26,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 0,
+        "other": 14
+      }
+    },
+    "numeric_mismatch_with_zero_output": 15,
+    "failures": [
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'cuda_launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLAstPreprocessorError: DSLAstPreprocessorError: Early exit (return) is not allowed in `layer_norm_kernel`"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": false,
+        "signal": "ValueError: Expected Coord, whose leaves are integers or None, but got (Int32(?), slice(0, 4194304, No"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_block_idx'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_block_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: unsupported operand type(s) for +: '_Tensor' and 'Int32'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_block_dim'"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLAstPreprocessorError: DSLAstPreprocessorError: Early exit (return) is not allowed in `layer_norm_kernel`"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'shared_array'"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_block_id'"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_cta_id'"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_block_id'"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "errors",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'blockIdx'"
+      },
+      {
+        "tier": "errors",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "errors",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "errors",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "errors",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLAstPreprocessorError: DSLAstPreprocessorError: Early exit (return) is not allowed in `layer_norm_kernel`"
+      },
+      {
+        "tier": "errors",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "errors",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "errors",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "errors",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "errors",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "errors",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "errors",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "errors",
+        "turn": 6,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "errors",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "errors",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'cuda'"
+      },
+      {
+        "tier": "errors",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "errors",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: 'function' object has no attribute 'grid'"
+      },
+      {
+        "tier": "errors",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'cuda'"
+      },
+      {
+        "tier": "errors",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_block_idx'"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_block_id'"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute.arch' has no attribute 'get_block_id'"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute.arch' has no attribute 'get_block_idx'. Did you mean: 'block_idx'?"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_block_idx'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_block_id'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'block_idx'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass' has no attribute 'get_block_idx'"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute.arch' has no attribute 'get_block_idx'. Did you mean: 'block_idx'?"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch'"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "examples",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "NameError: name 'cute' is not defined"
+      },
+      {
+        "tier": "examples",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "NameError: name 'cute' is not defined"
+      },
+      {
+        "tier": "examples",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "NameError: name 'cute' is not defined"
+      },
+      {
+        "tier": "examples",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "examples",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "examples",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: expected some sort of expr, but got <ast.FunctionDef object at 0x79894b22b490>"
+      },
+      {
+        "tier": "examples",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'get_block_idx'"
+      },
+      {
+        "tier": "examples",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "examples",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "examples",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-06",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: '<class 'cutlass.base_dsl._mlir_helpers.arith.ArithValue'>' object cannot"
+      },
+      {
+        "tier": "examples",
+        "turn": 6,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: 'function' object is not subscriptable"
+      },
+      {
+        "tier": "examples",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      }
+    ]
+  },
+  {
+    "root": "results/qwen-e1-l1-40",
+    "tiers": [
+      "bare",
+      "docs",
+      "errors",
+      "examples"
+    ],
+    "evaluations": 72,
+    "passed": 2,
+    "failed": 58,
+    "gate_rejected_no_device_run": 12,
+    "counts": {
+      "import/API": 11,
+      "compile": 7,
+      "layout/shape": 2,
+      "numeric mismatch": 0,
+      "timeout": 7,
+      "other": 31
+    },
+    "counts_by_surface": {
+      "barrier": {
+        "import/API": 2,
+        "compile": 2,
+        "layout/shape": 0,
+        "numeric mismatch": 0,
+        "timeout": 4,
+        "other": 8
+      },
+      "in-turn": {
+        "import/API": 9,
+        "compile": 5,
+        "layout/shape": 2,
+        "numeric mismatch": 0,
+        "timeout": 3,
+        "other": 23
+      }
+    },
+    "numeric_mismatch_with_zero_output": 23,
+    "failures": [
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_config'"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'launch_kernel'"
+      },
+      {
+        "tier": "bare",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "bare",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'make_grid'"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "timeout",
+        "zero_output": false,
+        "signal": "result.json timed_out=true"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: 'function' object has no attribute 'launch'"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLAstPreprocessorError: DSLAstPreprocessorError: Early exit (return) is not allowed in `layer_norm_kernel`"
+      },
+      {
+        "tier": "docs",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "timeout",
+        "zero_output": false,
+        "signal": "result.json timed_out=true"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: 'function' object has no attribute 'launch'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Failed to bind arguments to function `layer_norm_kernel` with signature `"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: Missing required argument in `layer_norm`: 'grid'"
+      },
+      {
+        "tier": "docs",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-05",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLAstPreprocessorError: DSLAstPreprocessorError: Early exit (return) is not allowed in `layer_norm_kernel`"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: 'function' object has no attribute 'launch'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: 'function' object has no attribute 'bind'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: 'function' object has no attribute 'launch'"
+      },
+      {
+        "tier": "docs",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": true,
+        "signal": "RuntimeError: validation failed: max_abs=1.729652, mean_abs=0.863745809, out_abs=0.000000"
+      },
+      {
+        "tier": "docs",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "timeout",
+        "zero_output": false,
+        "signal": "result.json timed_out=true"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "timeout",
+        "zero_output": false,
+        "signal": "result.json timed_out=true"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass' has no attribute 'ceil_div'"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "AttributeError: module 'cutlass.cute' has no attribute 'make_shape'"
+      },
+      {
+        "tier": "docs",
+        "turn": 5,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "timeout",
+        "zero_output": false,
+        "signal": "result.json timed_out=true"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "ValueError: Operation creation failed"
+      },
+      {
+        "tier": "docs",
+        "turn": 6,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "DSLAstPreprocessorError: DSLAstPreprocessorError: Early exit (return) is not allowed in `layer_norm_kernel`"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "timeout",
+        "zero_output": false,
+        "signal": "result.json timed_out=true"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "AcceleratorError: CUDA error: an illegal instruction was encountered"
+      },
+      {
+        "tier": "errors",
+        "turn": 1,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "timeout",
+        "zero_output": false,
+        "signal": "result.json timed_out=true"
+      },
+      {
+        "tier": "examples",
+        "turn": 1,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "import/API",
+        "zero_output": false,
+        "signal": "TypeError: cannot unpack non-iterable Int32 object"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: \ud83d\udca5\ud83d\udca5\ud83d\udca5 Error during runtime code generation for function `layer_norm` \ud83d\udca5\ud83d\udca5\ud83d\udca5"
+      },
+      {
+        "tier": "examples",
+        "turn": 2,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "layout/shape",
+        "zero_output": false,
+        "signal": "TypeError: get(): incompatible function arguments. The following argument types are supported:"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=449.728638, mean_abs=448.000000000, out_abs=448.000000"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "layout/shape",
+        "zero_output": false,
+        "signal": "TypeError: get(): incompatible function arguments. The following argument types are supported:"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-02",
+        "category": "compile",
+        "zero_output": false,
+        "signal": "DSLRuntimeError: DSLRuntimeError: \ud83d\udca5\ud83d\udca5\ud83d\udca5 Error during runtime code generation for function `layer_norm` \ud83d\udca5\ud83d\udca5\ud83d\udca5"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-03",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=449.728638, mean_abs=448.000000000, out_abs=448.000000"
+      },
+      {
+        "tier": "examples",
+        "turn": 3,
+        "surface": "in-turn",
+        "eval": "eval-04",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=449.728638, mean_abs=448.000000000, out_abs=448.000000"
+      },
+      {
+        "tier": "examples",
+        "turn": 4,
+        "surface": "barrier",
+        "eval": "b300",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=nan, mean_abs=nan, out_abs=nan"
+      },
+      {
+        "tier": "examples",
+        "turn": 4,
+        "surface": "in-turn",
+        "eval": "eval-01",
+        "category": "other",
+        "zero_output": false,
+        "signal": "RuntimeError: validation failed: max_abs=nan, mean_abs=nan, out_abs=nan"
+      }
+    ]
+  }
+]

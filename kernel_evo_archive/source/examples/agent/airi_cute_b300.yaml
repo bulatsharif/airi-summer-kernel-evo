@@ -1,0 +1,24 @@
+run:
+  name: airi-cute-b300
+  steps: 1
+  islands: 1
+  seed_preflight: true
+
+problem:
+  path: ../../tasks/cute/tasks/level1_01_square_matrix_multiplication_fp8
+  backend: cute
+
+evaluation:
+  kind: cute_b300
+  precision: fp8
+  runtime_precision: fp32
+  measurement_mode: device-time
+  seed: 0
+  warmup: 1
+  repeats: 1
+  timeout: 600
+
+scheduler:
+  ideas:
+    - id: preserve-b300-baseline
+      summary: Preserve the verified Blackwell FP8 GEMM dataflow for the first integration run.

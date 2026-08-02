@@ -34,7 +34,9 @@ intermediate = 9216          attention scale = 1 / 16
 The evaluator supplies precomputed FP32 `cos` and `sin`. RoPE affects the first
 64 dimensions of each head. Each KV head is shared by four query heads. Q and
 its output gate are interleaved per head in the `[128,8192]` Q projection.
-RMSNorm parameters use Qwen's `1 + weight` convention.
+RMSNorm parameters use Qwen's `1 + weight` convention. `q_norm_weight` and
+`k_norm_weight` are shared `[256]` vectors. RoPE uses Hugging Face
+`rotate_half`, pairing `d` with `d+32`, not adjacent dimensions.
 
 ## Precision contract
 

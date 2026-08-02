@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "level1_01_square_matrix_multiplication_fp8",
+  "title": "Square matrix multiplication with CuTe FP8",
+  "source": {
+    "suite": "KernelBench",
+    "level": 1,
+    "number": 1,
+    "url": "https://github.com/ScalingIntelligence/KernelBench/blob/main/KernelBench/level1/1_Square_matrix_multiplication_.py"
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
+  ],
+  "baseline": "../../cute_kernels/level1_01_square_matrix_multiplication_fp8/submission.py",
+  "precision": {
+    "inputs": "float8_e4m3fn",
+    "accumulator": "float32",
+    "output": "float32"
+  },
+  "problem": {
+    "operation": "C = A @ B",
+    "m": 4096,
+    "n": 4096,
+    "k": 4096,
+    "seed": 20260726
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=level1_01_square_matrix_multiplication .* PASS$",
+    "full_max_absolute_error_vs_torch_fp8": 0.125,
+    "sample_max_relative_error_vs_fp32": 0.01
+  },
+  "policy": {
+    "minimum_cute_kernels": 1,
+    "minimum_cute_jit_functions": 1,
+    "entrypoint_jit": "square_gemm",
+    "required_calls": [
+      "cute.gemm"
+    ]
+  }
+}

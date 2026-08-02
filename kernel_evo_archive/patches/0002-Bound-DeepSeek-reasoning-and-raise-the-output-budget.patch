@@ -1,0 +1,79 @@
+From 09a5503dd8f1d9348357ee14eeea6bf4ff0a3fe8 Mon Sep 17 00:00:00 2001
+From: bulatsaripov <b.sharipov@innopolis.university>
+Date: Sat, 1 Aug 2026 23:08:54 +0300
+Subject: [PATCH 2/8] Bound DeepSeek reasoning and raise the output budget for
+ layer tasks
+
+DeepSeek was reasoning on every run of the whole study. reasoning_effort was set
+in opencode.json but never reached the API: a probe with it set to "none"
+produced 12,433 reasoning tokens, and all 46 arms of the grid show 3-5x more
+reasoning than output.
+
+Unbounded reasoning is fatal at layer-task complexity. Measured against the API
+with a GPT-2-block prompt:
+
+    reasoning on,  8k cap : 8,192 reasoning,      0 chars, finish=length
+    reasoning on, 32k cap : 32,767 reasoning,     0 chars, finish=length
+    effort=none,   8k cap :      0 reasoning, 14,253 chars, finish=stop
+    effort=low,    8k cap :  1,489 reasoning, 18,202 chars, finish=stop
+
+So raising the cap does not help -- reasoning expands to fill it. That is why
+both layer arms wrote no candidate under either documentation delivery, and why
+the earlier read-starvation diagnosis was wrong: the binding constraint was the
+output budget, not the prompt.
+
+No opencode config path delivers the flag: model options.reasoning_effort is
+ignored, provider-level makes opencode hang (exit 124), and the schema's model
+ is also ignored (12,501 reasoning tokens). Bounded instead by
+a local proxy that injects reasoning_effort into each request body; verified
+end-to-end at 2,891 reasoning with 4,448 characters of output.
+
+Also raises max_output_tokens 8192 -> 24576 and the session budget to 2400s.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ experiments/cute_ablation/best-gpt2.yaml | 9 +++++++--
+ opencode.json                            | 2 +-
+ 2 files changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/experiments/cute_ablation/best-gpt2.yaml b/experiments/cute_ablation/best-gpt2.yaml
+index 2a285ab..374d014 100644
+--- a/experiments/cute_ablation/best-gpt2.yaml
++++ b/experiments/cute_ablation/best-gpt2.yaml
+@@ -13,13 +13,18 @@ agent:
+   islands: 1
+   # One arm per process; isolation is per-arm git worktrees.
+   concurrency: 1
+-  max_output_tokens: 8192
++  # Raised from 8192. DeepSeek's reasoning is not suppressible through any
++  # opencode config path (options.reasoning_effort ignored, provider-level
++  # hangs, model `reasoning: false` ignored), so it is bounded by a local
++  # proxy injecting reasoning_effort=low. Headroom still matters: unbounded
++  # reasoning consumed 8,192/8,192 and 32,767/32,768 with zero visible output.
++  max_output_tokens: 24576
+   max_repairs_per_island: 0
+   b300_seed: starter
+   # Layer tasks need room to write. At 900s the agent spent the whole
+   # session reading the 27-file bundle (52 reads, 40 steps) and never
+   # wrote a kernel; the barrier then graded the untouched skeleton.
+-  session_timeout_seconds: 1800
++  session_timeout_seconds: 2400
+ evaluator:
+   seed: 0
+   warmup: 5
+diff --git a/opencode.json b/opencode.json
+index b15222d..c9c26ac 100644
+--- a/opencode.json
++++ b/opencode.json
+@@ -64,7 +64,7 @@
+             "output": 32768
+           },
+           "options": {
+-            "reasoning_effort": "none"
++            "reasoning_effort": "low"
+           }
+         }
+       }
+-- 
+2.39.5 (Apple Git-154)
+

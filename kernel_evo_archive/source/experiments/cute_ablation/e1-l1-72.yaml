@@ -1,0 +1,30 @@
+schema_version: 1
+order_seed: 20260731
+model: deepseek/deepseek-v4-flash
+task: level1_72_conv_transpose3d_fp8
+tiers: [bare, docs, examples, errors]
+agent:
+  replications: 1
+  # Attempts the agent gets to reach a working kernel. Each attempt is one
+  # OpenCode session that sees its own previous candidate and the B300
+  # diagnostic, never a reference implementation.
+  steps: 6
+  islands: 1
+  # One arm per process; arms are isolated by running each in its own git
+  # worktree. See e1-l2-63.yaml for why a shared checkout leaks kernels.
+  concurrency: 1
+  max_output_tokens: 8192
+  max_repairs_per_island: 0
+  b300_seed: starter
+  session_timeout_seconds: 900
+evaluator:
+  seed: 0
+  warmup: 5
+  repeats: 50
+  timeout_seconds: 900
+
+# Conv-transpose 3D: neither GEMM-family nor reduction-family, so it tests the
+# documentation threshold on a third kernel shape. Architecture-neutral -- its
+# baseline probe and policy need no MMA atom, so unlike every level2_* task
+# (whose shared reference builds a tcgen05 MmaF8F6F4Op and dies on sm_90a) it
+# runs on Hopper. Pinned there so all its timings share one clock.

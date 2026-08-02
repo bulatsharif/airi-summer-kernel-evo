@@ -1,0 +1,16 @@
+{
+  "result": {
+    "compiled": true,
+    "correctness": true,
+    "valid": true,
+    "runtime_us": 626.208,
+    "ref_runtime_us": 49885.025,
+    "speedup": 79.6620691527416,
+    "fitness": 79.6620691527416,
+    "status": "passed",
+    "error": "",
+    "metadata": {}
+  },
+  "profile_summary": "",
+  "profile": {}
+}

@@ -1,0 +1,59 @@
+# Install with Python version check relaxed (kernelbench declares 3.10.* but works on 3.12):
+#   pip install -e . --ignore-requires-python
+
+[project]
+name = "kernel-evo"
+version = "0.0.1"
+description = "Evolutionary Generation for efficient kernels"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gigaevo @ git+https://github.com/FusionBrainLab/gigaevo-core.git@054df39c3b6bd782197985383f1006ef3cbe6586",
+    "kernelbench @ git+https://github.com/ScalingIntelligence/KernelBench.git",
+
+    "json_repair",
+    "PyYAML>=6.0",
+    "fastapi", # eval server
+    "openai>=2.34",
+    "tiktoken>=0.12",
+    # gigaevo 1.28+ imports langfuse.langchain (3.x API); upstream constrains
+    # only langfuse>=2, so we pin >=3 here to avoid uv resolving to 2.x.
+    "langfuse>=3.0.0",
+]
+
+[project.scripts]
+kernel-evo = "kernel_evo.cli:main"
+kernelevo = "kernel_evo.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["kernel_evo*"]
+
+[tool.setuptools.package-data]
+kernel_evo = [
+    "resources/*.yaml",
+    "resources/*.txt",
+    "resources/config/**/*",
+    "resources/prompts/**/*",
+    "resources/gigaevo/run.py",
+    "resources/gigaevo/config/**/*",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff"
+]
+
+[tool.ruff]
+line-length = 120
+extend-exclude = [
+    "src/kernel_evo/resources/initial_programs",
+    "src/kernel_evo/resources/prompts_run",
+]
+
+[tool.ruff.lint]
+select = ["E", "F"]  # E = pycodestyle (includes E501 line-too-long), F = Pyflakes

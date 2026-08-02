@@ -1,0 +1,25 @@
+run:
+  name: associate-agent
+  steps: 5
+  islands: 4
+
+problem:
+  path: ../../tasks/armt_associate/task.py
+  backend: triton
+
+evaluation:
+  precision: fp16
+  device: cuda:0
+  # wall-clock preserves CUDA-event elapsed timing; device-time sums only
+  # CUDA kernel and memcpy durations and ignores host dispatch gaps.
+  measurement_mode: wall-clock
+  num_correct_trials: 5
+  num_perf_trials: 100
+
+profiling:
+  enabled: true
+  runners: [torch]
+  min_speedup: 1.0
+
+scheduler:
+  migration_interval: 3

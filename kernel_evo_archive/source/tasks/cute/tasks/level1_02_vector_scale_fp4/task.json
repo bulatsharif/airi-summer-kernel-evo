@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "id": "level1_02_vector_scale_fp4",
+  "title": "Packed E2M1 vector scaling with CuTe",
+  "source": {
+    "suite": "KernelEvo",
+    "level": 1,
+    "number": 2
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
+  ],
+  "baseline": "../../cute_kernels/level1_02_vector_scale_fp4/submission.py",
+  "precision": {
+    "input": "float4_e2m1fn_x2",
+    "compute": "float32",
+    "output": "float16"
+  },
+  "problem": {
+    "operation": "output = 0.5 * input",
+    "elements": 67108864,
+    "seed": 20260729
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=level1_02_vector_scale_fp4 .* PASS$",
+    "full_max_absolute_error": 0.0
+  },
+  "policy": {
+    "minimum_cute_kernels": 1,
+    "minimum_cute_jit_functions": 1,
+    "entrypoint_jit": "scale_fp4",
+    "required_calls": [
+      "cute.make_tensor"
+    ]
+  }
+}

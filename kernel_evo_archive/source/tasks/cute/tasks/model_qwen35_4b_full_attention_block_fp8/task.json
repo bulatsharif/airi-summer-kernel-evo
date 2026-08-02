@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "model_qwen35_4b_full_attention_block_fp8",
+  "title": "Complete Qwen3.5-4B full-attention decoder block with CuTe FP8",
+  "source": {
+    "suite": "real_model_layers",
+    "model": "Qwen3.5-4B",
+    "model_id": "Qwen/Qwen3.5-4B",
+    "layer": "language_model.layers[3] (full_attention)"
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "references": [
+    "TASK_REFERENCE.md"
+  ],
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
+  ],
+  "baseline": "../../probes/model_qwen35_4b_full_attention_block_fp8_baseline.py",
+  "precision": {
+    "activations": "float8_e4m3fn at every declared linear and attention boundary",
+    "weights": "float8_e4m3fn",
+    "scales": "fixed per-tensor float32",
+    "accumulator": "float32",
+    "normalization_softmax_residual": "float32",
+    "output": "float32"
+  },
+  "problem": {
+    "operation": "complete pre-norm Qwen3.5 full-attention decoder block: RMSNorm, gated GQA with partial RoPE, residual, RMSNorm, SwiGLU MLP, residual",
+    "batch_size": 1,
+    "sequence_length": 128,
+    "tokens": 128,
+    "hidden_size": 2560,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 4,
+    "head_dim": 256,
+    "rotary_dim": 64,
+    "intermediate_size": 9216,
+    "causal": true,
+    "dropout": false,
+    "seed": 20260801
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=model_qwen35_4b_full_attention_block_fp8 .* PASS$",
+    "max_absolute_error_vs_quantized_torch": 0.08
+  },
+  "policy": {
+    "minimum_cute_kernels": 1,
+    "minimum_cute_jit_functions": 1,
+    "entrypoint_jit": "qwen35_full_attention_block",
+    "required_calls": [
+      "cute.arch.thread_idx"
+    ]
+  }
+}

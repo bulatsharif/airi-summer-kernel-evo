@@ -1,0 +1,31 @@
+id: cute_dsl_4_2_bf16_vector_add_aligned
+dialect: cute_dsl_python
+cutlass_version: 4.2.1
+architecture:
+  required: sm_80_or_newer
+operation:
+  kind: elementwise
+  equation: C = A + B
+supported:
+  a_dtype: bf16
+  b_dtype: bf16
+  c_dtype: bf16
+  constraints:
+    - A, B, and C are contiguous tensors with 16-byte-aligned base pointers.
+    - The flattened element count is divisible by the 1024-element TV tile.
+    - A separately dispatched predicated path handles every unsupported residue.
+mapping:
+  threads: 128
+  copy_bits: 128
+  boundary_handling: none; full aligned tiles only
+correctness:
+  reference: torch.add
+  tested_shapes: [[16, 256], [1024, 1024]]
+expected_codegen:
+  required_instruction_families: [vector_global_load_128, vector_global_store_128]
+  forbidden_instruction_families: [wgmma, tma]
+validated_h200_codegen:
+  registers_per_thread: 18
+  vector_global_load_128: 2
+  vector_global_store_128: 1
+  local_load_store: 0

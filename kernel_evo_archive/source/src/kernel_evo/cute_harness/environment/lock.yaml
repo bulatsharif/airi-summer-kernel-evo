@@ -1,0 +1,24 @@
+schema_version: 1
+dialect: cute_dsl_python
+package: nvidia-cutlass-dsl
+validated_version: 4.2.1
+validated_commit_reference: f3fde58372d33e9a5650ba7b80fc48b3b49d40c8
+target:
+  architecture: sm_90a
+  gpu_family: Hopper
+  validated_gpu: NVIDIA H200
+runtime:
+  python: "3.12"
+  torch: "2.9.1+cu128"
+  cuda_toolkit: "12.4"
+  cuda_python: "12.9.6"
+defaults:
+  storage_dtype: bf16
+  accumulator_dtype: fp32
+  copy_alignment_bytes: 16
+fp8:
+  formats: [e4m3fn, e5m2]
+  runtime_module_abi: bf16
+  acceleration_requirement: Hopper WGMMA on sm_90a
+source_of_truth: installed Python package and kernel-evo cute doctor
+

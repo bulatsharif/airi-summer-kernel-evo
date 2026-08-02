@@ -1,0 +1,84 @@
+From 6292ff694765274213d96204a2d5b16aa05094e7 Mon Sep 17 00:00:00 2001
+From: bulatsaripov <b.sharipov@innopolis.university>
+Date: Sat, 1 Aug 2026 21:43:24 +0300
+Subject: [PATCH 1/8] Switch the layer configs to prompt delivery and a 1800s
+ session
+
+Under files delivery the author opened the 27-file errors bundle one call at a
+time -- 52 successful reads, 40 steps -- and spent the entire 900s session
+reading, never writing a kernel. wrote_candidate was false and the barrier
+graded the untouched skeleton, so 0/6 said nothing about the model. The islands
+smoke run showed the same shape independently (island 1: 48 reads, 1 write).
+
+Prompt delivery hands the bundle over once and removes the read loop, and the
+five-task grid shows it is not a weak tier: E2 scored 6/6 on level1_02,
+level2_12 and level2_14, and underperformed only on level2_63 where it was
+itself timeout-confounded. 1800s gives these larger tasks room to write.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ experiments/cute_ablation/best-gpt2.yaml | 14 +++++++++++++-
+ experiments/cute_ablation/best-qwen.yaml | 14 +++++++++++++-
+ 2 files changed, 26 insertions(+), 2 deletions(-)
+
+diff --git a/experiments/cute_ablation/best-gpt2.yaml b/experiments/cute_ablation/best-gpt2.yaml
+index cd21742..2a285ab 100644
+--- a/experiments/cute_ablation/best-gpt2.yaml
++++ b/experiments/cute_ablation/best-gpt2.yaml
+@@ -16,7 +16,10 @@ agent:
+   max_output_tokens: 8192
+   max_repairs_per_island: 0
+   b300_seed: starter
+-  session_timeout_seconds: 900
++  # Layer tasks need room to write. At 900s the agent spent the whole
++  # session reading the 27-file bundle (52 reads, 40 steps) and never
++  # wrote a kernel; the barrier then graded the untouched skeleton.
++  session_timeout_seconds: 1800
+ evaluator:
+   seed: 0
+   warmup: 5
+@@ -28,3 +31,12 @@ evaluator:
+ # Three independent replications are run as separate results roots so each gets
+ # its own worktree; speedup was shown not to replicate at one replication, so
+ # the ladder is reported over replications rather than from a single arm.
++
++# `prompt` rather than `files`: under files delivery the author opens the
++# bundle one call at a time and every tool result replays into later steps,
++# which consumed the entire session on these larger tasks. Delivering the
++# bundle once removes the read loop. E2 scored 6/6 on level1_02, level2_12
++# and level2_14, so this is not a weak tier -- it was only timeout-confounded
++# on level2_63.
++documentation:
++  delivery: prompt
+diff --git a/experiments/cute_ablation/best-qwen.yaml b/experiments/cute_ablation/best-qwen.yaml
+index 6265a6a..d7773ab 100644
+--- a/experiments/cute_ablation/best-qwen.yaml
++++ b/experiments/cute_ablation/best-qwen.yaml
+@@ -16,7 +16,10 @@ agent:
+   max_output_tokens: 8192
+   max_repairs_per_island: 0
+   b300_seed: starter
+-  session_timeout_seconds: 900
++  # Layer tasks need room to write. At 900s the agent spent the whole
++  # session reading the 27-file bundle (52 reads, 40 steps) and never
++  # wrote a kernel; the barrier then graded the untouched skeleton.
++  session_timeout_seconds: 1800
+ evaluator:
+   seed: 0
+   warmup: 5
+@@ -28,3 +31,12 @@ evaluator:
+ # Three independent replications are run as separate results roots so each gets
+ # its own worktree; speedup was shown not to replicate at one replication, so
+ # the ladder is reported over replications rather than from a single arm.
++
++# `prompt` rather than `files`: under files delivery the author opens the
++# bundle one call at a time and every tool result replays into later steps,
++# which consumed the entire session on these larger tasks. Delivering the
++# bundle once removes the read loop. E2 scored 6/6 on level1_02, level2_12
++# and level2_14, so this is not a weak tier -- it was only timeout-confounded
++# on level2_63.
++documentation:
++  delivery: prompt
+-- 
+2.39.5 (Apple Git-154)
+

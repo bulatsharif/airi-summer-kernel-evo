@@ -1,0 +1,13 @@
+required_instruction_families:
+  - wgmma
+  - tma
+  - mbarrier
+resource_checks:
+  - registers_per_thread
+  - shared_memory_bytes
+resource_expectations:
+  local_load: 0
+  local_store: 0
+warnings:
+  - Any LDL/STL in the steady-state mainloop may indicate accumulator spilling.
+  - An FP8 configuration without WGMMA is not a genuine FP8 tensor-core path.

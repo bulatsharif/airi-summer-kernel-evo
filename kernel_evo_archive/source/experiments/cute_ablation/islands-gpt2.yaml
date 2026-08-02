@@ -1,0 +1,52 @@
+schema_version: 1
+order_seed: 20260801
+model: deepseek/deepseek-v4-flash
+task: model_gpt2_small_transformer_block_fp8
+# Best tier measured in E1-E4: `errors` scored 28/30 turns across five tasks,
+# tied best on correctness and cheapest in tokens.
+tiers: [errors]
+agent:
+  replications: 1
+  # 4 islands x 4 turns = 16 author sessions, plus up to 2 bounded repairs per
+  # island. The single-island study plateaued after ~turn 3 on every task
+  # (0.2689 -> 0.1265 -> 0.1179, then noise), so spending the budget on breadth
+  # rather than a fifth and sixth refinement turn is the whole point.
+  islands: 4
+  steps: 4
+  # Islands author concurrently; this bounds how many OpenCode streams the
+  # driver opens at once.
+  concurrency: 4
+  # Raised from 8192. DeepSeek's reasoning is not suppressible through any
+  # opencode config path, so it is bounded by a local proxy injecting
+  # reasoning_effort=low. Headroom still matters: unbounded reasoning
+  # consumed 8,192/8,192 and 32,767/32,768 with zero visible output.
+  max_output_tokens: 24576
+  # A localized failure -- did not compile, failed correctness, or a
+  # compliance/codegen/graph rejection -- reopens that island for one bounded
+  # repair against its own diagnostic, without consuming a turn. Two is enough
+  # to clear a signature error without letting one island monopolise the budget.
+  max_repairs_per_island: 2
+  # Islands pull from a shared elite every other iteration rather than every
+  # third; with only 4 turns, interval 3 would migrate once and the run would be
+  # four independent chains instead of a population.
+  b300_seed: starter
+  session_timeout_seconds: 2400
+migration_interval: 2
+evaluator:
+  seed: 0
+  warmup: 5
+  repeats: 50
+  timeout_seconds: 900
+
+# Full GPT-2 Small decoder block: LN, causal MHA, residual, LN, GELU MLP,
+# residual. Reference 3.5923 ms on B300 -- 14x cheaper to evaluate than the
+# Qwen block, so islands cost less device time here.
+
+# Every island authors from the skeleton. This is not the removed GigaEvo diff
+# path: no island is ever shown a working kernel.
+
+# `prompt` delivery: under `files` the author opens the 27-file bundle one
+# call at a time and every tool result replays into later steps. On a layer
+# task that consumed the whole session (52 reads, 0 writes).
+documentation:
+  delivery: prompt

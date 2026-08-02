@@ -1,0 +1,11 @@
+required_instruction_families:
+  - vector_global_load_128
+  - vector_global_store_128
+forbidden_instruction_families:
+  - wgmma
+  - tma
+resource_expectations:
+  local_load: 0
+  local_store: 0
+resource_limits:
+  registers_per_thread: 32

@@ -1,0 +1,532 @@
+From d0e445d478833e7681613c684ee5c4feb4f1978c Mon Sep 17 00:00:00 2001
+From: bulatsaripov <b.sharipov@innopolis.university>
+Date: Sun, 2 Aug 2026 09:54:17 +0300
+Subject: [PATCH 7/8] Give the timeline a per-iteration view, and stop calling
+ a numeric miss a compile failure
+
+Two defects, found while asking why the profiler arms of the layer study
+did no better than the control.
+
+The timeline measured the wrong span. It reports the whole capture --
+input generation, JIT compilation, the reference, warmup and every timed
+repeat -- so its headline reads "idle holes 4894.123 ms (99.4%); largest
+hole 4633.622 ms" while the block being optimized is 0.4% idle and runs
+its seven kernels back to back. An author steered by that number goes
+hunting starvation that is not there. Reduce to one representative
+iteration and give start, end, duration and the idle gap in front of
+each launch, with the gap between repeats reported separately: that one
+is host dispatch outside the block and fusing cannot remove it, so it
+must never be added to the in-block figure. Rows carry the kernel's own
+name rather than only the legend alias, because the point of the section
+is to be readable without scrolling a 500-row document.
+
+Segmentation anchors on a kernel name, not on a gap threshold -- gap
+size is the measurement here, so it cannot also be the premise. The loop
+is found as the launch-count group covering the most launches, ignoring
+kernels launched once: a real capture has eleven distinct names launched
+exactly once, and taking the most common count instead selects 1 and
+finds no loop at all.
+
+Numeric misses were reported as compile failures. `metrics` set
+compiled, correctness and is_valid from one boolean, so a kernel that
+compiled, launched and merely missed tolerance reported compiled=0. The
+scheduler reads that as a compile failure and says "rewrite the
+candidate", while the branch that says "repair the smallest reported
+numerical mismatch" needs compiled and not correctness and so could
+never fire for a CuTe task. Across 71 arm worktrees, 44 of 224 failing
+turns were numeric near-misses steered into a rewrite; one arm spent all
+six turns circling a single rounding-placement error, and a Qwen turn
+that missed at 0.0896 against a 0.08 threshold was told to start over.
+Replayed against those stored records, every API error still reads as a
+compile failure and every near-miss now asks for a repair.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ src/kernel_evo/cute_harness/b300.py          |  28 ++-
+ src/kernel_evo/cute_harness/trace_summary.py | 205 ++++++++++++++++++-
+ tests/test_b300_trace_summary.py             | 160 ++++++++++++++-
+ 3 files changed, 389 insertions(+), 4 deletions(-)
+
+diff --git a/src/kernel_evo/cute_harness/b300.py b/src/kernel_evo/cute_harness/b300.py
+index 3d0e058..11ad6a6 100644
+--- a/src/kernel_evo/cute_harness/b300.py
++++ b/src/kernel_evo/cute_harness/b300.py
+@@ -13,7 +13,7 @@ import time
+ import uuid
+ from dataclasses import dataclass
+ from pathlib import Path
+-from typing import Any
++from typing import Any, Mapping
+ from urllib.error import HTTPError, URLError
+ from urllib.parse import urlparse
+ from urllib.request import Request, urlopen
+@@ -301,7 +301,7 @@ def metrics(record: dict[str, Any], reference_ms: float) -> dict[str, Any]:
+     runtime_us = float(runtime_ms) * 1000.0 if passed and isinstance(runtime_ms, (int, float)) else RUNTIME_SENTINEL_US
+     speedup = reference_ms * 1000.0 / runtime_us if runtime_us < RUNTIME_SENTINEL_US else 0.0
+     value = {
+-        "compiled": float(passed),
++        "compiled": float(passed or reached_validation(record)),
+         "correctness": float(passed),
+         "is_valid": float(passed),
+         "runtime_us": runtime_us,
+@@ -314,6 +314,30 @@ def metrics(record: dict[str, Any], reference_ms: float) -> dict[str, Any]:
+     return value
+ 
+ 
++def reached_validation(record: dict[str, Any]) -> bool:
++    """Say whether the candidate compiled, launched, and produced numbers.
++
++    These three metrics used to be one boolean, so a kernel that ran and merely
++    missed tolerance reported `compiled: 0`. The scheduler reads that as a
++    compile failure and tells the next author to rewrite the candidate, while
++    its "repair the smallest reported numerical mismatch" branch -- the correct
++    advice, and the only one that names the real problem -- requires
++    `compiled and not correctness` and so was unreachable for every CuTe task.
++    Measured over 71 arm worktrees, 44 of 224 failing turns were numeric
++    near-misses steered into a rewrite this way: one arm burned all six turns
++    circling a single rounding-placement error, and a Qwen turn that missed at
++    0.0896 against a 0.08 threshold was told to start over.
++
++    The generated evaluator raises `RuntimeError: validation failed: ...` from
++    its appended `main()`, after compilation and after the kernels have run.
++    That phrase is the shared contract of every task template here, so it is
++    the signal: reaching it proves the candidate produced output.
++    """
++    response = record.get("response") or {}
++    stderr = response.get("stderr") if isinstance(response, Mapping) else ""
++    return "validation failed" in str(stderr or "")
++
++
+ def failure_reason(record: dict[str, Any]) -> str:
+     """Say why a B300 run failed, for the next turn's feedback.
+ 
+diff --git a/src/kernel_evo/cute_harness/trace_summary.py b/src/kernel_evo/cute_harness/trace_summary.py
+index c0b0b3f..2e39798 100644
+--- a/src/kernel_evo/cute_harness/trace_summary.py
++++ b/src/kernel_evo/cute_harness/trace_summary.py
+@@ -9,6 +9,7 @@ microseconds even though `displayTimeUnit` is "ms".
+ 
+ from __future__ import annotations
+ 
++from collections import Counter
+ from typing import Any, Mapping
+ 
+ 
+@@ -229,6 +230,129 @@ def summarize_chrome_timeline(
+         "unobserved_candidate_symbols": sorted(set(symbols) - observed_symbols),
+         "kernels": kernels,
+         "events": timeline_events,
++        "iteration": _iteration_timeline(timeline_events),
++    }
++
++
++def _iteration_timeline(events: list[dict[str, Any]]) -> dict[str, Any]:
++    """Reduce the whole-run trace to one representative iteration.
++
++    The trace spans everything the harness did: input generation, JIT compile,
++    the reference, warmup and every timed repeat. Its whole-run idle figure is
++    therefore dominated by setup -- on a real capture, 4894 ms idle across a
++    4922 ms span, 99.4%, against 0.5% idle inside the block itself. Reporting
++    only the whole-run number tells an author its GPU is starved when the
++    measured block is back to back, so reduce to the repeating part and give
++    the two figures separately.
++
++    Segmentation anchors on an activity name, not on a gap threshold: gap size
++    is what is being measured here and so cannot also be the premise. A kernel
++    launched once per repeat appears exactly `repeats` times, so each of its
++    occurrences opens an iteration. The representative is the median iteration
++    by wall span -- the early ones are warmup and the extremes are scheduling
++    noise, so a median row set reproduces across reruns where a first or a
++    fastest one does not.
++    """
++    launches = [
++        item
++        for item in events
++        if item.get("kind") == "kernel"
++        and isinstance(item.get("start_ms"), (int, float))
++        and isinstance(item.get("duration_us"), (int, float))
++    ]
++    if len(launches) < 2:
++        return {}
++    counts = Counter(str(item.get("activity", "")) for item in launches)
++    # How many times the timed loop ran. Kernels inside the block share one
++    # launch count and together account for more launches than anything else.
++    # Group by launch count and take the group covering the most launches --
++    # not the most common count, which one-off setup kernels win: a real
++    # capture has eleven distinct names launched once against seven launched
++    # fifty-five times, so "most common" selects 1 and finds no loop at all.
++    coverage: Counter[int] = Counter()
++    for count in counts.values():
++        # A kernel launched once cannot belong to a repeating block, and there
++        # are enough of them in a real capture to outweigh the loop on volume
++        # alone: forty distinct setup kernels would beat five repeats of three.
++        if count > 1:
++            coverage[count] += count
++    if not coverage:
++        return {}
++    per_iteration = max(coverage.items(), key=lambda item: (item[1], item[0]))[0]
++    recurring = {name for name, count in counts.items() if count >= per_iteration}
++    ordered = [item for item in launches if str(item.get("activity", "")) in recurring]
++    anchor = next(
++        (
++            str(item.get("activity", ""))
++            for item in ordered
++            if counts[str(item.get("activity", ""))] == per_iteration
++        ),
++        "",
++    )
++    if not anchor:
++        return {}
++
++    blocks: list[list[dict[str, Any]]] = []
++    for item in ordered:
++        if str(item.get("activity", "")) == anchor:
++            blocks.append([])
++        if blocks:
++            blocks[-1].append(item)
++    width = Counter(len(block) for block in blocks).most_common(1)[0][0]
++    whole = [block for block in blocks if len(block) == width]
++    if len(whole) < 2:
++        return {}
++
++    def start_us(item: Mapping[str, Any]) -> float:
++        return float(item["start_ms"]) * 1000.0
++
++    def end_us(item: Mapping[str, Any]) -> float:
++        return start_us(item) + float(item["duration_us"])
++
++    chosen = sorted(
++        whole, key=lambda block: (end_us(block[-1]) - start_us(block[0]), start_us(block[0]))
++    )[len(whole) // 2]
++    origin = start_us(chosen[0])
++
++    rows: list[dict[str, Any]] = []
++    previous_end: float | None = None
++    for item in chosen:
++        begin = start_us(item)
++        rows.append(
++            {
++                "activity": str(item.get("activity", "")),
++                "start_us": round(begin - origin, 3),
++                "end_us": round(end_us(item) - origin, 3),
++                "duration_us": round(float(item["duration_us"]), 3),
++                "gap_before_us": (
++                    None if previous_end is None else round(begin - previous_end, 3)
++                ),
++            }
++        )
++        previous_end = end_us(item)
++
++    busy = sum(row["duration_us"] for row in rows)
++    span = rows[-1]["end_us"]
++    inner = [row for row in rows if row["gap_before_us"] is not None]
++    worst = max(inner, key=lambda row: row["gap_before_us"], default=None)
++    # The gap in front of the block is host dispatch between repeats, not a
++    # bubble an author can close by fusing. Keep it out of the in-block total
++    # so the two can never be added together by mistake.
++    position = whole.index(chosen)
++    between = (
++        round(origin - end_us(whole[position - 1][-1]), 3) if position > 0 else None
++    )
++    return {
++        "iterations": len(whole),
++        "kernels_per_iteration": width,
++        "span_us": round(span, 3),
++        "busy_us": round(busy, 3),
++        "gap_us": round(span - busy, 3),
++        "gap_pct": round(100.0 * (span - busy) / span, 2) if span > 0 else 0.0,
++        "largest_gap_us": worst["gap_before_us"] if worst else 0.0,
++        "largest_gap_before": worst["activity"] if worst else "",
++        "between_iterations_us": between,
++        "rows": rows,
+     }
+ 
+ 
+@@ -293,12 +417,17 @@ def trace_timeline_markdown(timeline: dict, *, aggregate: dict | None = None) ->
+             "CPU/Python profiler records are intentionally omitted"
+         ),
+         (
+-            f"- observed span: {_ms(timeline.get('timeline_span_ms'))} ms; active union "
++            f"- whole capture: span {_ms(timeline.get('timeline_span_ms'))} ms; active union "
+             f"{_ms(timeline.get('busy_time_ms'))} ms; idle holes "
+             f"{_ms(timeline.get('idle_time_ms'))} ms "
+             f"({_pct(timeline.get('idle_pct'))}%); largest hole "
+             f"{_ms(timeline.get('largest_gap_ms'))} ms"
+         ),
++        (
++            "- that idle figure covers input generation, JIT compilation and the reference "
++            "as well as your block, so it is not a measure of your kernels; the per-iteration "
++            "section below is"
++        ),
+         (
+             f"- summed activity time: {_ms(timeline.get('activity_time_ms'))} ms; this may "
+             "exceed active union when streams overlap"
+@@ -316,6 +445,8 @@ def trace_timeline_markdown(timeline: dict, *, aggregate: dict | None = None) ->
+         timeline.get("unobserved_candidate_symbols"),
+     )
+ 
++    lines.extend(_iteration_lines(timeline.get("iteration"), kernels))
++
+     if isinstance(aggregate, Mapping):
+         hot = aggregate.get("top_kernels")
+         if isinstance(hot, list) and hot:
+@@ -381,6 +512,78 @@ def trace_timeline_markdown(timeline: dict, *, aggregate: dict | None = None) ->
+     return "\n".join(lines) + "\n"
+ 
+ 
++def _iteration_lines(iteration: Any, kernels: Any = None) -> list[str]:
++    """Render the representative iteration: start, end and idle per launch.
++
++    Rows carry the legend's alias id. Resolve it back to the kernel's own name
++    here: the legend does hold the mapping, but a table of `K24`..`K30` makes
++    an author scroll a 500-row document to learn which of its kernels the gap
++    sits in front of, and the point of this section is to be readable alone.
++    """
++    if not isinstance(iteration, Mapping):
++        return []
++    rows = iteration.get("rows")
++    if not isinstance(rows, list) or not rows:
++        return []
++    names: dict[str, str] = {}
++    if isinstance(kernels, list):
++        for kernel in kernels:
++            if isinstance(kernel, Mapping):
++                symbol = str(kernel.get("source_hint", ""))
++                names[str(kernel.get("id", ""))] = (
++                    symbol.split("candidate:", 1)[1]
++                    if symbol.startswith("candidate:")
++                    else str(kernel.get("name", ""))
++                )
++
++    lines = [
++        "",
++        "## One iteration of your block, launch by launch",
++        "",
++        (
++            f"Median of {_count(iteration.get('iterations'))} timed iterations, "
++            f"{_count(iteration.get('kernels_per_iteration'))} launches each. "
++            "Microseconds from the start of the iteration."
++        ),
++        "",
++        (
++            f"- wall span {_us(iteration.get('span_us'))}; kernels busy "
++            f"{_us(iteration.get('busy_us'))}; idle between your kernels "
++            f"{_us(iteration.get('gap_us'))} ({_pct(iteration.get('gap_pct'))}% of the span)"
++        ),
++    ]
++    worst = str(iteration.get("largest_gap_before", ""))
++    if worst:
++        lines.append(
++            f"- largest single gap {_us(iteration.get('largest_gap_us'))} immediately before "
++            f"`{_name(names.get(worst, worst))}`"
++        )
++    if isinstance(iteration.get("between_iterations_us"), (int, float)):
++        lines.append(
++            f"- {_us(iteration.get('between_iterations_us'))} elapses between one iteration "
++            "and the next; that is host-side dispatch outside your block, excluded from the "
++            "idle figure above, and fusing cannot remove it"
++        )
++    lines.extend(
++        [
++            "",
++            "| # | kernel | id | start | end | dur | idle before |",
++            "| ---: | --- | --- | ---: | ---: | ---: | ---: |",
++        ]
++    )
++    for position, row in enumerate(rows, start=1):
++        if not isinstance(row, Mapping):
++            continue
++        gap = row.get("gap_before_us")
++        alias = str(row.get("activity", ""))
++        lines.append(
++            f"| {position} | {_name(names.get(alias, alias))} | {_cell(alias)} "
++            f"| {_us(row.get('start_us'))} | {_us(row.get('end_us'))} "
++            f"| {_us(row.get('duration_us'))} | {'—' if gap is None else _us(gap)} |"
++        )
++    return lines
++
++
+ def compact_timeline_metadata(timeline: Mapping[str, Any]) -> dict[str, Any]:
+     """Keep timeline diagnostics in result.json without duplicating every trace event."""
+     return {
+diff --git a/tests/test_b300_trace_summary.py b/tests/test_b300_trace_summary.py
+index d47cc5d..29e425d 100644
+--- a/tests/test_b300_trace_summary.py
++++ b/tests/test_b300_trace_summary.py
+@@ -11,7 +11,12 @@ import pytest
+ from kernel_evo.agent import EvaluationResult, KernelEvoAgent
+ from kernel_evo.agent.config import AgentRunConfig
+ from kernel_evo.cute_harness import b300
+-from kernel_evo.cute_harness.b300 import EvaluationConfig, baseline_candidate, discover_tasks
++from kernel_evo.cute_harness.b300 import (
++    EvaluationConfig,
++    baseline_candidate,
++    discover_tasks,
++    metrics,
++)
+ from kernel_evo.cute_harness.trace_summary import (
+     summarize_chrome_trace,
+     summarize_chrome_timeline,
+@@ -218,6 +223,159 @@ def test_summarizes_a_real_trimmed_b300_trace() -> None:
+     assert 0.0 < summary["gpu_time_ms"] < 1.0
+ 
+ 
++def looping_trace(iterations: int = 5, setup: int = 9) -> dict[str, Any]:
++    """A three-kernel block repeated `iterations` times, preceded by setup.
++
++    Shaped like a real capture: setup is many distinct names launched once,
++    while the block is few names launched many times. Every figure is round.
++
++    Per iteration: alpha [0,10), 5 idle, beta [15,45), 1 idle, gamma [46,56).
++    Busy 50, span 56, so 6 idle inside the block; 44 more before the next one.
++    """
++    events: list[dict[str, Any]] = [
++        {"ph": "X", "cat": "kernel", "name": f"setup_{index}", "ts": 100.0 + index, "dur": 1.0}
++        for index in range(setup)
++    ]
++    for index in range(iterations):
++        origin = 1000.0 + index * 100.0
++        events.extend(
++            [
++                {"ph": "X", "cat": "kernel", "name": "alpha", "ts": origin, "dur": 10.0},
++                {"ph": "X", "cat": "kernel", "name": "beta", "ts": origin + 15.0, "dur": 30.0},
++                {"ph": "X", "cat": "kernel", "name": "gamma", "ts": origin + 46.0, "dur": 10.0},
++            ]
++        )
++    return {"traceEvents": events}
++
++
++def test_iteration_view_reports_start_end_and_the_gap_before_each_launch() -> None:
++    """The whole-capture idle figure is dominated by setup, not by the block.
++
++    On a real trace it reads 99.4% idle over a 4922 ms span while the block
++    itself is 0.4% idle, so an author steered by that number chases starvation
++    that is not there. The per-iteration reduction is the honest measurement.
++    """
++    iteration = summarize_chrome_timeline(looping_trace())["iteration"]
++
++    assert iteration["iterations"] == 5
++    assert iteration["kernels_per_iteration"] == 3
++    assert iteration["span_us"] == 56.0
++    assert iteration["busy_us"] == 50.0
++    assert iteration["gap_us"] == 6.0
++    assert iteration["gap_pct"] == pytest.approx(10.71, abs=0.01)
++    assert iteration["largest_gap_us"] == 5.0
++    # Dispatch between repeats is not a bubble the author can fuse away.
++    assert iteration["between_iterations_us"] == 44.0
++    assert [
++        (row["start_us"], row["end_us"], row["duration_us"], row["gap_before_us"])
++        for row in iteration["rows"]
++    ] == [(0.0, 10.0, 10.0, None), (15.0, 45.0, 30.0, 5.0), (46.0, 56.0, 10.0, 1.0)]
++
++
++def test_iteration_view_finds_the_loop_when_setup_names_outnumber_it() -> None:
++    """Nine names launched once must not be mistaken for the repeating block.
++
++    Picking the most common launch count selects 1 here, and on the real
++    capture, where eleven distinct kernels launch exactly once against seven
++    launched fifty-five times. The bucket covering the most launches is the
++    loop.
++    """
++    for setup in (9, 20, 40):
++        iteration = summarize_chrome_timeline(looping_trace(setup=setup))["iteration"]
++        assert iteration["kernels_per_iteration"] == 3, setup
++        assert iteration["iterations"] == 5, setup
++
++
++def test_iteration_view_is_absent_when_nothing_repeats() -> None:
++    once = {
++        "traceEvents": [
++            {"ph": "X", "cat": "kernel", "name": f"k{index}", "ts": float(index * 10), "dur": 1.0}
++            for index in range(6)
++        ]
++    }
++
++    timeline = summarize_chrome_timeline(once)
++    assert timeline["iteration"] == {}
++    assert "One iteration of your block" not in trace_timeline_markdown(timeline)
++
++
++def test_iteration_table_names_the_kernels_and_separates_the_two_idle_figures() -> None:
++    timeline = summarize_chrome_timeline(
++        looping_trace(), candidate_kernel_symbols=("alpha", "beta", "gamma")
++    )
++
++    rendered = trace_timeline_markdown(timeline)
++
++    assert "## One iteration of your block, launch by launch" in rendered
++    assert "| # | kernel | id | start | end | dur | idle before |" in rendered
++    # Named, not just the legend alias, so the section reads on its own.
++    assert "| 2 | beta | K" in rendered
++    assert "immediately before `beta`" in rendered
++    assert "excluded from the idle figure above" in rendered
++    assert "not a measure of your kernels" in rendered
++    assert rendered == trace_timeline_markdown(
++        summarize_chrome_timeline(
++            looping_trace(), candidate_kernel_symbols=("alpha", "beta", "gamma")
++        )
++    )
++
++
++def test_a_numeric_miss_is_a_correctness_failure_not_a_compile_failure() -> None:
++    """The three metrics were one boolean, so every failure read as a rewrite.
++
++    `compiled and not correctness` is what makes the scheduler say "repair the
++    smallest reported numerical mismatch"; fused, that branch never fired.
++    """
++    def record(stderr: str, *, passed: bool = False) -> dict[str, Any]:
++        return {
++            "passed": passed,
++            "kernel_time_ms": 0.5 if passed else None,
++            "response": {"exit_code": 0 if passed else 1, "stderr": stderr},
++        }
++
++    ran = metrics(record("RuntimeError: validation failed: quantized_abs=0.785310"), 3.5923)
++    assert (ran["compiled"], ran["correctness"], ran["is_valid"]) == (1.0, 0.0, 0.0)
++
++    broken = metrics(record("AttributeError: module 'cutlass.cute' has no attribute 'maximum'"), 3.5923)
++    assert (broken["compiled"], broken["correctness"], broken["is_valid"]) == (0.0, 0.0, 0.0)
++
++    ok = metrics(record("", passed=True), 3.5923)
++    assert (ok["compiled"], ok["correctness"], ok["is_valid"]) == (1.0, 1.0, 1.0)
++
++    # A failure is never scored, whichever kind it is.
++    assert ran["speedup"] == 0.0 and broken["speedup"] == 0.0
++    assert ran["fitness"] == 0.0 and broken["fitness"] == 0.0
++
++
++def test_the_scheduler_now_says_repair_rather_than_rewrite_for_a_numeric_miss() -> None:
++    from kernel_evo.agent.scheduler import IslandScheduler
++
++    def feedback_for(stderr: str) -> list[str]:
++        result = metrics({"passed": False, "response": {"exit_code": 1, "stderr": stderr}}, 3.5923)
++        return IslandScheduler().compact_feedback(
++            {
++                "entries": [
++                    {
++                        "id": "cand-1",
++                        "island": 0,
++                        "idea": {"summary": "implement the block"},
++                        "result": {"valid": False, **result},
++                    }
++                ]
++            },
++            island=0,
++        )
++
++    numeric = feedback_for("RuntimeError: validation failed: max_abs=0.089622")
++    assert any("correctness failure" in line for line in numeric)
++    assert any("numerical mismatch" in line for line in numeric)
++    assert not any("compile failure" in line for line in numeric)
++
++    broken = feedback_for("AttributeError: module 'cutlass.cute' has no attribute 'maximum'")
++    assert any("compile failure" in line for line in broken)
++    assert any("rewrite the candidate" in line for line in broken)
++
++
+ def test_timeline_retains_every_gpu_activity_and_measures_idle_holes() -> None:
+     trace = {
+         "deviceProperties": [{"name": "NVIDIA B300 SXM6 AC"}],
+-- 
+2.39.5 (Apple Git-154)
+

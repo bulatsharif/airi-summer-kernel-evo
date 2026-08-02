@@ -1,0 +1,23 @@
+schema_version: 1
+order_seed: 20260801
+model: deepseek/deepseek-v4-flash
+task: model_qwen35_4b_full_attention_block_fp8
+tiers: [errors]
+agent:
+  replications: 1
+  steps: 9
+  islands: 1
+  concurrency: 1
+  max_output_tokens: 24576
+  max_repairs_per_island: 0
+  b300_seed: starter
+  session_timeout_seconds: 2400
+evaluator:
+  seed: 0
+  warmup: 5
+  repeats: 50
+  timeout_seconds: 900
+documentation:
+  delivery: prompt
+profiling:
+  enabled: true

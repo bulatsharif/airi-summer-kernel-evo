@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "snapshot_date": "2026-07-12",
+  "authoritative_command": "kernel-evo cute doctor --arch sm_90a",
+  "dialect": "cute_dsl_python",
+  "scope": {
+    "included": [
+      "nvidia-cutlass-dsl",
+      "cutlass.cute"
+    ],
+    "excluded": [
+      "CuTe C++",
+      "legacy CUTLASS Python operation API"
+    ]
+  },
+  "packages": {
+    "nvidia-cutlass-dsl": "4.2.1",
+    "torch": "2.9.1+cu128",
+    "cuda-python": "12.9.6"
+  },
+  "gpu": {
+    "name": "NVIDIA H200",
+    "compute_capability": "9.0",
+    "target_arch": "sm_90a",
+    "multiprocessors": 132,
+    "memory_bytes": 150121021440,
+    "optin_shared_memory_per_block_bytes": 232448,
+    "native_bf16": true
+  },
+  "cuda": {
+    "driver": "570.172.08",
+    "torch_runtime": "12.8",
+    "toolkit": "12.4"
+  },
+  "types": [
+    "BFloat16",
+    "Float16",
+    "Float32",
+    "Float8E4M3FN",
+    "Float8E5M2"
+  ],
+  "features": [
+    "layout_algebra",
+    "tiled_copy",
+    "predication",
+    "cp_async",
+    "tma",
+    "mbarrier",
+    "clusters",
+    "wgmma_bf16",
+    "wgmma_fp8",
+    "warpgroup_register_control",
+    "ir_retention",
+    "cubin_disassembly",
+    "compute_sanitizer",
+    "nsight_compute"
+  ],
+  "tools": [
+    "nvcc",
+    "cuobjdump",
+    "nvdisasm",
+    "compute-sanitizer",
+    "ncu"
+  ],
+  "note": "This is a validated snapshot. Regenerate on the evaluator machine before trusting it for a run."
+}

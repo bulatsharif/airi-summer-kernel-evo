@@ -1,0 +1,34 @@
+schema_version: 1
+order_seed: 20260731
+model: deepseek/deepseek-v4-flash
+task: level2_63_gemm_relu_divide_fp8
+# Best tier from E1, held fixed.
+tiers: [errors]
+agent:
+  replications: 1
+  # Attempts the agent gets to reach a working kernel. Each attempt is one
+  # OpenCode session that sees its own previous candidate and the B300
+  # diagnostic, never a reference implementation.
+  steps: 6
+  islands: 1
+  concurrency: 1
+  max_output_tokens: 8192
+  max_repairs_per_island: 0
+  # The agent starts from the public skeleton, never from a working kernel.
+  # The verified baseline is timed separately as the speedup denominator and
+  # is never shown to the model.
+  b300_seed: starter
+  session_timeout_seconds: 900
+evaluator:
+  seed: 0
+  warmup: 5
+  repeats: 50
+  timeout_seconds: 900
+# E4, profiling. Exactly one key differs from e1-l2-63.yaml: the previous
+# candidate's B300 kernel breakdown is written as PARENT_PROFILE.md for the next
+# turn. A profile only exists once a candidate has run correctly, so this knob
+# can only act after a PASS -- it is an optimization signal, not a correctness
+# one, and a null effect on pass rate is the expected result. The metric that
+# can move is speedup among passing turns.
+profiling:
+  enabled: true
