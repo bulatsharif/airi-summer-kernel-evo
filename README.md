@@ -56,7 +56,7 @@ python3 -m experiment doctor \
 ```
 
 Ожидаемый результат: три ключа имеют статус `set`, `opencode` найден,
-`model_endpoint=reachable`, `tasks=9`, а requested model не помечена как
+`model_endpoint=reachable`, `tasks=13`, а requested model не помечена как
 `not advertised`.
 
 ## 3. Запустить эксперимент
@@ -181,6 +181,10 @@ API keys в artifacts не сохраняются.
 | `level2_40_matmul_scaling_residual_add_fp8` | GEMM + Scaling + ResidualAdd | FP8/FP32 epilogue |
 | `level2_63_gemm_relu_divide_fp8` | GEMM + ReLU + Divide | FP8/FP32 epilogue |
 | `level2_76_gemm_add_relu_fp8` | GEMM + Bias + ReLU | FP8/FP32 epilogue |
+| `model_gpt2_small_qkv_projection_fp8` | GPT-2 Small combined QKV projection | FP8/FP32 epilogue |
+| `model_gpt2_small_transformer_block_fp8` | Complete GPT-2 Small decoder block | FP8 boundaries, FP32 reductions |
+| `model_qwen35_4b_full_attention_block_fp8` | Complete Qwen3.5-4B full-attention decoder block | FP8 boundaries, FP32 reductions |
+| `model_qwen35_4b_vision_block_fp8` | Complete Qwen3.5-4B vision transformer block | FP8 boundaries, FP32 reductions |
 
 Q8_0 относится к квантизации Qwen в `llama.cpp`; FP8 task’и отдельно
 исполняются на B300.

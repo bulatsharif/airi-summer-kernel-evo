@@ -22,7 +22,7 @@ from cute_harness.tasks import REPO_ROOT, discover_tasks
 
 
 class TaskManifestTests(unittest.TestCase):
-    def test_nine_tasks_are_discoverable(self):
+    def test_thirteen_tasks_are_discoverable(self):
         tasks = discover_tasks()
         self.assertEqual(
             set(tasks),
@@ -36,6 +36,10 @@ class TaskManifestTests(unittest.TestCase):
                 "level2_40_matmul_scaling_residual_add_fp8",
                 "level2_63_gemm_relu_divide_fp8",
                 "level2_76_gemm_add_relu_fp8",
+                "model_gpt2_small_qkv_projection_fp8",
+                "model_gpt2_small_transformer_block_fp8",
+                "model_qwen35_4b_full_attention_block_fp8",
+                "model_qwen35_4b_vision_block_fp8",
             },
         )
 
@@ -218,6 +222,68 @@ class TaskManifestTests(unittest.TestCase):
             "level2_40_matmul_scaling_residual_add_fp8": gemm_constants,
             "level2_63_gemm_relu_divide_fp8": gemm_constants,
             "level2_76_gemm_add_relu_fp8": gemm_constants,
+            "model_gpt2_small_qkv_projection_fp8": gemm_constants
+            | {"SCALE_X", "SCALE_W"},
+            "model_gpt2_small_transformer_block_fp8": {
+                "TOKENS",
+                "HIDDEN_SIZE",
+                "NUM_HEADS",
+                "HEAD_DIM",
+                "MLP_SIZE",
+                "QKV_SIZE",
+                "THREADS",
+                "EPSILON",
+                "INPUT_SCALE",
+                "NORM_SCALE",
+                "QKV_SCALE",
+                "CONTEXT_SCALE",
+                "MLP_SCALE",
+                "WEIGHT_H_SCALE",
+                "WEIGHT_MLP_SCALE",
+                "FP8_DTYPE",
+            },
+            "model_qwen35_4b_full_attention_block_fp8": {
+                "TOKENS",
+                "HIDDEN_SIZE",
+                "NUM_HEADS",
+                "NUM_KV_HEADS",
+                "HEAD_DIM",
+                "ROTARY_DIM",
+                "INTERMEDIATE_SIZE",
+                "Q_GATE_SIZE",
+                "KV_SIZE",
+                "QUERY_SIZE",
+                "THREADS",
+                "EPSILON",
+                "INPUT_SCALE",
+                "NORM_SCALE",
+                "QKV_SCALE",
+                "CONTEXT_SCALE",
+                "MLP_PROJECTION_SCALE",
+                "MLP_ACTIVATION_SCALE",
+                "WEIGHT_H_SCALE",
+                "WEIGHT_CONTEXT_SCALE",
+                "WEIGHT_MLP_SCALE",
+                "FP8_DTYPE",
+            },
+            "model_qwen35_4b_vision_block_fp8": {
+                "TOKENS",
+                "HIDDEN_SIZE",
+                "NUM_HEADS",
+                "HEAD_DIM",
+                "INTERMEDIATE_SIZE",
+                "QKV_SIZE",
+                "THREADS",
+                "EPSILON",
+                "INPUT_SCALE",
+                "NORM_SCALE",
+                "QKV_SCALE",
+                "CONTEXT_SCALE",
+                "MLP_SCALE",
+                "WEIGHT_H_SCALE",
+                "WEIGHT_MLP_SCALE",
+                "FP8_DTYPE",
+            },
         }
         for task in discover_tasks().values():
             with self.subTest(task=task.id):

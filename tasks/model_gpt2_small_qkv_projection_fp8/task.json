@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "id": "model_gpt2_small_qkv_projection_fp8",
+  "title": "GPT-2 Small QKV projection with CuTe FP8",
+  "source": {
+    "suite": "real_model_layers",
+    "model": "GPT-2 Small (124M)",
+    "model_id": "openai-community/gpt2",
+    "layer": "transformer.h[*].attn.c_attn"
+  },
+  "prompt": "TASK.md",
+  "starter": "starter.py",
+  "references": [
+    "TASK_REFERENCE.md"
+  ],
+  "agent_skills": [
+    "../../opencode/.opencode/skills/cute-fp8-kernels"
+  ],
+  "baseline": "../../probes/model_gpt2_small_qkv_projection_fp8_baseline.py",
+  "precision": {
+    "activations": "float8_e4m3fn",
+    "weights": "float8_e4m3fn",
+    "scales": "per_tensor_float32",
+    "accumulator": "float32",
+    "bias": "float32",
+    "output": "float32"
+  },
+  "problem": {
+    "operation": "Y = scale_x * scale_w * (X @ W_qkv.T) + bias_qkv",
+    "batch_size": 8,
+    "sequence_length": 1024,
+    "tokens": 8192,
+    "hidden_size": 768,
+    "num_heads": 12,
+    "head_dim": 64,
+    "qkv_features": 2304,
+    "seed": 20260731
+  },
+  "validation": {
+    "mode": "local_owned_evaluator_v1",
+    "success_pattern": "(?m)^task=model_gpt2_small_qkv_projection_fp8 .* PASS$",
+    "full_max_absolute_error_vs_torch_fp8": 0.01,
+    "sample_max_absolute_error_vs_fp32": 0.2
+  },
+  "policy": {
+    "minimum_cute_kernels": 1,
+    "minimum_cute_jit_functions": 1,
+    "entrypoint_jit": "gpt2_qkv_projection",
+    "required_calls": [
+      "cute.gemm"
+    ]
+  }
+}
