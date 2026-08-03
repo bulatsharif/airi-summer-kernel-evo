@@ -38,6 +38,24 @@
 | GPT-2 transformer block | timeline profiler | **11.45×** |
 | Qwen attention block | без profiler | **79.59×** |
 
+### Откуда взялось ускорение
+
+- **Qwen: 49.88 → 0.627 мс.** Агент заменил скалярные GEMM, где каждый поток
+  последовательно считал один dot product, на FP8 Tensor Core `tcgen05`. Данные
+  подаются через TMA и трёхступенчатый pipeline, а residual и requantization
+  выполняются прямо в epilogue. Score, causal softmax и gated context также
+  объединены в одно attention-ядро.
+- **GPT-2: 3.59 → 0.314 мс.** GEMM разбиты на tiles `16×32`: общие фрагменты
+  загружаются в shared memory, а каждый поток накапливает четыре результата в
+  регистрах. Bias, GELU, residual и FP8 conversion встроены в epilogue;
+  score + softmax + context слиты из трёх запусков в один. Timeline показал,
+  что время уходит в вычисления GEMM/attention, а не в паузы между ядрами.
+
+Это ускорение относительно простого корректного **скалярного CuTe baseline**,
+а не относительно оптимизированных cuBLAS, FlashAttention или production
+inference engine. У Qwen скачок `3.21 → 0.63` мс произошёл одним удачным ходом
+без профилировщика; у GPT-2 timeline направлял последовательные улучшения.
+
 Методика, траектории по ходам и ограничения приведены в
 [отчёте](report.pdf) и [архиве результатов](kernel_evo_archive/README.md).
 
